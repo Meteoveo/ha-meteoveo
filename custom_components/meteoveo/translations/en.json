@@ -72,6 +72,9 @@
       },
       "last_upload": {
         "name": "Last upload"
+      },
+      "grace_remaining": {
+        "name": "Forecast access remaining"
       }
     },
     "binary_sensor": {

@@ -148,3 +148,46 @@ async def test_entry_can_be_unloaded(hass: HomeAssistant) -> None:
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_grace_sensor_shows_the_margin_before_it_runs_out(hass: HomeAssistant) -> None:
+    """The whole point is warning *before* access pauses, not after."""
+    view = dict(READY_VIEW)
+    view["reciprocity"] = {
+        "allowed": True,
+        "hoursSilent": 2.5,
+        "hoursRemaining": 9.5,
+        "everReported": True,
+        "graceHours": 12,
+    }
+    await setup_entry(hass, view)
+
+    state = hass.states.get("sensor.garden_forecast_access_remaining")
+    assert state.state == "9.5"
+    assert state.attributes["derived_data_available"] is True
+    assert state.attributes["grace_hours"] == 12
+
+
+async def test_grace_sensor_reads_zero_once_access_has_paused(hass: HomeAssistant) -> None:
+    view = dict(READY_VIEW)
+    view["reciprocity"] = {
+        "allowed": False,
+        "hoursSilent": 13,
+        "hoursRemaining": 0,
+        "everReported": True,
+        "graceHours": 12,
+    }
+    await setup_entry(hass, view)
+
+    state = hass.states.get("sensor.garden_forecast_access_remaining")
+    assert state.state == "0.0"
+    assert state.attributes["derived_data_available"] is False
+
+
+async def test_grace_sensor_is_unknown_when_the_service_says_nothing(
+    hass: HomeAssistant,
+) -> None:
+    # An older service version, or a response without the field: report
+    # nothing rather than inventing a reassuring zero.
+    await setup_entry(hass, READY_VIEW)
+    assert hass.states.get("sensor.garden_forecast_access_remaining").state == "unknown"

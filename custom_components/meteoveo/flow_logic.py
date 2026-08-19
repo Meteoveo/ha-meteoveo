@@ -13,6 +13,11 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from .client import InvalidCredentials, ServiceUnavailable
+from .const import (
+    DEFAULT_UPLOAD_INTERVAL_S,
+    MAX_UPLOAD_INTERVAL_S,
+    MIN_UPLOAD_INTERVAL_S,
+)
 
 #: Error keys shown by the config flow; each maps to a translated message.
 ERROR_INVALID_AUTH = "invalid_auth"
@@ -64,3 +69,19 @@ def entry_title(view: Mapping[str, Any] | None, station_id: str) -> str:
             if isinstance(name, str) and name.strip():
                 return name.strip()
     return station_id
+
+
+def clamp_upload_interval(value: Any) -> int:
+    """Keep the upload interval inside the range the service expects.
+
+    Out-of-range values are brought back rather than rejected: a value stored
+    by an older version must still load, and refusing to start over a setting
+    would be worse than correcting it.
+    """
+    try:
+        seconds = int(value)
+    except (TypeError, ValueError):
+        return DEFAULT_UPLOAD_INTERVAL_S
+    if seconds <= 0:
+        return DEFAULT_UPLOAD_INTERVAL_S
+    return max(MIN_UPLOAD_INTERVAL_S, min(MAX_UPLOAD_INTERVAL_S, seconds))

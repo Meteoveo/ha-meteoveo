@@ -72,6 +72,9 @@
       },
       "last_upload": {
         "name": "Utolsó beküldés"
+      },
+      "grace_remaining": {
+        "name": "Hátralévő előrejelzés-hozzáférés"
       }
     },
     "binary_sensor": {

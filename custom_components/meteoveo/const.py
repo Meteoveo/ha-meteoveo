@@ -26,9 +26,18 @@ CONF_STATION_ID: Final = "station_id"
 CONF_STATION_KEY: Final = "station_key"
 CONF_MEASUREMENTS: Final = "measurements"
 
-# One upload per minute. Weather stations report at this rate at best, and the
-# server rejects bursts, so there is nothing to gain from going faster.
+# One upload per minute -- the rate consumer stations report at, and the rate
+# the service expects.
 DEFAULT_UPLOAD_INTERVAL_S: Final = 60
+
+# Ten minutes is as sparse as a station may report. The service treats a
+# station as active when a reading arrives inside its grace window; a longer
+# interval would let someone configure a station that quietly falls outside
+# it during ordinary operation.
+MAX_UPLOAD_INTERVAL_S: Final = 600
+
+# Faster than the station itself measures only wastes requests.
+MIN_UPLOAD_INTERVAL_S: Final = 60
 
 # How long the server needs to observe a station before it can say which
 # forecast model performs best there. Until then the integration reports how

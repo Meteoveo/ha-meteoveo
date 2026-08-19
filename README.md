@@ -46,6 +46,32 @@ never be indistinguishable from a measurement.
 - **Sensor problem** — on when the service has flagged something about your
   station, with the individual findings as an attribute.
 - **Accepted uploads** and **Last upload**, so a silent failure is visible.
+- **Forecast access remaining** — see below.
+
+## An exchange, not a feed
+
+Forecast and nowcast are available to stations that report. If nothing
+arrives from your station for **12 hours**, those pause; your station's own
+data — sensor findings, upload state — stays available throughout, so you can
+see what went wrong. The first reading that arrives restores access
+immediately, with no waiting period.
+
+You are emailed after 1, 6 and 12 hours of silence, and the **Forecast access
+remaining** sensor counts down the margin, so an automation can warn you
+before it runs out:
+
+```yaml
+automation:
+  - alias: Warn before MeteoVeo access pauses
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.<your_station>_forecast_access_remaining
+        below: 3
+    action:
+      - action: notify.persistent_notification
+        data:
+          message: "The station has not reported for a while."
+```
 
 ## Requirements
 

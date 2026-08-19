@@ -72,6 +72,9 @@
       },
       "last_upload": {
         "name": "Último envío"
+      },
+      "grace_remaining": {
+        "name": "Acceso a predicción restante"
       }
     },
     "binary_sensor": {

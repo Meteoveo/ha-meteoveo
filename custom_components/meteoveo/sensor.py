@@ -28,6 +28,7 @@ async def async_setup_entry(
             BestModelSensor(coordinator),
             AcceptedUploadsSensor(coordinator),
             LastUploadSensor(coordinator),
+            GraceRemainingSensor(coordinator),
         ]
     )
 
@@ -107,3 +108,41 @@ class LastUploadSensor(MeteoVeoEntity, SensorEntity):
 
         raw = self._view.get("upload", {}).get("lastSeenAt")
         return dt_util.parse_datetime(raw) if raw else None
+
+
+class GraceRemainingSensor(MeteoVeoEntity, SensorEntity):
+    """Hours of forecast access left if the station stays silent.
+
+    MeteoVeo is an exchange: forecast and nowcast are available to stations
+    that report. This sensor makes the remaining margin visible *before* it
+    runs out, so an automation can warn about a station that stopped sending
+    rather than the owner discovering it once access has already paused.
+    """
+
+    entity_description = SensorEntityDescription(
+        key="grace_remaining",
+        translation_key="grace_remaining",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement="h",
+        state_class="measurement",
+        suggested_display_precision=1,
+    )
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "grace_remaining")
+
+    @property
+    def native_value(self) -> float | None:
+        reciprocity = self._view.get("reciprocity")
+        if not reciprocity:
+            return None
+        return round(float(reciprocity.get("hoursRemaining", 0)), 2)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        reciprocity = self._view.get("reciprocity") or {}
+        return {
+            "derived_data_available": reciprocity.get("allowed"),
+            "hours_silent": reciprocity.get("hoursSilent"),
+            "grace_hours": reciprocity.get("graceHours"),
+        }
