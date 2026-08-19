@@ -28,10 +28,10 @@ class TestStationIdCleanup:
     @pytest.mark.parametrize(
         "typed,expected",
         [
-            ("MV1690B415", "MV1690B415"),
-            ("  MV1690B415  ", "MV1690B415"),
-            ("mv1690b415", "MV1690B415"),
-            ("\tMV1690B415\n", "MV1690B415"),
+            ("MVEXAMPLE1", "MVEXAMPLE1"),
+            ("  MVEXAMPLE1  ", "MVEXAMPLE1"),
+            ("mvexample1", "MVEXAMPLE1"),
+            ("\tMVEXAMPLE1\n", "MVEXAMPLE1"),
         ],
     )
     def test_whitespace_and_case_are_forgiven(self, typed, expected):
@@ -64,23 +64,23 @@ class TestIdentity:
     def test_unique_id_is_the_station_id(self):
         # Adding the same station twice has to be caught; the station id is
         # what stays stable across key rotations.
-        assert unique_id_for("MV1690B415") == "mv1690b415"
+        assert unique_id_for("MVEXAMPLE1") == "mvexample1"
 
     def test_unique_id_survives_a_key_rotation(self):
-        first = unique_id_for(clean_station_id(" mv1690b415 "))
-        second = unique_id_for(clean_station_id("MV1690B415"))
+        first = unique_id_for(clean_station_id(" mvexample1 "))
+        second = unique_id_for(clean_station_id("MVEXAMPLE1"))
         assert first == second
 
     def test_entry_title_prefers_the_station_name(self):
-        assert entry_title({"station": {"name": "Garden"}}, "MV1690B415") == "Garden"
+        assert entry_title({"station": {"name": "Garden"}}, "MVEXAMPLE1") == "Garden"
 
     @pytest.mark.parametrize("view", [{}, {"station": {}}, {"station": {"name": ""}}, None])
     def test_entry_title_falls_back_to_the_station_id(self, view):
         # A nameless entry would be unidentifiable in the device list.
-        assert entry_title(view, "MV1690B415") == "MV1690B415"
+        assert entry_title(view, "MVEXAMPLE1") == "MVEXAMPLE1"
 
 
 def test_credentials_are_built_from_cleaned_input():
-    creds = Credentials(station_id=clean_station_id(" mv1690b415 "), station_key="  key  ".strip())
-    assert creds.station_id == "MV1690B415"
+    creds = Credentials(station_id=clean_station_id(" mvexample1 "), station_key="  key  ".strip())
+    assert creds.station_id == "MVEXAMPLE1"
     assert creds.station_key == "key"
