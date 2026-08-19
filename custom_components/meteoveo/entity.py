@@ -31,7 +31,7 @@ class MeteoVeoEntity(CoordinatorEntity[MeteoVeoCoordinator]):
             name=self._station.get("name") or station_id,
             manufacturer="MeteoVeo",
             model="Weather station",
-            configuration_url="https://www.meteoveo.com/#/cuenta",
+            configuration_url="https://www.meteoveo.com/#/account",
         )
 
     @property

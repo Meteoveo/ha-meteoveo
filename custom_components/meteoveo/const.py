@@ -20,7 +20,7 @@ API_BASE: Final = "https://www.meteoveo.com/api"
 
 # Where to send someone who does not have a station yet. Account creation uses
 # passkeys, which need a real browser -- it cannot happen inside Home Assistant.
-SIGNUP_URL: Final = "https://www.meteoveo.com/#/cuenta"
+SIGNUP_URL: Final = "https://www.meteoveo.com/#/account"
 
 CONF_STATION_ID: Final = "station_id"
 CONF_STATION_KEY: Final = "station_key"

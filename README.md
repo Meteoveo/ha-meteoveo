@@ -97,7 +97,7 @@ automation:
 1. **Settings → Devices & Services → Add Integration → MeteoVeo**
 2. Enter the **station ID** and **station key**.
    - No station yet? Create one at
-     [meteoveo.com](https://www.meteoveo.com/#/cuenta) first — account
+     [meteoveo.com](https://www.meteoveo.com/#/account) first — account
      creation uses passkeys and needs a browser.
    - Lost the key? Open the station's settings page on meteoveo.com and
      generate a new one. **Generating a new key immediately invalidates the
