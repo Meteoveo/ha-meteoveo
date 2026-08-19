@@ -4,7 +4,11 @@ Send your weather station's readings to [MeteoVeo](https://www.meteoveo.com)
 from Home Assistant, and bring what MeteoVeo knows about your station back
 into your automations.
 
-> **Status: early development.** Not yet submitted to HACS.
+> **Status: early development.** Submitted to the HACS default list.
+
+The integration ships its own brand icons in `custom_components/meteoveo/brand/`.
+Since Home Assistant 2026.3.0 that is the supported route for custom
+integrations — the `home-assistant/brands` repository no longer accepts them.
 
 ## Documentation
 
@@ -87,7 +91,9 @@ automation:
 
 ## Installation
 
-### HACS (once published)
+### HACS
+
+Until the default-list submission is merged, add it as a custom repository:
 
 1. HACS → Integrations → ⋮ → **Custom repositories**
 2. Add `https://github.com/meteoveo/ha-meteoveo`, category **Integration**
@@ -103,9 +109,10 @@ automation:
 
 1. **Settings → Devices & Services → Add Integration → MeteoVeo**
 2. Enter the **station ID** and **station key**.
-   - No station yet? Create one at
-     [meteoveo.com](https://www.meteoveo.com/#/account) first — account
-     creation uses passkeys and needs a browser.
+   - No station yet? Create an account at
+     [meteoveo.com](https://www.meteoveo.com/#/account) first. Sign-up needs a
+     browser: an email address, a password, and a confirmation code sent to
+     that address. A passkey can be added later and is optional.
    - Lost the key? Open the station's settings page on meteoveo.com and
      generate a new one. **Generating a new key immediately invalidates the
      old one**, so anything already using it will stop.
