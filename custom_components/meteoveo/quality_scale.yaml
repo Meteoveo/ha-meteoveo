@@ -5,8 +5,10 @@ rules:
     comment: The integration registers no service actions.
   appropriate-polling: done
   brands:
-    status: todo
-    comment: Logo submission to home-assistant/brands is pending.
+    status: done
+    comment: Brand assets ship in custom_components/meteoveo/brand. A
+      submission to home-assistant/brands follows once the integration is
+      published.
   common-modules: done
   config-flow: done
   config-flow-test-coverage: done

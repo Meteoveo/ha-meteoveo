@@ -2,14 +2,24 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.util import dt as dt_util
 
 from .auth import Credentials
 from .client import MeteoVeoClient
-from .const import CONF_STATION_ID, CONF_STATION_KEY
+from .const import (
+    CONF_MEASUREMENTS,
+    CONF_STATION_ID,
+    CONF_STATION_KEY,
+    DEFAULT_UPLOAD_INTERVAL_S,
+)
 from .coordinator import MeteoVeoConfigEntry, MeteoVeoCoordinator
+from .uploader import upload_once
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
 
@@ -32,6 +42,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: MeteoVeoConfigEntry) -> 
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload_on_options_change))
+
+    # Uploads run on a timer rather than on every state change: a station
+    # reporting several sensors would otherwise fire a burst of requests
+    # carrying almost the same reading.
+    async def _upload(_now) -> None:
+        selection = entry.options.get(CONF_MEASUREMENTS, {})
+        if not selection:
+            return
+        await upload_once(
+            client,
+            hass.states,
+            selection,
+            now_iso=dt_util.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+
+    entry.async_on_unload(
+        async_track_time_interval(
+            hass, _upload, timedelta(seconds=DEFAULT_UPLOAD_INTERVAL_S)
+        )
+    )
     return True
 
 
