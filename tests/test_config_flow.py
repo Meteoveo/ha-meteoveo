@@ -115,3 +115,22 @@ async def test_title_falls_back_to_the_station_id(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_configure(result["flow_id"], CREDENTIALS)
         result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
     assert result["title"] == "MVEXAMPLE1"
+
+
+async def test_every_form_carries_its_docs_link(
+    hass: HomeAssistant, mock_station_view
+) -> None:
+    # Each step's description ends in a link to the relevant knowledge-base
+    # page; the placeholder must actually be supplied or the raw "{docs_url}"
+    # shows up in the dialog.
+    from custom_components.meteoveo.const import (
+        DOCS_MEASUREMENTS_URL,
+        DOCS_SETUP_URL,
+    )
+
+    result = await start(hass)
+    assert result["description_placeholders"]["docs_url"] == DOCS_SETUP_URL
+
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], CREDENTIALS)
+    assert result["step_id"] == "measurements"
+    assert result["description_placeholders"]["docs_url"] == DOCS_MEASUREMENTS_URL

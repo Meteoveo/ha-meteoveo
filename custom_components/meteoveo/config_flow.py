@@ -26,6 +26,9 @@ from .const import (
     CONF_MEASUREMENTS,
     CONF_STATION_ID,
     CONF_STATION_KEY,
+    DOCS_MEASUREMENTS_URL,
+    DOCS_SETUP_URL,
+    DOCS_TROUBLESHOOTING_URL,
     DOMAIN,
     SIGNUP_URL,
 )
@@ -124,7 +127,10 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=STEP_USER_SCHEMA,
             errors=errors,
-            description_placeholders={"signup_url": SIGNUP_URL},
+            description_placeholders={
+                "signup_url": SIGNUP_URL,
+                "docs_url": DOCS_SETUP_URL,
+            },
         )
 
     async def async_step_measurements(
@@ -146,6 +152,7 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="measurements",
             data_schema=_measurement_schema({}),
+            description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
         )
 
     async def async_step_reauth(self, entry_data: dict[str, Any]) -> FlowResult:
@@ -183,6 +190,7 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+            description_placeholders={"docs_url": DOCS_TROUBLESHOOTING_URL},
         )
 
     @staticmethod
@@ -204,4 +212,5 @@ class MeteoVeoOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="init",
             data_schema=_measurement_schema(dict(current)),
+            description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
         )

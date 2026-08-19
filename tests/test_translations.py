@@ -71,3 +71,46 @@ def test_the_signup_placeholder_survives_translation(language):
     # leave someone without an account with nowhere to go.
     description = load(language)["config"]["step"]["user"]["description"]
     assert "{signup_url}" in description
+
+
+# --- Tooltips and knowledge-base links (added with the docs pages) ---------
+
+
+def data_description_steps(data: dict):
+    """Every (step, fields) pair that renders input fields."""
+    yield "config.user", data["config"]["step"]["user"]
+    yield "config.measurements", data["config"]["step"]["measurements"]
+    yield "config.reauth_confirm", data["config"]["step"]["reauth_confirm"]
+    yield "options.init", data["options"]["step"]["init"]
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_every_field_has_a_tooltip(language):
+    # data_description renders as helper text under the field -- the tooltip
+    # the UI asks for. A field without one is a bare label, which is exactly
+    # what the guideline (and the user) complained about.
+    data = load(language)
+    for step_name, step in data_description_steps(data):
+        fields = step["data"]
+        tooltips = step.get("data_description", {})
+        assert set(tooltips) == set(fields), f"{language}: {step_name}"
+        for key, text in tooltips.items():
+            assert text.strip(), f"{language}: {step_name}.{key} tooltip empty"
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_docs_link_survives_translation(language):
+    # Each step's description links to the relevant knowledge-base page; a
+    # translation that drops the placeholder loses the "?" for that language.
+    data = load(language)
+    for step_name, step in data_description_steps(data):
+        assert "{docs_url}" in step["description"], f"{language}: {step_name}"
+
+
+def test_strings_json_is_the_english_translation():
+    # hassfest validates strings.json, Home Assistant renders en.json. If the
+    # two drift, what was reviewed is not what English users see.
+    strings = json.loads(
+        (TRANSLATIONS.parent / "strings.json").read_text(encoding="utf-8")
+    )
+    assert strings == load("en")

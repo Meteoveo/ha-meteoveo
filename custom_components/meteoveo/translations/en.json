@@ -3,15 +3,19 @@
     "step": {
       "user": {
         "title": "Connect your station",
-        "description": "Enter the ingest ID and key shown when your station was created.\n\nNo station yet? Create one at {signup_url}, then come back.",
+        "description": "Enter the ingest ID and key shown when your station was created.\n\nNo station yet? Create one at {signup_url}, then come back.\n\n[Setup guide]({docs_url})",
         "data": {
           "station_id": "Station ID",
           "station_key": "Station key"
+        },
+        "data_description": {
+          "station_id": "The MV… identifier shown on your station's page. It is not secret and never changes.",
+          "station_key": "The secret generated on the station's page. Creating a new key invalidates the old one immediately."
         }
       },
       "measurements": {
         "title": "Which entity feeds which measurement",
-        "description": "Leave a measurement empty if your station does not report it. One entity per measurement.",
+        "description": "Leave a measurement empty if your station does not report it. One entity per measurement.\n\n[About the measurements]({docs_url})",
         "data": {
           "temperature": "Temperature",
           "humidity": "Humidity",
@@ -21,13 +25,26 @@
           "wind_direction": "Wind direction",
           "daily_rain": "Daily rainfall",
           "solar_radiation": "Solar radiation"
+        },
+        "data_description": {
+          "temperature": "Outdoor temperature. °C and °F both work.",
+          "humidity": "Outdoor relative humidity, in %.",
+          "pressure": "Station-level (absolute) pressure in hPa, mbar or inHg. The service reduces it to sea level itself — do not pick an already reduced value.",
+          "wind_speed": "Sustained wind speed, in any common unit.",
+          "wind_gust": "Peak wind gust, in any common unit.",
+          "wind_direction": "Wind direction in degrees, 0–360.",
+          "daily_rain": "Rain accumulated since midnight — not the rain rate.",
+          "solar_radiation": "Solar irradiance, in W/m²."
         }
       },
       "reauth_confirm": {
         "title": "Enter the new station key",
-        "description": "The previous key stopped working. Generate a new one on the station's settings page and paste it here.",
+        "description": "The previous key stopped working. Generate a new one on the station's settings page and paste it here.\n\n[Troubleshooting]({docs_url})",
         "data": {
           "station_key": "Station key"
+        },
+        "data_description": {
+          "station_key": "The new key from the station's page. The old key stopped working the moment it was replaced."
         }
       }
     },
@@ -45,7 +62,7 @@
     "step": {
       "init": {
         "title": "Which entity feeds which measurement",
-        "description": "Leave a measurement empty if your station does not report it. One entity per measurement.",
+        "description": "Leave a measurement empty if your station does not report it. One entity per measurement.\n\n[About the measurements]({docs_url})",
         "data": {
           "temperature": "Temperature",
           "humidity": "Humidity",
@@ -55,6 +72,16 @@
           "wind_direction": "Wind direction",
           "daily_rain": "Daily rainfall",
           "solar_radiation": "Solar radiation"
+        },
+        "data_description": {
+          "temperature": "Outdoor temperature. °C and °F both work.",
+          "humidity": "Outdoor relative humidity, in %.",
+          "pressure": "Station-level (absolute) pressure in hPa, mbar or inHg. The service reduces it to sea level itself — do not pick an already reduced value.",
+          "wind_speed": "Sustained wind speed, in any common unit.",
+          "wind_gust": "Peak wind gust, in any common unit.",
+          "wind_direction": "Wind direction in degrees, 0–360.",
+          "daily_rain": "Rain accumulated since midnight — not the rain rate.",
+          "solar_radiation": "Solar irradiance, in W/m²."
         }
       }
     }

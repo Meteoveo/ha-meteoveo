@@ -3,15 +3,19 @@
     "step": {
       "user": {
         "title": "Conecta tu estación",
-        "description": "Escribe el ID y la clave de envío que viste al crear la estación.\n\n¿Aún no tienes estación? Créala en {signup_url} y vuelve aquí.",
+        "description": "Escribe el ID y la clave de envío que viste al crear la estación.\n\n¿Aún no tienes estación? Créala en {signup_url} y vuelve aquí.\n\n[Guía de instalación]({docs_url})",
         "data": {
           "station_id": "ID de la estación",
           "station_key": "Clave de la estación"
+        },
+        "data_description": {
+          "station_id": "El identificador MV… que aparece en la página de tu estación. No es secreto y nunca cambia.",
+          "station_key": "El secreto generado en la página de la estación. Crear una clave nueva invalida la anterior al instante."
         }
       },
       "measurements": {
         "title": "Qué entidad alimenta cada medida",
-        "description": "Deja vacía una medida si tu estación no la mide. Una entidad por medida.",
+        "description": "Deja vacía una medida si tu estación no la mide. Una entidad por medida.\n\n[Sobre las medidas]({docs_url})",
         "data": {
           "temperature": "Temperatura",
           "humidity": "Humedad",
@@ -21,13 +25,26 @@
           "wind_direction": "Dirección del viento",
           "daily_rain": "Lluvia del día",
           "solar_radiation": "Radiación solar"
+        },
+        "data_description": {
+          "temperature": "Temperatura exterior. Valen tanto °C como °F.",
+          "humidity": "Humedad relativa exterior, en %.",
+          "pressure": "Presión absoluta (a nivel de la estación) en hPa, mbar o inHg. El servicio la reduce al nivel del mar por sí mismo — no elijas un valor ya reducido.",
+          "wind_speed": "Velocidad sostenida del viento, en cualquier unidad habitual.",
+          "wind_gust": "Racha máxima de viento, en cualquier unidad habitual.",
+          "wind_direction": "Dirección del viento en grados, 0–360.",
+          "daily_rain": "Lluvia acumulada desde medianoche — no la intensidad.",
+          "solar_radiation": "Irradiancia solar, en W/m²."
         }
       },
       "reauth_confirm": {
         "title": "Escribe la clave nueva",
-        "description": "La clave anterior dejó de funcionar. Genera una nueva en la configuración de la estación y pégala aquí.",
+        "description": "La clave anterior dejó de funcionar. Genera una nueva en la configuración de la estación y pégala aquí.\n\n[Resolución de problemas]({docs_url})",
         "data": {
           "station_key": "Clave de la estación"
+        },
+        "data_description": {
+          "station_key": "La clave nueva de la página de la estación. La anterior dejó de funcionar en el momento en que fue sustituida."
         }
       }
     },
@@ -45,7 +62,7 @@
     "step": {
       "init": {
         "title": "Qué entidad alimenta cada medida",
-        "description": "Deja vacía una medida si tu estación no la mide. Una entidad por medida.",
+        "description": "Deja vacía una medida si tu estación no la mide. Una entidad por medida.\n\n[Sobre las medidas]({docs_url})",
         "data": {
           "temperature": "Temperatura",
           "humidity": "Humedad",
@@ -55,6 +72,16 @@
           "wind_direction": "Dirección del viento",
           "daily_rain": "Lluvia del día",
           "solar_radiation": "Radiación solar"
+        },
+        "data_description": {
+          "temperature": "Temperatura exterior. Valen tanto °C como °F.",
+          "humidity": "Humedad relativa exterior, en %.",
+          "pressure": "Presión absoluta (a nivel de la estación) en hPa, mbar o inHg. El servicio la reduce al nivel del mar por sí mismo — no elijas un valor ya reducido.",
+          "wind_speed": "Velocidad sostenida del viento, en cualquier unidad habitual.",
+          "wind_gust": "Racha máxima de viento, en cualquier unidad habitual.",
+          "wind_direction": "Dirección del viento en grados, 0–360.",
+          "daily_rain": "Lluvia acumulada desde medianoche — no la intensidad.",
+          "solar_radiation": "Irradiancia solar, en W/m²."
         }
       }
     }

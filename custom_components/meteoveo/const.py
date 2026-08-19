@@ -22,6 +22,15 @@ API_BASE: Final = "https://www.meteoveo.com/api"
 # passkeys, which need a real browser -- it cannot happen inside Home Assistant.
 SIGNUP_URL: Final = "https://www.meteoveo.com/#/account"
 
+# Knowledge-base pages, linked from each config-flow step. They live in this
+# repository so the linked text is versioned together with the code it
+# describes.
+_DOCS_BASE: Final = "https://github.com/meteoveo/ha-meteoveo/blob/main/docs"
+DOCS_SETUP_URL: Final = f"{_DOCS_BASE}/setup.md"
+DOCS_MEASUREMENTS_URL: Final = f"{_DOCS_BASE}/measurements.md"
+DOCS_RECIPROCITY_URL: Final = f"{_DOCS_BASE}/reciprocity.md"
+DOCS_TROUBLESHOOTING_URL: Final = f"{_DOCS_BASE}/troubleshooting.md"
+
 CONF_STATION_ID: Final = "station_id"
 CONF_STATION_KEY: Final = "station_key"
 CONF_MEASUREMENTS: Final = "measurements"

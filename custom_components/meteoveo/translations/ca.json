@@ -3,15 +3,19 @@
     "step": {
       "user": {
         "title": "Connecta la teva estació",
-        "description": "Escriu l'ID i la clau d'enviament que vas veure en crear l'estació.\n\nEncara no tens estació? Crea-la a {signup_url} i torna aquí.",
+        "description": "Escriu l'ID i la clau d'enviament que vas veure en crear l'estació.\n\nEncara no tens estació? Crea-la a {signup_url} i torna aquí.\n\n[Guia d'instal·lació]({docs_url})",
         "data": {
           "station_id": "ID de l'estació",
           "station_key": "Clau de l'estació"
+        },
+        "data_description": {
+          "station_id": "L'identificador MV… que apareix a la pàgina de la teva estació. No és secret i no canvia mai.",
+          "station_key": "El secret generat a la pàgina de l'estació. Crear una clau nova invalida l'anterior a l'instant."
         }
       },
       "measurements": {
         "title": "Quina entitat alimenta cada mesura",
-        "description": "Deixa buida una mesura si la teva estació no la mesura. Una entitat per mesura.",
+        "description": "Deixa buida una mesura si la teva estació no la mesura. Una entitat per mesura.\n\n[Sobre les mesures]({docs_url})",
         "data": {
           "temperature": "Temperatura",
           "humidity": "Humitat",
@@ -21,13 +25,26 @@
           "wind_direction": "Direcció del vent",
           "daily_rain": "Pluja del dia",
           "solar_radiation": "Radiació solar"
+        },
+        "data_description": {
+          "temperature": "Temperatura exterior. Valen tant °C com °F.",
+          "humidity": "Humitat relativa exterior, en %.",
+          "pressure": "Pressió absoluta (a nivell de l'estació) en hPa, mbar o inHg. El servei la redueix al nivell del mar tot sol — no triïs un valor ja reduït.",
+          "wind_speed": "Velocitat sostinguda del vent, en qualsevol unitat habitual.",
+          "wind_gust": "Ratxa màxima de vent, en qualsevol unitat habitual.",
+          "wind_direction": "Direcció del vent en graus, 0–360.",
+          "daily_rain": "Pluja acumulada des de mitjanit — no la intensitat.",
+          "solar_radiation": "Irradiància solar, en W/m²."
         }
       },
       "reauth_confirm": {
         "title": "Escriu la clau nova",
-        "description": "La clau anterior ha deixat de funcionar. Genera'n una de nova a la configuració de l'estació i enganxa-la aquí.",
+        "description": "La clau anterior ha deixat de funcionar. Genera'n una de nova a la configuració de l'estació i enganxa-la aquí.\n\n[Resolució de problemes]({docs_url})",
         "data": {
           "station_key": "Clau de l'estació"
+        },
+        "data_description": {
+          "station_key": "La clau nova de la pàgina de l'estació. L'anterior va deixar de funcionar en el moment de ser substituïda."
         }
       }
     },
@@ -45,7 +62,7 @@
     "step": {
       "init": {
         "title": "Quina entitat alimenta cada mesura",
-        "description": "Deixa buida una mesura si la teva estació no la mesura. Una entitat per mesura.",
+        "description": "Deixa buida una mesura si la teva estació no la mesura. Una entitat per mesura.\n\n[Sobre les mesures]({docs_url})",
         "data": {
           "temperature": "Temperatura",
           "humidity": "Humitat",
@@ -55,6 +72,16 @@
           "wind_direction": "Direcció del vent",
           "daily_rain": "Pluja del dia",
           "solar_radiation": "Radiació solar"
+        },
+        "data_description": {
+          "temperature": "Temperatura exterior. Valen tant °C com °F.",
+          "humidity": "Humitat relativa exterior, en %.",
+          "pressure": "Pressió absoluta (a nivell de l'estació) en hPa, mbar o inHg. El servei la redueix al nivell del mar tot sol — no triïs un valor ja reduït.",
+          "wind_speed": "Velocitat sostinguda del vent, en qualsevol unitat habitual.",
+          "wind_gust": "Ratxa màxima de vent, en qualsevol unitat habitual.",
+          "wind_direction": "Direcció del vent en graus, 0–360.",
+          "daily_rain": "Pluja acumulada des de mitjanit — no la intensitat.",
+          "solar_radiation": "Irradiància solar, en W/m²."
         }
       }
     }

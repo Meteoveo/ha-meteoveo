@@ -6,6 +6,13 @@ into your automations.
 
 > **Status: early development.** Not yet submitted to HACS.
 
+## Documentation
+
+- [Setup guide](docs/setup.md) — account, station, adding the integration
+- [Measurements](docs/measurements.md) — what each field expects, units, pitfalls
+- [Reciprocity](docs/reciprocity.md) — the give-data-get-data rules
+- [Troubleshooting](docs/troubleshooting.md) — errors and what they mean
+
 ## Why this exists
 
 Most consumer weather-station gateways — the Fine Offset family, sold as

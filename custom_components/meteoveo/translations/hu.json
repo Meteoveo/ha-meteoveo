@@ -3,15 +3,19 @@
     "step": {
       "user": {
         "title": "Állomás bekötése",
-        "description": "Írd be a beküldési azonosítót és kulcsot, amit az állomás létrehozásakor kaptál.\n\nMég nincs állomásod? Hozd létre itt: {signup_url}, aztán gyere vissza.",
+        "description": "Írd be a beküldési azonosítót és kulcsot, amit az állomás létrehozásakor kaptál.\n\nMég nincs állomásod? Hozd létre itt: {signup_url}, aztán gyere vissza.\n\n[Telepítési útmutató]({docs_url})",
         "data": {
           "station_id": "Állomás-azonosító",
           "station_key": "Állomás-kulcs"
+        },
+        "data_description": {
+          "station_id": "Az MV… kezdetű azonosító az állomásod oldaláról. Nem titok, és soha nem változik.",
+          "station_key": "Az állomás oldalán generált titok. Új kulcs készítése a régit azonnal érvényteleníti."
         }
       },
       "measurements": {
         "title": "Melyik entitás adja melyik mérést",
-        "description": "Hagyd üresen azt a mérést, amit az állomásod nem mér. Mérésenként egy entitás.",
+        "description": "Hagyd üresen azt a mérést, amit az állomásod nem mér. Mérésenként egy entitás.\n\n[A mérésekről]({docs_url})",
         "data": {
           "temperature": "Hőmérséklet",
           "humidity": "Páratartalom",
@@ -21,13 +25,26 @@
           "wind_direction": "Szélirány",
           "daily_rain": "Napi csapadék",
           "solar_radiation": "Globálsugárzás"
+        },
+        "data_description": {
+          "temperature": "Külső hőmérséklet. °C és °F egyaránt jó.",
+          "humidity": "Külső relatív páratartalom, %-ban.",
+          "pressure": "Abszolút (állomás-szinti) légnyomás hPa, mbar vagy inHg egységben. A tengerszintre átszámítást a szolgáltatás végzi — ne már átszámított értéket válassz.",
+          "wind_speed": "Tartós szélsebesség, bármely szokásos egységben.",
+          "wind_gust": "Legerősebb széllökés, bármely szokásos egységben.",
+          "wind_direction": "Szélirány fokban, 0–360.",
+          "daily_rain": "Éjféltől gyűlt csapadék — nem az intenzitás.",
+          "solar_radiation": "Napsugárzás, W/m²-ben."
         }
       },
       "reauth_confirm": {
         "title": "Írd be az új kulcsot",
-        "description": "A korábbi kulcs megszűnt. Generálj újat az állomás beállításainál, és illeszd be ide.",
+        "description": "A korábbi kulcs megszűnt. Generálj újat az állomás beállításainál, és illeszd be ide.\n\n[Hibaelhárítás]({docs_url})",
         "data": {
           "station_key": "Állomás-kulcs"
+        },
+        "data_description": {
+          "station_key": "Az új kulcs az állomás oldaláról. A régi abban a pillanatban megszűnt, amikor lecserélted."
         }
       }
     },
@@ -45,7 +62,7 @@
     "step": {
       "init": {
         "title": "Melyik entitás adja melyik mérést",
-        "description": "Hagyd üresen azt a mérést, amit az állomásod nem mér. Mérésenként egy entitás.",
+        "description": "Hagyd üresen azt a mérést, amit az állomásod nem mér. Mérésenként egy entitás.\n\n[A mérésekről]({docs_url})",
         "data": {
           "temperature": "Hőmérséklet",
           "humidity": "Páratartalom",
@@ -55,6 +72,16 @@
           "wind_direction": "Szélirány",
           "daily_rain": "Napi csapadék",
           "solar_radiation": "Globálsugárzás"
+        },
+        "data_description": {
+          "temperature": "Külső hőmérséklet. °C és °F egyaránt jó.",
+          "humidity": "Külső relatív páratartalom, %-ban.",
+          "pressure": "Abszolút (állomás-szinti) légnyomás hPa, mbar vagy inHg egységben. A tengerszintre átszámítást a szolgáltatás végzi — ne már átszámított értéket válassz.",
+          "wind_speed": "Tartós szélsebesség, bármely szokásos egységben.",
+          "wind_gust": "Legerősebb széllökés, bármely szokásos egységben.",
+          "wind_direction": "Szélirány fokban, 0–360.",
+          "daily_rain": "Éjféltől gyűlt csapadék — nem az intenzitás.",
+          "solar_radiation": "Napsugárzás, W/m²-ben."
         }
       }
     }
