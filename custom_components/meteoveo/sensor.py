@@ -145,4 +145,10 @@ class GraceRemainingSensor(MeteoVeoEntity, SensorEntity):
             "derived_data_available": reciprocity.get("allowed"),
             "hours_silent": reciprocity.get("hoursSilent"),
             "grace_hours": reciprocity.get("graceHours"),
+            # Cadence matters, not just presence: readings arriving less
+            # often than every ten minutes do not count as reporting. When
+            # cadence_ok is false while last_reading_hours_ago is small, the
+            # station is sending -- just too sparsely.
+            "cadence_ok": reciprocity.get("cadenceOk"),
+            "last_reading_hours_ago": reciprocity.get("lastReadingAgoH"),
         }
