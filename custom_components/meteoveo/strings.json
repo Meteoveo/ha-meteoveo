@@ -1,0 +1,83 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect your station",
+        "description": "Enter the ingest ID and key shown when your station was created.\n\nNo station yet? Create one at {signup_url}, then come back.",
+        "data": {
+          "station_id": "Station ID",
+          "station_key": "Station key"
+        }
+      },
+      "measurements": {
+        "title": "Which entity feeds which measurement",
+        "description": "Leave a measurement empty if your station does not report it. One entity per measurement.",
+        "data": {
+          "temperature": "Temperature",
+          "humidity": "Humidity",
+          "pressure": "Pressure",
+          "wind_speed": "Wind speed",
+          "wind_gust": "Wind gust",
+          "wind_direction": "Wind direction",
+          "daily_rain": "Daily rainfall",
+          "solar_radiation": "Solar radiation"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Enter the new station key",
+        "description": "The previous key stopped working. Generate a new one on the station's settings page and paste it here.",
+        "data": {
+          "station_key": "Station key"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "The station ID or key was not accepted. Check both, and note that generating a new key immediately invalidates the old one.",
+      "cannot_connect": "Could not reach MeteoVeo. Your credentials were not tested; try again shortly.",
+      "unknown": "Something went wrong that we did not anticipate. The log has the details."
+    },
+    "abort": {
+      "already_configured": "This station is already set up.",
+      "reauth_successful": "The new key works."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Which entity feeds which measurement",
+        "description": "Leave a measurement empty if your station does not report it. One entity per measurement.",
+        "data": {
+          "temperature": "Temperature",
+          "humidity": "Humidity",
+          "pressure": "Pressure",
+          "wind_speed": "Wind speed",
+          "wind_gust": "Wind gust",
+          "wind_direction": "Wind direction",
+          "daily_rain": "Daily rainfall",
+          "solar_radiation": "Solar radiation"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "best_model": {
+        "name": "Best forecast model",
+        "state": {
+          "collecting": "Collecting data"
+        }
+      },
+      "accepted_uploads": {
+        "name": "Accepted uploads"
+      },
+      "last_upload": {
+        "name": "Last upload"
+      }
+    },
+    "binary_sensor": {
+      "sensor_problem": {
+        "name": "Sensor problem"
+      }
+    }
+  }
+}

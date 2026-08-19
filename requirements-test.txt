@@ -1,2 +1,5 @@
+# The Home Assistant test harness pulls in Home Assistant itself, which is
+# what makes real config-flow tests possible (a Bronze tier requirement).
 pytest>=8.0
 pytest-asyncio>=0.24
+pytest-homeassistant-custom-component>=0.13

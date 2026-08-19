@@ -58,5 +58,26 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "best_model": {
+        "name": "Mejor modelo de predicción",
+        "state": {
+          "collecting": "Recogiendo datos"
+        }
+      },
+      "accepted_uploads": {
+        "name": "Envíos aceptados"
+      },
+      "last_upload": {
+        "name": "Último envío"
+      }
+    },
+    "binary_sensor": {
+      "sensor_problem": {
+        "name": "Problema de sensor"
+      }
+    }
   }
 }

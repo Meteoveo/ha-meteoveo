@@ -30,7 +30,7 @@ from .const import (
     SIGNUP_URL,
 )
 from .flow_logic import clean_station_id, entry_title, error_for, unique_id_for
-from .selection import NOT_AVAILABLE, validate_selection
+from .selection import validate_selection
 from .wu_payload import MEASUREMENTS
 
 _LOGGER = logging.getLogger(__name__)
@@ -54,9 +54,18 @@ def _measurement_schema(current: dict[str, str]) -> vol.Schema:
     """
     fields: dict[Any, Any] = {}
     for measurement in MEASUREMENTS:
-        fields[
-            vol.Optional(measurement.key, default=current.get(measurement.key, NOT_AVAILABLE))
-        ] = selector.EntitySelector(
+        # No default. An entity picker rejects any placeholder value, so
+        # "not available" is expressed the way Home Assistant expresses it:
+        # the field is simply left empty. A previously chosen entity is
+        # offered back as a suggestion rather than as a hard default, so it
+        # can be cleared again.
+        chosen = current.get(measurement.key)
+        field = (
+            vol.Optional(measurement.key, description={"suggested_value": chosen})
+            if chosen
+            else vol.Optional(measurement.key)
+        )
+        fields[field] = selector.EntitySelector(
             selector.EntitySelectorConfig(
                 domain=["sensor", "input_number", "number"],
                 # Device class narrows the list where we have one; wind

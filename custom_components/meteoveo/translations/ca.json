@@ -58,5 +58,26 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "best_model": {
+        "name": "Millor model de predicció",
+        "state": {
+          "collecting": "Recollint dades"
+        }
+      },
+      "accepted_uploads": {
+        "name": "Enviaments acceptats"
+      },
+      "last_upload": {
+        "name": "Últim enviament"
+      }
+    },
+    "binary_sensor": {
+      "sensor_problem": {
+        "name": "Problema de sensor"
+      }
+    }
   }
 }

@@ -58,5 +58,26 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "best_model": {
+        "name": "Best forecast model",
+        "state": {
+          "collecting": "Collecting data"
+        }
+      },
+      "accepted_uploads": {
+        "name": "Accepted uploads"
+      },
+      "last_upload": {
+        "name": "Last upload"
+      }
+    },
+    "binary_sensor": {
+      "sensor_problem": {
+        "name": "Sensor problem"
+      }
+    }
   }
 }
