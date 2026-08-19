@@ -1,0 +1,62 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connecta la teva estació",
+        "description": "Escriu l'ID i la clau d'enviament que vas veure en crear l'estació.\n\nEncara no tens estació? Crea-la a {signup_url} i torna aquí.",
+        "data": {
+          "station_id": "ID de l'estació",
+          "station_key": "Clau de l'estació"
+        }
+      },
+      "measurements": {
+        "title": "Quina entitat alimenta cada mesura",
+        "description": "Deixa buida una mesura si la teva estació no la mesura. Una entitat per mesura.",
+        "data": {
+          "temperature": "Temperatura",
+          "humidity": "Humitat",
+          "pressure": "Pressió",
+          "wind_speed": "Velocitat del vent",
+          "wind_gust": "Ratxa de vent",
+          "wind_direction": "Direcció del vent",
+          "daily_rain": "Pluja del dia",
+          "solar_radiation": "Radiació solar"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Escriu la clau nova",
+        "description": "La clau anterior ha deixat de funcionar. Genera'n una de nova a la configuració de l'estació i enganxa-la aquí.",
+        "data": {
+          "station_key": "Clau de l'estació"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "No s'ha acceptat l'ID o la clau. Revisa'ls tots dos; tingues en compte que generar una clau nova invalida l'anterior a l'instant.",
+      "cannot_connect": "No s'ha pogut contactar amb MeteoVeo. Les teves dades no s'han comprovat; torna-ho a provar d'aquí a una estona.",
+      "unknown": "Ha passat alguna cosa que no havíem previst. Els detalls són al registre."
+    },
+    "abort": {
+      "already_configured": "Aquesta estació ja està configurada.",
+      "reauth_successful": "La clau nova funciona."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Quina entitat alimenta cada mesura",
+        "description": "Deixa buida una mesura si la teva estació no la mesura. Una entitat per mesura.",
+        "data": {
+          "temperature": "Temperatura",
+          "humidity": "Humitat",
+          "pressure": "Pressió",
+          "wind_speed": "Velocitat del vent",
+          "wind_gust": "Ratxa de vent",
+          "wind_direction": "Direcció del vent",
+          "daily_rain": "Pluja del dia",
+          "solar_radiation": "Radiació solar"
+        }
+      }
+    }
+  }
+}

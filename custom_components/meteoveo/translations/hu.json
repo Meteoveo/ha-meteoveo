@@ -1,0 +1,62 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Állomás bekötése",
+        "description": "Írd be a beküldési azonosítót és kulcsot, amit az állomás létrehozásakor kaptál.\n\nMég nincs állomásod? Hozd létre itt: {signup_url}, aztán gyere vissza.",
+        "data": {
+          "station_id": "Állomás-azonosító",
+          "station_key": "Állomás-kulcs"
+        }
+      },
+      "measurements": {
+        "title": "Melyik entitás adja melyik mérést",
+        "description": "Hagyd üresen azt a mérést, amit az állomásod nem mér. Mérésenként egy entitás.",
+        "data": {
+          "temperature": "Hőmérséklet",
+          "humidity": "Páratartalom",
+          "pressure": "Nyomás",
+          "wind_speed": "Szélsebesség",
+          "wind_gust": "Széllökés",
+          "wind_direction": "Szélirány",
+          "daily_rain": "Napi csapadék",
+          "solar_radiation": "Globálsugárzás"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Írd be az új kulcsot",
+        "description": "A korábbi kulcs megszűnt. Generálj újat az állomás beállításainál, és illeszd be ide.",
+        "data": {
+          "station_key": "Állomás-kulcs"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Az azonosítót vagy a kulcsot nem fogadta el a szolgáltatás. Nézd meg mindkettőt — és vedd figyelembe, hogy új kulcs generálása a régit azonnal érvényteleníti.",
+      "cannot_connect": "Nem sikerült elérni a MeteoVeót. Az adataidat nem ellenőriztük; próbáld újra kicsit később.",
+      "unknown": "Valami olyan történt, amire nem számítottunk. A részletek a naplóban vannak."
+    },
+    "abort": {
+      "already_configured": "Ez az állomás már be van kötve.",
+      "reauth_successful": "Az új kulcs működik."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Melyik entitás adja melyik mérést",
+        "description": "Hagyd üresen azt a mérést, amit az állomásod nem mér. Mérésenként egy entitás.",
+        "data": {
+          "temperature": "Hőmérséklet",
+          "humidity": "Páratartalom",
+          "pressure": "Nyomás",
+          "wind_speed": "Szélsebesség",
+          "wind_gust": "Széllökés",
+          "wind_direction": "Szélirány",
+          "daily_rain": "Napi csapadék",
+          "solar_radiation": "Globálsugárzás"
+        }
+      }
+    }
+  }
+}
