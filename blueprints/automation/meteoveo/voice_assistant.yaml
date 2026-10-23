@@ -116,6 +116,7 @@ actions:
       # --- Texts. Placeholders in braces are filled in below. ---------------------
       t:
         es:
+          numbers: ["", "un", "dos", "tres"]
           raining_until: "Ahora mismo cae lluvia {band} y debería parar hacia las {time}."
           raining_on: "Ahora mismo cae lluvia {band} y seguirá al menos tres horas."
           rain_at: "Sí, se espera lluvia {band} hacia las {time}."
@@ -157,6 +158,7 @@ actions:
             windy: "viento"
             windy-variant: "viento y nubes"
         en:
+          numbers: ["", "one", "two", "three"]
           raining_until: "Right now there's {band} rain, and it should stop around {time}."
           raining_on: "Right now there's {band} rain, and it should keep going for at least three hours."
           rain_at: "Yes, {band} rain is expected around {time}."
@@ -198,6 +200,7 @@ actions:
             windy: "wind"
             windy-variant: "wind and clouds"
         ca:
+          numbers: ["", "un", "dos", "tres"]
           raining_until: "Ara mateix cau pluja {band} i hauria de parar cap a les {time}."
           raining_on: "Ara mateix cau pluja {band} i continuarà almenys tres hores."
           rain_at: "Sí, s'espera pluja {band} cap a les {time}."
@@ -296,7 +299,7 @@ actions:
               {%- set phen = T.phenomena[w.phenomenon] if w.phenomenon in T.phenomena else ((w.phenomenon_name or w.phenomenon or '') | lower) -%}
               {%- set ns.parts = ns.parts + [fill(T.warning_item, {'level': T.levels[w.level] | default(w.level), 'phenomenon': phen, 'when': when})] -%}
             {%- endfor -%}
-            {{ fill(T.warnings_intro, {'n': live | count, 'noun': T.warning_noun_1 if live | count == 1 else T.warning_noun_n, 'verb': 'is' if live | count == 1 else 'are', 'items': ns.parts | join('; ')}) }}
+            {{ fill(T.warnings_intro, {'n': T.numbers[live | count] if live | count < 4 else live | count, 'noun': T.warning_noun_1 if live | count == 1 else T.warning_noun_n, 'verb': 'is' if live | count == 1 else 'are', 'items': ns.parts | join('; ')}) }}
           {%- endif -%}
         {%- else -%}
           {%- if tmr_fc -%}
