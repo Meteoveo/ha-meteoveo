@@ -185,7 +185,9 @@ class MeteoVeoClient:
 
         url, params = upload_url_and_params(self._credentials, fields, now_iso=now_iso)
         try:
-            async with self._session.get(url, params=params) as response:
+            async with self._session.get(
+                url, params=params, headers={"User-Agent": USER_AGENT}
+            ) as response:
                 if response.status in _AUTH_STATUSES:
                     raise InvalidCredentials("station id or key was rejected")
                 if response.status >= 400:
