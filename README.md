@@ -83,7 +83,7 @@ upload key is stored as well.
 
 ## What you get
 
-**For everyone** — one device, named after the town:
+**For everyone** — one device, named “MeteoVeo <town>” (you can rename it):
 
 | Entity | Meaning |
 |---|---|
