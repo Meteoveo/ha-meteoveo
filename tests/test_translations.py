@@ -149,3 +149,17 @@ def test_strings_json_is_the_english_translation():
         (TRANSLATIONS.parent / "strings.json").read_text(encoding="utf-8")
     )
     assert strings == load("en")
+
+
+def test_icons_match_translation_keys() -> None:
+    """Every icon belongs to an entity the integration translates (and so creates)."""
+    import json
+    from pathlib import Path
+
+    base = Path(__file__).parent.parent / "custom_components" / "meteoveo"
+    icons = json.loads((base / "icons.json").read_text(encoding="utf-8"))["entity"]
+    strings = json.loads((base / "strings.json").read_text(encoding="utf-8"))["entity"]
+    for platform, keys in icons.items():
+        for key, icon in keys.items():
+            assert key in strings.get(platform, {}), f"{platform}.{key} has an icon but no translation"
+            assert icon["default"].startswith("mdi:")

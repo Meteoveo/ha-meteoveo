@@ -50,11 +50,12 @@ def device_info_for(
         # entity ID say where it comes from (weather.meteoveo_almisera), on the
         # dashboard and in automations alike. Users can still rename it.
         name = f"MeteoVeo {place.get('name') or entry.title}"
-        model = "Forecast"
+        # No model: HA shows it untranslated ("Forecast" in a Spanish UI).
+        model = None
     else:
         station = (station_view or {}).get("station") or {}
         name = station.get("name") or base_id
-        model = "Weather station"
+        model = None
     return DeviceInfo(
         identifiers={(DOMAIN, base_id)},
         name=name,
