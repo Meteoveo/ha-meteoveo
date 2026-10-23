@@ -107,9 +107,23 @@ def next_hour_attributes(next_hour: Mapping[str, Any]) -> dict[str, Any]:
         "starts_at": next_hour.get("rainStartsAt"),
         "ends_at": next_hour.get("rainEndsAt"),
         "issued_at": next_hour.get("issuedAt"),
-        "age_minutes": next_hour.get("ageMinutes"),
+        "age_minutes": _age_minutes(next_hour),
         "steps": steps,
     }
+
+
+def _age_minutes(next_hour: Mapping[str, Any]) -> int | None:
+    """Minutes since the nowcast run, counted now rather than taken from the reply.
+
+    A 304 keeps the previous reply, whose ``ageMinutes`` was true when it was
+    sent; counting from ``issuedAt`` keeps the age honest while the reply is
+    reused. The server's figure is only the fallback.
+    """
+    issued = dt_util.parse_datetime(str(next_hour.get("issuedAt") or ""))
+    if issued is None:
+        age = next_hour.get("ageMinutes")
+        return age if isinstance(age, int) else None
+    return max(0, int((dt_util.utcnow() - issued).total_seconds() // 60))
 
 
 def warnings_list(home: Mapping[str, Any] | None) -> list[dict[str, Any]] | None:

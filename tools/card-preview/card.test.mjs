@@ -118,3 +118,20 @@ test("language, compass and icons", () => {
   assert.equal(conditionIcon("partlycloudy", false), "mdi:weather-night-partly-cloudy");
   assert.equal(conditionIcon("nonsense"), "mdi:weather-cloudy");
 });
+
+test("a reply reused after a 304 shows its true age, not the frozen age_minutes", () => {
+  // Run issued at ISSUED; the reply was computed 2 minutes later (its age_minutes: 2),
+  // and HA kept it for another 15 minutes because the server answered 304.
+  const computed = ISSUED + 2 * 60000;
+  const reused = steps(fill(["none", "none", "weak", "weak"])).map((s, i) => ({
+    ...s,
+    at: new Date(computed + i * 600000).toISOString(),
+  }));
+  const m = nextHourModel(
+    { issued_at: new Date(ISSUED).toISOString(), age_minutes: 2, steps: reused },
+    computed + 15 * 60000,
+  );
+  assert.equal(m.ageMinutes, 17);
+  assert.equal(m.slots[0].lead, 10);
+  assert.equal(m.minutes, 10);
+});

@@ -207,15 +207,19 @@ export function nextHourModel(attrs, nowMs) {
   const steps = attrs.steps.map(normalizeStep).filter(Boolean).sort((a, b) => a.lead - b.lead);
   if (steps.length === 0) return null;
 
-  let age = Number(attrs.age_minutes);
-  if (!Number.isFinite(age)) {
-    const issued = Date.parse(attrs.issued_at || "");
-    age = Number.isFinite(issued) ? Math.max(0, (nowMs - issued) / 60000) : 0;
-  }
+  // The age is counted live from issued_at: a reply reused after a 304 carries an
+  // age_minutes that was only true when it was sent. age_minutes is the fallback.
+  const issued = Date.parse(attrs.issued_at || "");
+  let age = Number.isFinite(issued) ? Math.max(0, (nowMs - issued) / 60000) : Number(attrs.age_minutes);
+  if (!Number.isFinite(age)) age = 0;
   const source = steps.find((s) => s.source)?.source || null;
 
   // Steps that already began are the past; the one containing "now" is the first slot.
-  const shift = Math.floor(age / STEP_MINUTES) * STEP_MINUTES;
+  // The leads count from the first step's own time (when the reply was computed),
+  // not from the nowcast run, so that is what the elapsed time is measured from.
+  const firstAt = Date.parse(steps[0].at || "");
+  const elapsed = Number.isFinite(firstAt) ? Math.max(0, (nowMs - firstAt) / 60000) : age;
+  const shift = Math.floor(elapsed / STEP_MINUTES) * STEP_MINUTES;
   const slots = steps
     .filter((s) => s.lead >= shift && s.lead - shift <= HORIZON_MINUTES)
     .map((s) => ({ ...s, minutes: s.lead - shift }));
