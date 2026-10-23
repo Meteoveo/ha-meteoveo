@@ -248,20 +248,6 @@ class AccountClient:
             raise ServiceUnavailable("sign-in answered without a session")
         return token
 
-    async def async_logout(self, token: str) -> None:
-        """End the session. Best effort: a session left open simply expires."""
-        try:
-            await _call(
-                self._session,
-                "POST",
-                "/auth/logout",
-                bearer=token,
-                timeout=REVOKE_TIMEOUT_S,
-                secrets=(token,),
-            )
-        except MeteoVeoError:
-            pass
-
     async def async_create_station(
         self, token: str, *, name: str, lat: float, lon: float, sensor_height_cm: int
     ) -> dict[str, Any]:

@@ -247,11 +247,6 @@ async def test_account_deletion_request_and_refusals() -> None:
     assert kwargs["json"] == {"password": PASSWORD, "confirm": "ana@example.com"}
 
 
-async def test_logout_never_raises() -> None:
-    session = FakeSession(Unreachable(aiohttp.ClientConnectionError("x")))
-    await AccountClient(session).async_logout(TOKEN)
-
-
 # --- Home view and the integration key --------------------------------------
 
 
