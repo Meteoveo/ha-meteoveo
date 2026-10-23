@@ -787,11 +787,13 @@ export class MeteoVeoCard extends Base {
     if (k === dayKey(nowMs + 86400000)) return "tomorrow";
     try {
       const d = new Date(ms);
-      // Hungarian puts the weekday first ("V 25."); Intl's own "25., V" reads badly in a row.
-      if (this._lang === "hu") return `${new Intl.DateTimeFormat("hu", { weekday: "short", timeZone: tz }).format(d)} ${new Intl.DateTimeFormat("hu", { day: "numeric", timeZone: tz }).format(d)}.`;
-      // Plain "en" orders it "25 Sun"; the English speakers of HA read "Sun 25".
-      const locale = this._locale() === "en" ? "en-US" : this._locale();
-      return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", timeZone: tz }).format(d);
+      // Intl gives "25 Sun" and "25., V" without a month; English and Hungarian put the weekday first.
+      if (this._lang === "hu" || this._lang === "en") {
+        const wd = new Intl.DateTimeFormat(this._locale(), { weekday: "short", timeZone: tz }).format(d);
+        const day = new Intl.DateTimeFormat(this._locale(), { day: "numeric", timeZone: tz }).format(d);
+        return `${wd} ${day}${this._lang === "hu" ? "." : ""}`;
+      }
+      return new Intl.DateTimeFormat(this._locale(), { weekday: "short", day: "numeric", timeZone: tz }).format(d);
     } catch (e) { return k; }
   }
 
