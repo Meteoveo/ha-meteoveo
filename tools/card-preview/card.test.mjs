@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   nextHourModel, nextHourSentence, compassPoint, pickLanguage, conditionIcon,
-  uvLevel, precipBand, warningSchedule, validityText,
+  uvLevel, precipBand, warningSchedule, validityText, compactWarnings,
 } from "../../custom_components/meteoveo/frontend/meteoveo-card.js";
 
 const ISSUED = Date.parse("2026-10-23T11:50:00Z");
@@ -223,4 +223,18 @@ test("a reply reused after a 304 shows its true age, not the frozen age_minutes"
   assert.equal(m.ageMinutes, 17);
   assert.equal(m.slots[0].lead, 10);
   assert.equal(m.minutes, 10);
+});
+
+
+test("compact mode keeps the warnings the owner's option asks for", () => {
+  const h = 3600000;
+  const list = [
+    { level: "yellow", phenomenon_name: "Lluvias", onset: new Date(NOW - h).toISOString(), expires: new Date(NOW + h).toISOString() },
+    { level: "orange", phenomenon_name: "Vientos", onset: new Date(NOW - h).toISOString(), expires: new Date(NOW + 2 * h).toISOString() },
+    { level: "red", phenomenon_name: "Costeros", onset: new Date(NOW + 5 * h).toISOString(), expires: new Date(NOW + 9 * h).toISOString() },
+  ];
+  const schedule = warningSchedule(list, NOW);
+  assert.deepEqual(compactWarnings(schedule, "severe").map((w) => w.level), ["orange"]);
+  assert.deepEqual(compactWarnings(schedule, "all").map((w) => w.level), ["orange", "yellow"]);
+  assert.deepEqual(compactWarnings(schedule, "none"), []);
 });

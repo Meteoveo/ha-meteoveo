@@ -85,6 +85,8 @@ const TEXT = {
       hourly_count: "Horas mostradas", daily_count: "Días mostrados",
       compact: "Modo compacto (ahora + próximas 3 horas)", show_details: "Detalles de ahora (sensación, UV, sol)",
       show_precipitation: "Lluvia por horas (mm)",
+      compact_warnings: "Avisos en modo compacto",
+      compact_warnings_options: { severe: "Solo naranja y rojo", all: "Todos los activos", none: "Ninguno" },
     },
   },
   en: {
@@ -139,6 +141,8 @@ const TEXT = {
       hourly_count: "Hours shown", daily_count: "Days shown",
       compact: "Compact mode (now + next 3 hours)", show_details: "Now details (feels like, UV, sun)",
       show_precipitation: "Hourly rain (mm)",
+      compact_warnings: "Warnings in compact mode",
+      compact_warnings_options: { severe: "Orange and red only", all: "All active", none: "None" },
     },
   },
   ca: {
@@ -193,6 +197,8 @@ const TEXT = {
       hourly_count: "Hores mostrades", daily_count: "Dies mostrats",
       compact: "Mode compacte (ara + pròximes 3 hores)", show_details: "Detalls d’ara (sensació, UV, sol)",
       show_precipitation: "Pluja per hores (mm)",
+      compact_warnings: "Avisos en mode compacte",
+      compact_warnings_options: { severe: "Només taronja i vermell", all: "Tots els actius", none: "Cap" },
     },
   },
   // Hungarian: for the owner's review, not a product language.
@@ -248,6 +254,8 @@ const TEXT = {
       hourly_count: "Mutatott órák", daily_count: "Mutatott napok",
       compact: "Kompakt mód (most + következő 3 óra)", show_details: "A „most” részletei (hőérzet, UV, nap)",
       show_precipitation: "Órás csapadék (mm)",
+      compact_warnings: "Figyelmeztetések kompakt módban",
+      compact_warnings_options: { severe: "Csak narancs és piros", all: "Minden aktív", none: "Egyik sem" },
     },
   },
 };
@@ -470,6 +478,18 @@ export function validityText(phase, rel, time, lang) {
 /** How many warnings are shown before the "+N more" fold. */
 const WARNINGS_FOLD = 2;
 
+/**
+ * Which warnings the compact card keeps (owner, 2026-10-23: configurable):
+ * "severe" = active orange and red (the default), "all" = every active one,
+ * "none" = nothing. Upcoming warnings never show in compact mode.
+ */
+export function compactWarnings(schedule, mode) {
+  if (mode === "none") return [];
+  return schedule.filter(
+    (w) => w.phase === "active" && (mode === "all" || w.level === "orange" || w.level === "red"),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Styles. HA theme variables carry the surface and the type; the MeteoVeo
 // accents (the rain blue, amber, terracotta, green) come from the app's palette
@@ -599,6 +619,19 @@ export class MeteoVeoCard extends Base {
         },
         { name: "compact", default: false, selector: { boolean: {} } },
         {
+          name: "compact_warnings",
+          default: "severe",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: ["severe", "all", "none"].map((value) => ({
+                value,
+                label: TEXT[lang()].editor.compact_warnings_options[value],
+              })),
+            },
+          },
+        },
+        {
           type: "grid", name: "",
           schema: [
             { name: "hourly_count", default: 12, selector: { number: { min: 3, max: 48, mode: "box" } } },
@@ -631,7 +664,7 @@ export class MeteoVeoCard extends Base {
     if (!config || !config.entity) throw new Error("MeteoVeo: set `entity` to the MeteoVeo weather entity");
     this._config = {
       show_next_hour: true, show_hourly: true, show_daily: true, show_warnings: true,
-      show_details: true, show_precipitation: true, compact: false,
+      show_details: true, show_precipitation: true, compact: false, compact_warnings: "severe",
       hourly_count: 12, daily_count: 7, ...config,
     };
     this._snapshot = null;
@@ -846,8 +879,12 @@ export class MeteoVeoCard extends Base {
     if (weather.state === "unavailable" || weather.state === "unknown") {
       parts.push(`<div class="empty">${esc(t.unavailable)}</div>`);
     } else if (c.compact) {
-      // Compact: the "now" header and the next 3 hours, nothing else.
+      // Compact: the "now" header and the next 3 hours, plus the warnings the
+      // `compact_warnings` option keeps (by default an active orange or red one).
       if (c.show_next_hour) parts.push(this._nextHour(ids.rain ? hass.states[ids.rain] : null, nowMs));
+      if (c.show_warnings && c.compact_warnings !== "none") {
+        parts.push(this._warnings(ids.warnings ? hass.states[ids.warnings] : null, nowMs, c.compact_warnings));
+      }
     } else {
       if (c.show_details) parts.push(this._details(weather, ids));
       if (c.show_next_hour) parts.push(this._nextHour(ids.rain ? hass.states[ids.rain] : null, nowMs));
@@ -963,10 +1000,11 @@ export class MeteoVeoCard extends Base {
     </section>`;
   }
 
-  _warnings(sensor, nowMs) {
+  _warnings(sensor, nowMs, compactMode = null) {
     const t = TEXT[this._lang];
     if (!sensor || sensor.state === "unavailable" || sensor.state === "unknown") return "";
-    const all = warningSchedule(sensor.attributes.warnings, nowMs);
+    const schedule = warningSchedule(sensor.attributes.warnings, nowMs);
+    const all = compactMode ? compactWarnings(schedule, compactMode) : schedule;
     if (!all.length) return "";
     const shown = this._warningsExpanded ? all : all.slice(0, WARNINGS_FOLD);
     const banners = shown.map((w) => {
