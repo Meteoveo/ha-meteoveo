@@ -1,0 +1,278 @@
+blueprint:
+  name: MeteoVeo — voice assistant answers
+  description: >-
+    Lets Assist answer weather questions from MeteoVeo, in Spanish, English or
+    Catalan: "¿Va a llover hoy?", "¿Cuándo va a llover?", "¿Hay avisos?",
+    "¿Qué tiempo hará mañana?" (and the same in English and Catalan). Works with
+    Home Assistant's own local assistant, no internet speech service needed.
+    Pick your MeteoVeo weather entity; the rain and warnings sensors of the same
+    place are found automatically.
+
+
+    Respuestas del asistente de voz: pregunta a Assist si va a llover, cuándo,
+    si hay avisos o qué tiempo hará mañana.
+  domain: automation
+  source_url: https://github.com/Meteoveo/ha-meteoveo/blob/main/blueprints/automation/meteoveo/voice_assistant.yaml
+  input:
+    weather_entity:
+      name: MeteoVeo weather
+      description: The MeteoVeo weather entity of your place.
+      selector:
+        entity:
+          filter:
+            - integration: meteoveo
+              domain: weather
+
+mode: parallel
+max: 5
+
+triggers:
+  - trigger: conversation
+    id: rain
+    command:
+      - "va a llover [hoy|pronto|esta tarde|esta noche|ahora]"
+      - "(llueve|está lloviendo) [ahora]"
+      - "(necesito|necesitaré|hace falta) [el] paraguas [hoy]"
+      - "(is it going to|will it) rain [today|soon|this afternoon|tonight]"
+      - "is it raining [now]"
+      - "do i need an umbrella [today]"
+      - "(plourà|va a ploure) [avui|aviat|aquesta tarda|aquesta nit|ara]"
+      - "(plou|està plovent) [ara]"
+  - trigger: conversation
+    id: when
+    command:
+      - "cuándo (va a llover|llueve|lloverá)"
+      - "when (will it|is it going to) rain"
+      - "quan (plourà|va a ploure)"
+  - trigger: conversation
+    id: warnings
+    command:
+      - "hay [algún] aviso[s] [hoy|meteorológico[s]]"
+      - "hay [alguna] alerta[s] [meteorológica[s]]"
+      - "are there [any] [weather] (warnings|alerts)"
+      - "is there [a|any] [weather] (warning|alert)"
+      - "hi ha [algun] avís [meteorològic]"
+      - "hi ha avisos [meteorològics]"
+  - trigger: conversation
+    id: tomorrow
+    command:
+      - "qué tiempo (hará|va a hacer) mañana"
+      - "cómo (estará|será) el tiempo mañana"
+      - "what will the weather be [like] tomorrow"
+      - "what is the weather [going to be] [like] tomorrow"
+      - "quin temps farà demà"
+
+actions:
+  - variables:
+      weather_entity: !input weather_entity
+      lang: >-
+        {% set l = ((trigger.user_input | default({})).language | default('es'))[:2] | lower %}
+        {{ l if l in ['es', 'en', 'ca'] else 'es' }}
+      # Sibling entities of the same MeteoVeo device, found by what they carry,
+      # so the entity IDs may be in any language.
+      siblings: "{{ device_entities(device_id(weather_entity)) }}"
+      rain_sensor: >-
+        {{ states.binary_sensor | selectattr('entity_id', 'in', siblings)
+           | selectattr('attributes.steps', 'defined') | map(attribute='entity_id') | first | default('') }}
+      warnings_sensor: >-
+        {{ states.sensor | selectattr('entity_id', 'in', siblings)
+           | selectattr('attributes.highest_level', 'defined') | map(attribute='entity_id') | first | default('') }}
+  - action: weather.get_forecasts
+    target:
+      entity_id: "{{ weather_entity }}"
+    data:
+      type: daily
+    response_variable: forecasts
+  - variables:
+      # --- Texts. Placeholders in braces are filled in below. ---------------------
+      t:
+        es:
+          raining_until: "Está lloviendo ahora ({band}) y parará hacia las {time}."
+          raining_on: "Está lloviendo ahora ({band}) y seguirá al menos tres horas."
+          rain_at: "Sí, se espera lluvia {band} hacia las {time}."
+          no_rain_3h: "En las próximas tres horas no se espera lluvia."
+          rest_of_day: "Para el resto del día, la probabilidad es del {p} %."
+          next_rainy_day: "El próximo día con lluvia probable es el {day}, con un {p} %."
+          no_rainy_day: "No se espera lluvia en los próximos días."
+          raining_now_short: "Está lloviendo ahora mismo ({band})."
+          when_at: "Hacia las {time}, lluvia {band}."
+          no_warnings: "No hay avisos activos."
+          warning_item: "aviso {level} por {phenomenon} {when}"
+          warnings_intro: "Hay {n} {noun}: {items}."
+          warning_noun_1: "aviso"
+          warning_noun_n: "avisos"
+          until: "hasta {when}"
+          from: "desde {when}"
+          at_today: "las {time}"
+          at_tomorrow: "mañana a las {time}"
+          at_day: "el {day} a las {time}"
+          phenomena: { PR: "lluvias", TO: "tormentas", VI: "vientos", NE: "nevadas", CO: "fenómenos costeros", TM: "temperaturas máximas", Tm: "temperaturas mínimas", NI: "nieblas", PO: "polvo en suspensión", AV: "aludes", DU: "deshielo" }
+          tomorrow: "Mañana: {condition}, máxima de {max} y mínima de {min} grados, {p} % de probabilidad de lluvia."
+          no_forecast: "Ahora mismo no tengo la previsión de MeteoVeo."
+          bands: { light: "débil", moderate: "moderada", heavy: "fuerte" }
+          levels: { yellow: "amarillo", orange: "naranja", red: "rojo" }
+          days: ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+          conditions:
+            sunny: "soleado"
+            clear-night: "despejado"
+            partlycloudy: "parcialmente nublado"
+            cloudy: "nublado"
+            rainy: "lluvia"
+            pouring: "lluvia intensa"
+            lightning-rainy: "tormenta"
+            lightning: "tormenta"
+            snowy: "nieve"
+            snowy-rainy: "aguanieve"
+            fog: "niebla"
+            hail: "granizo"
+            windy: "viento"
+            windy-variant: "viento"
+        en:
+          raining_until: "It's raining now ({band}) and should stop around {time}."
+          raining_on: "It's raining now ({band}) and should go on for at least three hours."
+          rain_at: "Yes, {band} rain is expected around {time}."
+          no_rain_3h: "No rain is expected in the next three hours."
+          rest_of_day: "For the rest of the day, the chance is {p} %."
+          next_rainy_day: "The next day with likely rain is {day}, at {p} %."
+          no_rainy_day: "No rain is expected in the coming days."
+          raining_now_short: "It's raining right now ({band})."
+          when_at: "Around {time}, {band} rain."
+          no_warnings: "There are no active warnings."
+          warning_item: "{level} warning for {phenomenon} {when}"
+          warnings_intro: "There {verb} {n} {noun}: {items}."
+          warning_noun_1: "warning"
+          warning_noun_n: "warnings"
+          until: "until {when}"
+          from: "from {when}"
+          at_today: "{time}"
+          at_tomorrow: "tomorrow at {time}"
+          at_day: "{day} at {time}"
+          phenomena: { PR: "rain", TO: "thunderstorms", VI: "wind", NE: "snow", CO: "coastal events", TM: "high temperatures", Tm: "low temperatures", NI: "fog", PO: "dust", AV: "avalanches", DU: "thaw" }
+          tomorrow: "Tomorrow: {condition}, a high of {max} and a low of {min} degrees, {p} % chance of rain."
+          no_forecast: "I don't have the MeteoVeo forecast right now."
+          bands: { light: "light", moderate: "moderate", heavy: "heavy" }
+          levels: { yellow: "yellow", orange: "orange", red: "red" }
+          days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+          conditions:
+            sunny: "sunny"
+            clear-night: "clear"
+            partlycloudy: "partly cloudy"
+            cloudy: "cloudy"
+            rainy: "rain"
+            pouring: "heavy rain"
+            lightning-rainy: "thunderstorms"
+            lightning: "thunderstorms"
+            snowy: "snow"
+            snowy-rainy: "sleet"
+            fog: "fog"
+            hail: "hail"
+            windy: "windy"
+            windy-variant: "windy"
+        ca:
+          raining_until: "Ara plou ({band}) i pararà cap a les {time}."
+          raining_on: "Ara plou ({band}) i continuarà almenys tres hores."
+          rain_at: "Sí, s'espera pluja {band} cap a les {time}."
+          no_rain_3h: "En les pròximes tres hores no s'espera pluja."
+          rest_of_day: "Per a la resta del dia, la probabilitat és del {p} %."
+          next_rainy_day: "El pròxim dia amb pluja probable és el {day}, amb un {p} %."
+          no_rainy_day: "No s'espera pluja en els pròxims dies."
+          raining_now_short: "Ara mateix plou ({band})."
+          when_at: "Cap a les {time}, pluja {band}."
+          no_warnings: "No hi ha avisos actius."
+          warning_item: "avís {level} per {phenomenon} {when}"
+          warnings_intro: "Hi ha {n} {noun}: {items}."
+          warning_noun_1: "avís"
+          warning_noun_n: "avisos"
+          until: "fins {when}"
+          from: "a partir de {when}"
+          at_today: "a les {time}"
+          at_tomorrow: "demà a les {time}"
+          at_day: "el {day} a les {time}"
+          phenomena: { PR: "pluges", TO: "tempestes", VI: "vents", NE: "nevades", CO: "fenòmens costaners", TM: "temperatures màximes", Tm: "temperatures mínimes", NI: "boires", PO: "pols en suspensió", AV: "allaus", DU: "desglaç" }
+          tomorrow: "Demà: {condition}, màxima de {max} i mínima de {min} graus, {p} % de probabilitat de pluja."
+          no_forecast: "Ara mateix no tinc la previsió de MeteoVeo."
+          bands: { light: "feble", moderate: "moderada", heavy: "forta" }
+          levels: { yellow: "groc", orange: "taronja", red: "vermell" }
+          days: ["dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte", "diumenge"]
+          conditions:
+            sunny: "assolellat"
+            clear-night: "serè"
+            partlycloudy: "parcialment ennuvolat"
+            cloudy: "ennuvolat"
+            rainy: "pluja"
+            pouring: "pluja intensa"
+            lightning-rainy: "tempesta"
+            lightning: "tempesta"
+            snowy: "neu"
+            snowy-rainy: "aiguaneu"
+            fog: "boira"
+            hail: "calamarsa"
+            windy: "vent"
+            windy-variant: "vent"
+  - variables:
+      answer: >-
+        {%- set T = t[lang] -%}
+        {%- macro fill(text, values) -%}
+          {%- set ns = namespace(s=text) -%}
+          {%- for k, v in values.items() -%}{%- set ns.s = ns.s | replace('{' ~ k ~ '}', v | string) -%}{%- endfor -%}
+          {{- ns.s -}}
+        {%- endmacro -%}
+        {%- macro hhmm(iso) -%}{{ as_timestamp(iso) | timestamp_custom('%H:%M') }}{%- endmacro -%}
+        {%- macro at(iso) -%}
+          {%- set d = as_local(as_datetime(iso)).date() -%}
+          {%- if d == now().date() -%}{{ fill(T.at_today, {'time': hhmm(iso)}) }}
+          {%- elif d == (now() + timedelta(days=1)).date() -%}{{ fill(T.at_tomorrow, {'time': hhmm(iso)}) }}
+          {%- else -%}{{ fill(T.at_day, {'day': T.days[d.weekday()], 'time': hhmm(iso)}) }}{%- endif -%}
+        {%- endmacro -%}
+        {%- set days = (forecasts[weather_entity].forecast if weather_entity in forecasts else []) -%}
+        {%- set today = now().date() | string -%}
+        {%- set tmr = (now() + timedelta(days=1)).date() | string -%}
+        {%- set today_fc = days | selectattr('datetime', 'search', '^' ~ today) | list -%}
+        {%- set tmr_fc = days | selectattr('datetime', 'search', '^' ~ tmr) | list -%}
+        {%- set rs = states[rain_sensor] if rain_sensor else none -%}
+        {%- set ok = rs is not none and rs.state in ['on', 'off'] -%}
+        {%- set steps = (rs.attributes.steps if ok else []) or [] -%}
+        {%- set wet = steps | rejectattr('band', 'eq', 'none') | list -%}
+        {%- set band_now = (steps | selectattr('lead_minutes', 'eq', 0) | map(attribute='band') | first | default('none')) -%}
+        {%- set first_band = (wet | map(attribute='band') | first | default('light')) -%}
+        {%- if trigger.id == 'rain' -%}
+          {%- if ok and rs.attributes.rain_now -%}
+            {%- if rs.attributes.ends_at -%}{{ fill(T.raining_until, {'band': T.bands[band_now] | default(T.bands.light), 'time': hhmm(rs.attributes.ends_at)}) }}
+            {%- else -%}{{ fill(T.raining_on, {'band': T.bands[band_now] | default(T.bands.light)}) }}{%- endif -%}
+          {%- elif ok and rs.attributes.starts_at -%}
+            {{ fill(T.rain_at, {'band': T.bands[first_band], 'time': hhmm(rs.attributes.starts_at)}) }}
+          {%- else -%}
+            {{ T.no_rain_3h }}
+            {%- if today_fc and today_fc[0].precipitation_probability is number %} {{ fill(T.rest_of_day, {'p': today_fc[0].precipitation_probability | int}) }}{%- endif -%}
+          {%- endif -%}
+        {%- elif trigger.id == 'when' -%}
+          {%- if ok and rs.attributes.rain_now -%}{{ fill(T.raining_now_short, {'band': T.bands[band_now] | default(T.bands.light)}) }}
+          {%- elif ok and rs.attributes.starts_at -%}{{ fill(T.when_at, {'band': T.bands[first_band], 'time': hhmm(rs.attributes.starts_at)}) }}
+          {%- else -%}
+            {%- set rainy = days | selectattr('precipitation_probability', 'number') | selectattr('precipitation_probability', 'ge', 40) | list -%}
+            {{ T.no_rain_3h }}
+            {%- if rainy %} {{ fill(T.next_rainy_day, {'day': T.days[as_datetime(rainy[0].datetime).weekday()], 'p': rainy[0].precipitation_probability | int}) }}
+            {%- else %} {{ T.no_rainy_day }}{%- endif -%}
+          {%- endif -%}
+        {%- elif trigger.id == 'warnings' -%}
+          {%- set ws = states[warnings_sensor] if warnings_sensor else none -%}
+          {%- set items = ((ws.attributes.warnings if ws is not none else []) or []) -%}
+          {%- set live = items | selectattr('expires', 'defined') | list -%}
+          {%- if not live -%}{{ T.no_warnings }}
+          {%- else -%}
+            {%- set ns = namespace(parts=[]) -%}
+            {%- for w in live -%}
+              {%- set started = as_timestamp(w.onset) <= as_timestamp(now()) if w.onset else true -%}
+              {%- set when = fill(T.until, {'when': at(w.expires)}) if started else fill(T.from, {'when': at(w.onset)}) -%}
+              {%- set phen = T.phenomena[w.phenomenon] if w.phenomenon in T.phenomena else ((w.phenomenon_name or w.phenomenon or '') | lower) -%}
+              {%- set ns.parts = ns.parts + [fill(T.warning_item, {'level': T.levels[w.level] | default(w.level), 'phenomenon': phen, 'when': when})] -%}
+            {%- endfor -%}
+            {{ fill(T.warnings_intro, {'n': live | count, 'noun': T.warning_noun_1 if live | count == 1 else T.warning_noun_n, 'verb': 'is' if live | count == 1 else 'are', 'items': ns.parts | join('; ')}) }}
+          {%- endif -%}
+        {%- else -%}
+          {%- if tmr_fc -%}
+            {%- set d = tmr_fc[0] -%}
+            {{ fill(T.tomorrow, {'condition': T.conditions[d.condition] | default(d.condition), 'max': d.temperature | round(0) | int, 'min': d.templow | round(0) | int, 'p': (d.precipitation_probability | int(0))}) }}
+          {%- else -%}{{ T.no_forecast }}{%- endif -%}
+        {%- endif -%}
+  - set_conversation_response: "{{ answer | trim }}"
