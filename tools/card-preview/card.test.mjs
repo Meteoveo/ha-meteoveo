@@ -3,7 +3,10 @@
 // import it for the helpers alone.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nextHourModel, nextHourSentence, compassPoint, pickLanguage, conditionIcon } from "../../custom_components/meteoveo/frontend/meteoveo-card.js";
+import {
+  nextHourModel, nextHourSentence, compassPoint, pickLanguage, conditionIcon,
+  uvLevel, precipBand, warningSchedule, validityText,
+} from "../../custom_components/meteoveo/frontend/meteoveo-card.js";
 
 const ISSUED = Date.parse("2026-10-23T11:50:00Z");
 const NOW = ISSUED + 60000;
@@ -117,6 +120,92 @@ test("language, compass and icons", () => {
   assert.equal(conditionIcon("sunny", false), "mdi:weather-night");
   assert.equal(conditionIcon("partlycloudy", false), "mdi:weather-night-partly-cloudy");
   assert.equal(conditionIcon("nonsense"), "mdi:weather-cloudy");
+});
+
+test("Hungarian texts exist for the owner's review", () => {
+  assert.equal(pickLanguage("hu-HU"), "hu");
+  const m = nextHourModel(attrs(fill(["none", "none", "weak", "moderate", "weak"])), NOW);
+  assert.equal(nextHourSentence(m, "hu", clock), "Eső ~20 perc múlva (mérsékelt)");
+  const ends = nextHourModel(attrs(fill(["moderate", "moderate", "weak", "weak"])), NOW);
+  assert.equal(nextHourSentence(ends, "hu", clock), "Eső 12:30-ig (mérsékelt)");
+  assert.equal(compassPoint(270, "hu"), "Ny");
+});
+
+test("UV index on the WHO scale", () => {
+  assert.equal(uvLevel(0).key, "low");
+  assert.equal(uvLevel(2.4).key, "low");
+  assert.equal(uvLevel(3).key, "moderate");
+  assert.equal(uvLevel("5").key, "moderate");
+  assert.equal(uvLevel(6).key, "high");
+  assert.equal(uvLevel(7).key, "high");
+  assert.equal(uvLevel(8).key, "veryHigh");
+  assert.equal(uvLevel(10.4).key, "veryHigh");
+  assert.equal(uvLevel(11).key, "extreme");
+  assert.equal(uvLevel(14).color, "#b567a4");
+  assert.equal(uvLevel(null), null);
+  assert.equal(uvLevel(""), null);
+  assert.equal(uvLevel("unknown"), null);
+  assert.equal(uvLevel(-1), null);
+});
+
+test("hourly precipitation on the app's mm scale", () => {
+  assert.equal(precipBand(0), null);
+  assert.equal(precipBand(0.05), null);
+  assert.equal(precipBand(0.1), "weak");
+  assert.equal(precipBand(0.9), "weak");
+  assert.equal(precipBand(1), "moderate");
+  assert.equal(precipBand(4.9), "moderate");
+  assert.equal(precipBand(5), "strong");
+  assert.equal(precipBand(null), null);
+  assert.equal(precipBand(undefined), null);
+  assert.equal(precipBand("x"), null);
+});
+
+const WARNINGS = [
+  { level: "yellow", phenomenon_name: "Tormentas", onset: "2026-10-23T10:00:00Z", expires: "2026-10-23T23:00:00Z" },
+  { level: "orange", phenomenon_name: "Lluvias", onset: "2026-10-23T10:00:00Z", expires: "2026-10-23T19:00:00Z" },
+  { level: "orange", phenomenon_name: "Costeros", onset: "2026-10-25T06:00:00Z", expires: "2026-10-25T22:00:00Z" },
+  { level: "yellow", phenomenon_name: "Viento", onset: "2026-10-24T04:00:00Z", expires: "2026-10-24T16:00:00Z" },
+  { level: "red", phenomenon_name: "Caducado", onset: "2026-10-22T10:00:00Z", expires: "2026-10-23T06:00:00Z" },
+];
+
+test("warnings: active by level then upcoming by onset, expired dropped", () => {
+  const s = warningSchedule(WARNINGS, NOW);
+  assert.deepEqual(s.map((w) => [w.phase, w.phenomenon_name]), [
+    ["active", "Lluvias"], ["active", "Tormentas"], ["upcoming", "Viento"], ["upcoming", "Costeros"],
+  ]);
+  assert.equal(s[0].expiresMs, Date.parse("2026-10-23T19:00:00Z"));
+  assert.equal(s[2].onsetMs, Date.parse("2026-10-24T04:00:00Z"));
+});
+
+test("warnings: two active of the same level end soonest first; no dates = active; bad input never throws", () => {
+  const s = warningSchedule([
+    { level: "yellow", phenomenon_name: "B", expires: "2026-10-23T23:00:00Z" },
+    { level: "yellow", phenomenon_name: "A", expires: "2026-10-23T15:00:00Z" },
+    { level: "weird", phenomenon_name: "C" },
+    null, "x",
+  ], NOW);
+  assert.deepEqual(s.map((w) => w.phenomenon_name), ["A", "B", "C"]);
+  assert.equal(s[2].level, "yellow");
+  assert.equal(s[2].phase, "active");
+  assert.deepEqual(warningSchedule(null, NOW), []);
+  assert.deepEqual(warningSchedule("nope", NOW), []);
+});
+
+test("validity text: until / from, today / tomorrow / a later day, four languages", () => {
+  assert.equal(validityText("active", "today", "21:00", "es"), "hasta las 21:00");
+  assert.equal(validityText("active", "tomorrow", "01:00", "es"), "hasta mañana a las 01:00");
+  assert.equal(validityText("upcoming", "tomorrow", "06:00", "es"), "desde mañana a las 06:00");
+  assert.equal(validityText("upcoming", "dom 25", "07:00", "es"), "desde el dom 25 a las 07:00");
+  assert.equal(validityText("active", "today", "21:00", "en"), "until 21:00");
+  assert.equal(validityText("upcoming", "Sun 25", "7:00 AM", "en"), "from Sun 25 7:00 AM");
+  assert.equal(validityText("active", "tomorrow", "01:00", "ca"), "fins demà a les 01:00");
+  assert.equal(validityText("upcoming", "today", "18:00", "ca"), "des de les 18:00");
+  assert.equal(validityText("active", "today", "21:00", "hu"), "21:00-ig");
+  assert.equal(validityText("upcoming", "tomorrow", "06:00", "hu"), "holnap 06:00-tól");
+  assert.equal(validityText("upcoming", "V 25.", "07:00", "hu"), "V 25. 07:00-tól");
+  assert.equal(validityText("active", "today", "", "es"), "");
+  assert.equal(validityText("active", "today", "21:00", "xx"), "until 21:00");
 });
 
 test("a reply reused after a 304 shows its true age, not the frozen age_minutes", () => {
