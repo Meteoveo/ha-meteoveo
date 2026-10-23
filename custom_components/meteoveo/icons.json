@@ -12,6 +12,24 @@
         "state": {
           "on": "mdi:alert-circle-outline"
         }
+      },
+      "warning_yellow": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_orange": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_red": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
       }
     },
     "sensor": {
@@ -38,6 +56,33 @@
       },
       "grace_remaining": {
         "default": "mdi:timer-sand"
+      },
+      "dew_point": {
+        "default": "mdi:water-thermometer"
+      },
+      "uv_index": {
+        "default": "mdi:sun-wireless"
+      },
+      "uv_index_max_today": {
+        "default": "mdi:sun-wireless-outline"
+      },
+      "minutes_to_rain": {
+        "default": "mdi:timer-outline"
+      },
+      "rain_intensity_now": {
+        "default": "mdi:weather-pouring",
+        "state": {
+          "none": "mdi:weather-partly-cloudy",
+          "light": "mdi:weather-rainy"
+        }
+      },
+      "next_warning": {
+        "default": "mdi:alert-circle-outline"
+      }
+    },
+    "event": {
+      "warning": {
+        "default": "mdi:alert-decagram-outline"
       }
     }
   }

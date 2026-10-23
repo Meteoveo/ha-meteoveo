@@ -107,6 +107,13 @@ upload key is stored as well.
 | `binary_sensor.meteoveo_<town>_rain_in_the_next_hour` | On when rain is expected within 60 minutes. Attributes: `rain_now`, `starts_at`, `ends_at`, `issued_at`, `age_minutes`, and `steps` — ten-minute steps with `band` (`none`, `light`, `moderate`, `heavy`), `source` (`radar` or `model`) and `uncertain`. Unavailable outside nowcast coverage. |
 | `sensor.meteoveo_<town>_rain_start` / `_rain_end` | When the next rain starts / when the current rain stops (timestamps). |
 | `sensor.meteoveo_<town>_weather_warnings` | Number of active official warnings; `highest_level` (`none`, `yellow`, `orange`, `red`) and the `warnings` list as attributes. |
+| `binary_sensor.meteoveo_<town>_yellow_warning` / `_orange_warning` / `_red_warning` | On while an official warning of that level is in force (started, not expired). |
+| `sensor.meteoveo_<town>_next_warning` | When the next warning that has not started yet begins. |
+| `event.meteoveo_<town>_new_warning` | Fires once for every new warning; the event type is the level, the headline and validity are attributes. Warnings already known at start-up do not fire again. |
+| `sensor.meteoveo_<town>_minutes_until_rain` | Minutes until it rains — `0` while raining, unknown when none is expected. A number, so a *numeric state* trigger works without templates. |
+| `sensor.meteoveo_<town>_rain_intensity_now` | `none`, `light`, `moderate` or `heavy`, from the nowcast step covering now. |
+| `sensor.meteoveo_<town>_feels_like` / `_dew_point` | Apparent temperature of the current hour; dew point from the current temperature and humidity. |
+| `sensor.meteoveo_<town>_uv_index` / `_uv_index_today_max` | UV index of the current hour, and today's maximum. |
 
 A MeteoVeo Plus account sees its Plus level in Home Assistant as well, as
 soon as it is active.
@@ -147,11 +154,13 @@ daily list, in your theme's light or dark colours. Options and YAML:
 
 ### Blueprints
 
-Two ready-made automations, imported with one click:
+Four ready-made automations, imported with one click:
 
 | Blueprint | What it does | Import |
 |---|---|---|
 | **Rain in the next minutes** | Runs your actions when rain is expected within the minutes you choose (10–120, default 30) — close the awning, shut the skylight, bring in the laundry, pause the irrigation. Fires once per rain spell. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Frain_soon.yaml) |
+| **Rain has stopped** | Runs your actions once the rain is over and the sensor has stayed dry for the minutes you choose — reopen the awning, resume the irrigation. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Frain_stopped.yaml) |
+| **Frost tomorrow** | Every evening checks tomorrow's minimum in the forecast and runs your actions at or below your threshold (default 2 °C); the minimum is available as `{{ low }}`. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Ffrost_tomorrow.yaml) |
 | **AEMET weather warning** | Runs your actions when an official warning reaches yellow, orange or red at your place; the warning text is available as `{{ headline }}`. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Faemet_warning.yaml) |
 
 ## Why a station owner would use this

@@ -1,0 +1,51 @@
+blueprint:
+  name: MeteoVeo — rain has stopped
+  description: >-
+    Runs your actions once the rain is over and none is expected for the next
+    hour — reopen the awning, resume the irrigation, open the skylight again.
+    It waits until the "Rain in the next hour" sensor has stayed off for the
+    minutes you choose, so a short gap between showers does not count.
+
+
+    Ha dejado de llover: ejecuta tus acciones cuando termina la lluvia y no se
+    espera más en la próxima hora.
+  domain: automation
+  source_url: https://github.com/Meteoveo/ha-meteoveo/blob/main/blueprints/automation/meteoveo/rain_stopped.yaml
+  input:
+    rain_sensor:
+      name: Rain in the next hour sensor
+      description: The MeteoVeo binary sensor "Rain in the next hour" of your place.
+      selector:
+        entity:
+          filter:
+            - integration: meteoveo
+              domain: binary_sensor
+    dry_minutes:
+      name: Dry for at least
+      description: How long the sensor must stay off before your actions run.
+      default: 30
+      selector:
+        number:
+          min: 10
+          max: 180
+          step: 10
+          unit_of_measurement: min
+    actions:
+      name: Actions
+      description: What to do — for example open a cover or turn the irrigation back on.
+      default: []
+      selector:
+        action: {}
+
+mode: single
+max_exceeded: silent
+
+triggers:
+  - trigger: state
+    entity_id: !input rain_sensor
+    from: "on"
+    to: "off"
+    for:
+      minutes: !input dry_minutes
+
+actions: !input actions

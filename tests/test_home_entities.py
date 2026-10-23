@@ -49,6 +49,20 @@ RAIN_SOON = "binary_sensor.meteoveo_villa_ejemplo_rain_in_the_next_hour"
 RAIN_START = "sensor.meteoveo_villa_ejemplo_rain_start"
 RAIN_END = "sensor.meteoveo_villa_ejemplo_rain_end"
 WARNINGS = "sensor.meteoveo_villa_ejemplo_weather_warnings"
+# ADR-0827 B1/B2 (2026-10-23): derived sensors, warnings by level, the warning event.
+MORE = {
+    "sensor.meteoveo_villa_ejemplo_next_warning": "next_warning",
+    "sensor.meteoveo_villa_ejemplo_feels_like": "apparent_temperature",
+    "sensor.meteoveo_villa_ejemplo_dew_point": "dew_point",
+    "sensor.meteoveo_villa_ejemplo_uv_index": "uv_index",
+    "sensor.meteoveo_villa_ejemplo_uv_index_today_max": "uv_index_max_today",
+    "sensor.meteoveo_villa_ejemplo_minutes_until_rain": "minutes_to_rain",
+    "sensor.meteoveo_villa_ejemplo_rain_intensity_now": "rain_intensity_now",
+    "binary_sensor.meteoveo_villa_ejemplo_yellow_warning": "warning_yellow",
+    "binary_sensor.meteoveo_villa_ejemplo_orange_warning": "warning_orange",
+    "binary_sensor.meteoveo_villa_ejemplo_red_warning": "warning_red",
+    "event.meteoveo_villa_ejemplo_new_warning": "warning",
+}
 
 
 async def setup(hass: HomeAssistant, data: dict, home=None, unique_id="EXAMPLEKEY"):
@@ -75,7 +89,7 @@ async def test_account_entry_without_station_gets_the_forecast_only(
     assert entry.state is ConfigEntryState.LOADED
 
     ids = {e.entity_id for e in er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)}
-    assert ids == {WEATHER, RAIN_SOON, RAIN_START, RAIN_END, WARNINGS}
+    assert ids == {WEATHER, RAIN_SOON, RAIN_START, RAIN_END, WARNINGS, *MORE}
 
     device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "EXAMPLEKEY")})
     assert device.name == "MeteoVeo Villa Ejemplo"
@@ -94,6 +108,7 @@ async def test_translation_keys_are_the_ones_the_card_relies_on(hass: HomeAssist
         RAIN_START: "rain_start",
         RAIN_END: "rain_end",
         WARNINGS: "warnings",
+        **MORE,
     }
 
 

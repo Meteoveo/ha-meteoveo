@@ -272,6 +272,33 @@
             }
           }
         }
+      },
+      "apparent_temperature": {
+        "name": "Sensación térmica"
+      },
+      "dew_point": {
+        "name": "Punto de rocío"
+      },
+      "uv_index": {
+        "name": "Índice UV"
+      },
+      "uv_index_max_today": {
+        "name": "Índice UV máximo hoy"
+      },
+      "minutes_to_rain": {
+        "name": "Minutos hasta la lluvia"
+      },
+      "next_warning": {
+        "name": "Próximo aviso"
+      },
+      "rain_intensity_now": {
+        "name": "Intensidad de la lluvia ahora",
+        "state": {
+          "none": "Sin lluvia",
+          "light": "Débil",
+          "moderate": "Moderada",
+          "heavy": "Fuerte"
+        }
       }
     },
     "binary_sensor": {
@@ -280,6 +307,29 @@
       },
       "rain_soon": {
         "name": "Lluvia en la próxima hora"
+      },
+      "warning_yellow": {
+        "name": "Aviso amarillo"
+      },
+      "warning_orange": {
+        "name": "Aviso naranja"
+      },
+      "warning_red": {
+        "name": "Aviso rojo"
+      }
+    },
+    "event": {
+      "warning": {
+        "name": "Nuevo aviso",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "yellow": "Amarillo",
+              "orange": "Naranja",
+              "red": "Rojo"
+            }
+          }
+        }
       }
     }
   },

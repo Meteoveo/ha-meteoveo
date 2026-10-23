@@ -272,6 +272,33 @@
             }
           }
         }
+      },
+      "apparent_temperature": {
+        "name": "Hőérzet"
+      },
+      "dew_point": {
+        "name": "Harmatpont"
+      },
+      "uv_index": {
+        "name": "UV-index"
+      },
+      "uv_index_max_today": {
+        "name": "Mai legmagasabb UV-index"
+      },
+      "minutes_to_rain": {
+        "name": "Percek az esőig"
+      },
+      "next_warning": {
+        "name": "Következő figyelmeztetés"
+      },
+      "rain_intensity_now": {
+        "name": "Esőintenzitás most",
+        "state": {
+          "none": "Nincs eső",
+          "light": "Gyenge",
+          "moderate": "Mérsékelt",
+          "heavy": "Erős"
+        }
       }
     },
     "binary_sensor": {
@@ -280,6 +307,29 @@
       },
       "rain_soon": {
         "name": "Eső a következő órában"
+      },
+      "warning_yellow": {
+        "name": "Sárga figyelmeztetés"
+      },
+      "warning_orange": {
+        "name": "Narancs figyelmeztetés"
+      },
+      "warning_red": {
+        "name": "Piros figyelmeztetés"
+      }
+    },
+    "event": {
+      "warning": {
+        "name": "Új figyelmeztetés",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "yellow": "Sárga",
+              "orange": "Narancs",
+              "red": "Piros"
+            }
+          }
+        }
       }
     }
   },
