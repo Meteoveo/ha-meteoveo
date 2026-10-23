@@ -1,8 +1,11 @@
 # Tests
 
 ```bash
-python -m pytest tests/ -q
+.venv/bin/python -m pytest -q
 ```
 
-The suite has no Home Assistant dependency: it covers the pure logic --
-unit conversion, plausibility limits, and credential handling.
+The suite runs on `pytest-homeassistant-custom-component`: config flows,
+options, re-authentication and entities are exercised through a real Home
+Assistant instance, with the MeteoVeo service mocked. Pure logic -- unit
+conversion, plausibility limits, credential handling, request shapes -- is
+tested directly.
