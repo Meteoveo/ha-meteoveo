@@ -91,13 +91,21 @@ automation:
 
 ## Installation
 
-### HACS
+[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Meteoveo&repository=ha-meteoveo&category=integration)
 
-Until the default-list submission is merged, add it as a custom repository:
+### HACS (recommended)
 
-1. HACS → Integrations → ⋮ → **Custom repositories**
-2. Add `https://github.com/meteoveo/ha-meteoveo`, category **Integration**
-3. Install **MeteoVeo**, then restart Home Assistant
+1. Open **HACS** in Home Assistant and search for **MeteoVeo**
+2. Open it and select **Download**
+3. Restart Home Assistant
+
+The button above takes you straight to step 2.
+
+While the integration waits to join the HACS default list, the search does not
+find it yet. Use the button — HACS offers to add the repository for you — or
+add it by hand: HACS → ⋮ → **Custom repositories**, enter
+`https://github.com/Meteoveo/ha-meteoveo` with category **Integration**, then
+continue from step 2.
 
 ### Manually
 
@@ -107,7 +115,10 @@ Until the default-list submission is merged, add it as a custom repository:
 
 ## Setup
 
-1. **Settings → Devices & Services → Add Integration → MeteoVeo**
+[![Open your Home Assistant instance and start setting up MeteoVeo.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=meteoveo)
+
+1. **Settings → Devices & Services → Add Integration → MeteoVeo** (or use the
+   button above)
 2. Enter the **station ID** and **station key**.
    - No station yet? Create an account at
      [meteoveo.com](https://www.meteoveo.com/#/account) first. Sign-up needs a
