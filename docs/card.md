@@ -46,9 +46,11 @@ Texts are in Spanish, English or Catalan (and Hungarian), chosen from your
 Home Assistant language (English otherwise); times use your time zone and
 12/24-hour setting.
 
-**Compact mode** (`compact: true`) keeps only the "now" header and the
+**Compact mode** (`compact: true`) keeps the "now" header and the
 next-3-hours strip — for a small dashboard or a narrow column of a sections
-view.
+view. Which warnings it still shows is up to you (`compact_warnings`):
+`severe` (default — an active orange or red warning), `all` (every active
+warning) or `none`.
 
 ## Adding the card
 
@@ -93,6 +95,7 @@ daily_count: 7           # 1–14 days in the list
 | `show_details` | `true` | Show the detail row under the header (feels like, UV, sun, dew point). |
 | `show_precipitation` | `true` | Show the mm bars in the hourly strip when the window has rain. |
 | `compact` | `false` | Header and the next-3-hours strip only. |
+| `compact_warnings` | `severe` | In compact mode: `severe` = active orange and red warnings, `all` = every active warning, `none` = no warnings. |
 | `hourly_count` | `12` | Hours in the strip. |
 | `daily_count` | `7` | Days in the list (the free level provides 7). |
 
