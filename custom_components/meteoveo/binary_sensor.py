@@ -12,10 +12,11 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .coordinator import MeteoVeoConfigEntry
 from .entity import MeteoVeoEntity
-from .home import next_hour_attributes
+from .home import WARNING_LEVELS, active_levels, next_hour_attributes, warnings_list
 
 PARALLEL_UPDATES = 0
 
@@ -27,6 +28,7 @@ async def async_setup_entry(
 ) -> None:
     runtime = entry.runtime_data
     entities: list[BinarySensorEntity] = [RainSoonBinarySensor(runtime.home)]
+    entities += [WarningLevelBinarySensor(runtime.home, level) for level in WARNING_LEVELS]
     if runtime.station is not None:
         entities.append(SensorHealthBinarySensor(runtime.station))
     async_add_entities(entities)
@@ -68,6 +70,41 @@ class RainSoonBinarySensor(MeteoVeoEntity, BinarySensorEntity):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         next_hour = self._next_hour
         return next_hour_attributes(next_hour) if next_hour is not None else None
+
+
+class WarningLevelBinarySensor(MeteoVeoEntity, BinarySensorEntity):
+    """On while an official warning of this level is in force at the place.
+
+    One per level, so an automation can react to "orange or worse" without
+    templates. The warnings of this level that are in force are attributes.
+    """
+
+    def __init__(self, coordinator, level: str) -> None:
+        super().__init__(coordinator, f"warning_{level}")
+        self.entity_description = BinarySensorEntityDescription(
+            key=f"warning_{level}",
+            translation_key=f"warning_{level}",
+            device_class=BinarySensorDeviceClass.SAFETY,
+        )
+        self._level = level
+
+    @property
+    def is_on(self) -> bool | None:
+        warnings = warnings_list(self._view)
+        if warnings is None:
+            return None
+        return self._level in active_levels(warnings, dt_util.utcnow())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        now = dt_util.utcnow()
+        return {
+            "warnings": [
+                w
+                for w in warnings_list(self._view) or []
+                if w.get("level") == self._level and self._level in active_levels([w], now)
+            ]
+        }
 
 
 class SensorHealthBinarySensor(MeteoVeoEntity, BinarySensorEntity):

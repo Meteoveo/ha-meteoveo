@@ -272,6 +272,33 @@
             }
           }
         }
+      },
+      "apparent_temperature": {
+        "name": "Sensació tèrmica"
+      },
+      "dew_point": {
+        "name": "Punt de rosada"
+      },
+      "uv_index": {
+        "name": "Índex UV"
+      },
+      "uv_index_max_today": {
+        "name": "Índex UV màxim avui"
+      },
+      "minutes_to_rain": {
+        "name": "Minuts fins a la pluja"
+      },
+      "next_warning": {
+        "name": "Pròxim avís"
+      },
+      "rain_intensity_now": {
+        "name": "Intensitat de la pluja ara",
+        "state": {
+          "none": "Sense pluja",
+          "light": "Feble",
+          "moderate": "Moderada",
+          "heavy": "Forta"
+        }
       }
     },
     "binary_sensor": {
@@ -280,6 +307,29 @@
       },
       "rain_soon": {
         "name": "Pluja en la pròxima hora"
+      },
+      "warning_yellow": {
+        "name": "Avís groc"
+      },
+      "warning_orange": {
+        "name": "Avís taronja"
+      },
+      "warning_red": {
+        "name": "Avís vermell"
+      }
+    },
+    "event": {
+      "warning": {
+        "name": "Nou avís",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "yellow": "Groc",
+              "orange": "Taronja",
+              "red": "Vermell"
+            }
+          }
+        }
       }
     }
   },

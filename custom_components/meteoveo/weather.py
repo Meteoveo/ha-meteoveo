@@ -17,9 +17,10 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .coordinator import HomeCoordinator, MeteoVeoConfigEntry
-from .home import daily_forecast, hourly_forecast
+from .home import current_hour, daily_forecast, dew_point, hourly_forecast
 
 PARALLEL_UPDATES = 0
 
@@ -86,6 +87,18 @@ class MeteoVeoWeather(SingleCoordinatorWeatherEntity[HomeCoordinator]):
     @property
     def wind_bearing(self) -> float | None:
         return self._current.get("windBearingDeg")
+
+    @property
+    def native_apparent_temperature(self) -> float | None:
+        return (current_hour(self.coordinator.data, dt_util.utcnow()) or {}).get("feelsLikeC")
+
+    @property
+    def native_dew_point(self) -> float | None:
+        return dew_point(self._current.get("tempC"), self._current.get("humidityPct"))
+
+    @property
+    def uv_index(self) -> float | None:
+        return (current_hour(self.coordinator.data, dt_util.utcnow()) or {}).get("uvIndex")
 
     @property
     def attribution(self) -> str | None:

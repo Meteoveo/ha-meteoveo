@@ -9,7 +9,8 @@ units are fixed by the contract: ``...C`` degrees Celsius, ``...Pct`` percent,
 
 from __future__ import annotations
 
-from datetime import datetime
+import math
+from datetime import datetime, timedelta
 from typing import Any, Mapping
 
 from homeassistant.util import dt as dt_util
@@ -149,3 +150,91 @@ def highest_level(warnings: list[dict[str, Any]]) -> str:
     """``none``, ``yellow``, ``orange`` or ``red``."""
     found = [WARNING_LEVELS.index(w["level"]) for w in warnings if w.get("level") in WARNING_LEVELS]
     return WARNING_LEVELS[max(found)] if found else "none"
+
+
+# --- Derived values (ADR-0827 B1/B2) -------------------------------------------
+#
+# Computed from what the home view already carries; no extra request. A dew
+# point is arithmetic on the measured temperature and humidity, not new data.
+
+RAIN_BANDS = ("none", "light", "moderate", "heavy")
+
+
+def current_hour(view: Mapping[str, Any] | None, now: datetime) -> Mapping[str, Any] | None:
+    """The hourly item whose hour contains ``now``, or None."""
+    for hour in (view or {}).get("hourly") or []:
+        start = parse_time(hour.get("at")) if isinstance(hour, Mapping) else None
+        if start is not None and start <= now < start + timedelta(hours=1):
+            return hour
+    return None
+
+
+def dew_point(temp_c: Any, humidity_pct: Any) -> float | None:
+    """Magnus formula (Sonntag 1990 constants), to 0.1 °C."""
+    temp, rh = _num(temp_c), _num(humidity_pct)
+    if temp is None or rh is None or not 0 < rh <= 100:
+        return None
+    a, b = 17.62, 243.12
+    gamma = math.log(rh / 100) + a * temp / (b + temp)
+    return round(b * gamma / (a - gamma), 1)
+
+
+def minutes_to_rain(next_hour: Mapping[str, Any] | None, now: datetime) -> int | None:
+    """0 while it rains, minutes until the next rain, None when none is expected."""
+    if not next_hour:
+        return None
+    if next_hour.get("rainNow") is True:
+        return 0
+    start = parse_time(next_hour.get("rainStartsAt"))
+    if start is None:
+        return None
+    return max(0, math.ceil((start - now).total_seconds() / 60))
+
+
+def rain_intensity_now(next_hour: Mapping[str, Any] | None, now: datetime) -> str | None:
+    """The band of the latest step that has begun (``none`` … ``heavy``)."""
+    band = None
+    for step in (next_hour or {}).get("steps") or []:
+        at = parse_time(step.get("at")) if isinstance(step, Mapping) else None
+        if at is not None and at <= now and step.get("band") in RAIN_BANDS:
+            band = step["band"]
+    if band is None:
+        steps = (next_hour or {}).get("steps") or []
+        first = steps[0] if steps and isinstance(steps[0], Mapping) else {}
+        band = first.get("band") if first.get("band") in RAIN_BANDS else None
+    return band
+
+
+def uv_max_today(view: Mapping[str, Any] | None, now: datetime) -> float | int | None:
+    """Today's UV maximum from the daily forecast (the local calendar day)."""
+    today = dt_util.as_local(now).date().isoformat()
+    for day in (view or {}).get("daily") or []:
+        if isinstance(day, Mapping) and day.get("date") == today:
+            return _num(day.get("uvIndex"))
+    return None
+
+
+def active_levels(warnings: list[dict[str, Any]] | None, now: datetime) -> set[str]:
+    """The levels with a warning in force now (started, not yet expired)."""
+    levels: set[str] = set()
+    for warning in warnings or []:
+        onset, expires = parse_time(warning.get("onset")), parse_time(warning.get("expires"))
+        if onset is not None and onset <= now and (expires is None or now < expires):
+            if warning.get("level") in WARNING_LEVELS:
+                levels.add(warning["level"])
+    return levels
+
+
+def next_warning_onset(warnings: list[dict[str, Any]] | None, now: datetime) -> datetime | None:
+    """When the next warning that has not started yet begins."""
+    upcoming = [
+        onset
+        for warning in warnings or []
+        if (onset := parse_time(warning.get("onset"))) is not None and onset > now
+    ]
+    return min(upcoming) if upcoming else None
+
+
+def warning_id(warning: Mapping[str, Any]) -> str:
+    """Identity of a warning across refreshes: phenomenon, level and onset."""
+    return f"{warning.get('phenomenon')}|{warning.get('level')}|{warning.get('onset')}"

@@ -36,7 +36,7 @@ from .uploader import upload_once
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.WEATHER]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.WEATHER, Platform.EVENT]
 
 # Set up through the UI only; there is no YAML configuration.
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)

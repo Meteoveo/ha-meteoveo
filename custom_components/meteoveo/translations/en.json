@@ -272,6 +272,33 @@
             }
           }
         }
+      },
+      "apparent_temperature": {
+        "name": "Feels like"
+      },
+      "dew_point": {
+        "name": "Dew point"
+      },
+      "uv_index": {
+        "name": "UV index"
+      },
+      "uv_index_max_today": {
+        "name": "UV index today max"
+      },
+      "minutes_to_rain": {
+        "name": "Minutes until rain"
+      },
+      "next_warning": {
+        "name": "Next warning"
+      },
+      "rain_intensity_now": {
+        "name": "Rain intensity now",
+        "state": {
+          "none": "No rain",
+          "light": "Light",
+          "moderate": "Moderate",
+          "heavy": "Heavy"
+        }
       }
     },
     "binary_sensor": {
@@ -280,6 +307,29 @@
       },
       "rain_soon": {
         "name": "Rain in the next hour"
+      },
+      "warning_yellow": {
+        "name": "Yellow warning"
+      },
+      "warning_orange": {
+        "name": "Orange warning"
+      },
+      "warning_red": {
+        "name": "Red warning"
+      }
+    },
+    "event": {
+      "warning": {
+        "name": "New warning",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "yellow": "Yellow",
+              "orange": "Orange",
+              "red": "Red"
+            }
+          }
+        }
       }
     }
   },
