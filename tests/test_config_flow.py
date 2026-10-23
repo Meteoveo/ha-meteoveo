@@ -134,3 +134,32 @@ async def test_every_form_carries_its_docs_link(
     result = await hass.config_entries.flow.async_configure(result["flow_id"], CREDENTIALS)
     assert result["step_id"] == "measurements"
     assert result["description_placeholders"]["docs_url"] == DOCS_MEASUREMENTS_URL
+
+
+class _UnreachableRequest:
+    async def __aenter__(self):
+        import aiohttp
+
+        raise aiohttp.ClientConnectionError("connection refused")
+
+    async def __aexit__(self, *exc):
+        return False
+
+
+class _UnreachableSession:
+    def get(self, url, **kwargs):
+        return _UnreachableRequest()
+
+
+async def test_an_unreachable_service_is_reported_as_such(hass: HomeAssistant) -> None:
+    # Through the real client, not a patched _verify: a refused connection
+    # must reach the screen as "Could not reach MeteoVeo", not as "unknown".
+    with patch(
+        "custom_components.meteoveo.config_flow.async_get_clientsession",
+        return_value=_UnreachableSession(),
+    ):
+        result = await start(hass)
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], CREDENTIALS)
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "cannot_connect"}

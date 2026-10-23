@@ -11,7 +11,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt as dt_util
 
 from .auth import Credentials
-from .client import MeteoVeoClient
+from .client import InvalidCredentials, MeteoVeoClient
 from .const import (
     CONF_MEASUREMENTS,
     CONF_STATION_ID,
@@ -50,12 +50,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: MeteoVeoConfigEntry) -> 
         selection = entry.options.get(CONF_MEASUREMENTS, {})
         if not selection:
             return
-        await upload_once(
-            client,
-            hass.states,
-            selection,
-            now_iso=dt_util.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-        )
+        try:
+            await upload_once(
+                client,
+                hass.states,
+                selection,
+                now_iso=dt_util.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+        except InvalidCredentials:
+            # This timer is not the coordinator: an exception left to escape
+            # here would only reach the log, once a minute, and never ask for
+            # a new key. Home Assistant opens at most one re-authentication
+            # flow per entry, so a key that stays rejected does not stack up
+            # prompts.
+            entry.async_start_reauth(hass)
 
     entry.async_on_unload(
         async_track_time_interval(

@@ -165,3 +165,106 @@ async def test_nothing_mapped_means_no_request(hass) -> None:
         await hass.async_block_till_done()
 
     upload.assert_not_awaited()
+
+
+async def _set_up_uploading_entry(hass):
+    """An entry with one mapped measurement, its station view patched to load."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.meteoveo.const import (
+        CONF_MEASUREMENTS,
+        CONF_STATION_ID,
+        CONF_STATION_KEY,
+        DOMAIN,
+    )
+
+    hass.states.async_set("sensor.outside", "21.37", {"unit_of_measurement": "°C"})
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_STATION_ID: "MVEXAMPLE1", CONF_STATION_KEY: "key"},
+        unique_id="mvexample1",
+        options={CONF_MEASUREMENTS: {"temperature": "sensor.outside"}},
+    )
+    entry.add_to_hass(hass)
+    return entry
+
+
+_VIEW = {"station": {"name": "Garden"}, "health": {"findings": []},
+         "model": {"status": "collecting", "samples": 0, "samplesNeeded": 10,
+                   "daysRemaining": 10},
+         "upload": {"lastSeenAt": None, "acceptedCount": 0, "lastError": None}}
+
+
+async def test_a_rejected_key_during_upload_asks_for_a_new_one(hass) -> None:
+    """The timer is not the coordinator: the rejection has to start reauth itself."""
+    from datetime import timedelta
+    from unittest.mock import AsyncMock, patch
+
+    from homeassistant.config_entries import SOURCE_REAUTH
+    from homeassistant.util import dt as dt_util
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed
+
+    from custom_components.meteoveo.client import InvalidCredentials
+
+    entry = await _set_up_uploading_entry(hass)
+    with (
+        patch(
+            "custom_components.meteoveo.client.MeteoVeoClient.async_get_station",
+            new=AsyncMock(return_value=_VIEW),
+        ),
+        patch(
+            "custom_components.meteoveo.client.MeteoVeoClient.async_upload",
+            new=AsyncMock(side_effect=InvalidCredentials("station id or key was rejected")),
+        ) as upload,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        # Two ticks: a key that stays rejected must not stack up prompts.
+        for minutes in (1, 2):
+            async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=61 * minutes))
+            await hass.async_block_till_done()
+
+    assert upload.await_count == 2
+    assert len(list(entry.async_get_active_flows(hass, {SOURCE_REAUTH}))) == 1
+
+
+async def test_an_unreachable_service_during_upload_is_not_an_error(hass, caplog) -> None:
+    """A lost connection waits for the next tick; it must not log an error every minute."""
+    import logging
+    from datetime import timedelta
+    from unittest.mock import AsyncMock, patch
+
+    import aiohttp
+    from homeassistant.util import dt as dt_util
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed
+
+    attempts = []
+
+    class Unreachable:
+        async def __aenter__(self):
+            raise aiohttp.ClientConnectionError("connection refused")
+
+        async def __aexit__(self, *exc):
+            return False
+
+    class Session:
+        def get(self, url, **kwargs):
+            attempts.append(url)
+            return Unreachable()
+
+    entry = await _set_up_uploading_entry(hass)
+    with (
+        patch("custom_components.meteoveo.async_get_clientsession", return_value=Session()),
+        patch(
+            "custom_components.meteoveo.client.MeteoVeoClient.async_get_station",
+            new=AsyncMock(return_value=_VIEW),
+        ),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=61))
+        await hass.async_block_till_done()
+
+    assert attempts, "the upload was never attempted, so the test proves nothing"
+    assert [r for r in caplog.records if r.levelno >= logging.ERROR] == []

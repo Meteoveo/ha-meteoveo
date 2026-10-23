@@ -53,7 +53,7 @@ async def upload_once(
     try:
         return await client.async_upload(fields, now_iso=now_iso)
     except InvalidCredentials:
-        # Let this surface: the coordinator turns it into a re-authentication
+        # Let this surface: the upload timer turns it into a re-authentication
         # prompt, and silently retrying with a replaced key never recovers.
         raise
     except ServiceUnavailable as failure:
