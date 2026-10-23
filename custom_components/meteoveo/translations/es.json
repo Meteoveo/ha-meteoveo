@@ -228,7 +228,8 @@
       "wrong_account": "Esta conexión pertenece a otra cuenta de MeteoVeo. Entra con el correo con el que la configuraste.",
       "confirm_mismatch": "Las dos direcciones de correo no coinciden. No se ha borrado nada.",
       "invalid_password": "La contraseña no es correcta. Tu cuenta sigue intacta.",
-      "password_required": "Esta cuenta no tiene contraseña. Bórrala desde la app de MeteoVeo o en meteoveo.com."
+      "password_required": "Esta cuenta no tiene contraseña. Bórrala desde la app de MeteoVeo o en meteoveo.com.",
+      "location_change_limit": "Puedes cambiar el lugar como máximo 3 veces al día y 10 al mes. Inténtalo más tarde."
     },
     "abort": {
       "account_deleted": "Tu cuenta de MeteoVeo se ha borrado. La integración se eliminará ahora de Home Assistant por sí sola.",

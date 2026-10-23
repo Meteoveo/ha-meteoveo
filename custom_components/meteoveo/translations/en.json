@@ -228,7 +228,8 @@
       "wrong_account": "This connection belongs to a different MeteoVeo account. Use the email it was set up with.",
       "confirm_mismatch": "The two email addresses do not match.",
       "invalid_password": "Wrong password.",
-      "password_required": "This account has no password. Delete it in the MeteoVeo app or on meteoveo.com instead."
+      "password_required": "This account has no password. Delete it in the MeteoVeo app or on meteoveo.com instead.",
+      "location_change_limit": "You can change the place at most 3 times a day and 10 times a month. Try again later."
     },
     "abort": {
       "account_deleted": "Your MeteoVeo account has been deleted. The integration now removes itself.",

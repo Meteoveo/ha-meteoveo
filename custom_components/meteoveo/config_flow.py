@@ -762,9 +762,13 @@ class MeteoVeoOptionsFlow(OptionsFlow):
                     entry.async_start_reauth(self.hass)
                     return self.async_abort(reason="reauth_required")
                 except ApiError as failure:
-                    errors[CONF_LOCATION if failure.code == "invalid_location" else "base"] = (
-                        "invalid_location" if failure.code == "invalid_location" else "unknown"
-                    )
+                    if failure.code == "invalid_location":
+                        errors[CONF_LOCATION] = "invalid_location"
+                    elif failure.code == "location_change_limit":
+                        # ADR-0834 D2: at most 3 changes a day and 10 a month.
+                        errors["base"] = "location_change_limit"
+                    else:
+                        errors["base"] = "unknown"
                 except MeteoVeoError as failure:
                     errors["base"] = _account_error(failure)
                 else:

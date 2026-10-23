@@ -228,7 +228,8 @@
       "wrong_account": "Aquesta connexió és d'un altre compte de MeteoVeo. Fes servir el correu amb què la vas configurar.",
       "confirm_mismatch": "Els dos correus no coincideixen.",
       "invalid_password": "Contrasenya incorrecta.",
-      "password_required": "Aquest compte no té contrasenya. Elimina'l des de l'app de MeteoVeo o a meteoveo.com."
+      "password_required": "Aquest compte no té contrasenya. Elimina'l des de l'app de MeteoVeo o a meteoveo.com.",
+      "location_change_limit": "Pots canviar el lloc com a màxim 3 vegades al dia i 10 al mes. Torna-ho a provar més tard."
     },
     "abort": {
       "account_deleted": "El teu compte de MeteoVeo s'ha eliminat. La integració es treu sola ara.",

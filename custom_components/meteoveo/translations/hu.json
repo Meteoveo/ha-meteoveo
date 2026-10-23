@@ -228,7 +228,8 @@
       "wrong_account": "Ez a kapcsolat egy másik MeteoVeo-fiókhoz tartozik. Azt az e-mail-címet használd, amivel beállítottad.",
       "confirm_mismatch": "A két e-mail-cím nem egyezik.",
       "invalid_password": "Hibás jelszó.",
-      "password_required": "Ennek a fióknak nincs jelszava. A MeteoVeo appban vagy a meteoveo.com-on töröld."
+      "password_required": "Ennek a fióknak nincs jelszava. A MeteoVeo appban vagy a meteoveo.com-on töröld.",
+      "location_change_limit": "A helyet naponta legfeljebb 3-szor, havonta legfeljebb 10-szer lehet módosítani. Próbáld újra később."
     },
     "abort": {
       "account_deleted": "A MeteoVeo-fiókodat töröltük. Az integráció most eltávolítja magát.",

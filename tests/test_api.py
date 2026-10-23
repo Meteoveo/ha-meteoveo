@@ -313,6 +313,23 @@ async def test_location_outside_the_service_area() -> None:
     assert caught.value.code == "invalid_location"
 
 
+async def test_location_change_limit_is_a_reason_not_an_outage() -> None:
+    """ADR-0834 D2: too many place changes -> 429 with a code; the flow shows it."""
+    session = FakeSession(FakeResponse(429, {"error": {"code": "location_change_limit"}}))
+    client = MeteoVeoClient(session, integration_key=INTEGRATION_KEY)
+    with pytest.raises(ApiError) as caught:
+        await client.async_set_location(40.42, -3.7)
+    assert caught.value.code == "location_change_limit"
+
+
+async def test_a_plain_429_is_still_an_outage() -> None:
+    """ADR-0834 D3: a quota 429 is temporary -- retried on the next round."""
+    session = FakeSession(FakeResponse(429, {"error": {"code": "rate_limited"}}))
+    client = MeteoVeoClient(session, integration_key=INTEGRATION_KEY)
+    with pytest.raises(ServiceUnavailable):
+        await client.async_get_home("es")
+
+
 async def test_revoke_uses_a_short_timeout() -> None:
     session = FakeSession(FakeResponse(204))
     client = MeteoVeoClient(session, integration_key=INTEGRATION_KEY)
