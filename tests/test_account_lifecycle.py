@@ -293,7 +293,10 @@ async def test_deleting_the_account(hass: HomeAssistant) -> None:
     )
     assert hass.config_entries.async_get_entry(entry.entry_id) is None
     notifications = hass.data["persistent_notification"]
-    assert f"{DOMAIN}_account_deleted" in notifications
+    note = notifications[f"{DOMAIN}_account_deleted"]
+    # The translated text, not the built-in fallback.
+    assert note["title"] == "MeteoVeo account deleted"
+    assert "App Store or Google Play subscription is not cancelled" in note["message"]
 
 
 async def test_deletion_needs_the_email_typed_twice(hass: HomeAssistant) -> None:
@@ -439,3 +442,23 @@ def test_manifest_declares_what_the_card_needs() -> None:
         (Path(__file__).resolve().parents[1] / "custom_components/meteoveo/manifest.json").read_text()
     )
     assert {"http", "frontend"} <= set(manifest["dependencies"])
+
+
+async def test_deleting_the_account_removes_all_of_its_entries(hass: HomeAssistant) -> None:
+    entry = add_entry(hass, ACCOUNT_DATA)
+    second = MockConfigEntry(
+        domain=DOMAIN, data={**ACCOUNT_DATA, CONF_KEY_ID: "K2"}, unique_id="K2"
+    )
+    second.add_to_hass(hass)
+    unrelated = MockConfigEntry(
+        domain=DOMAIN, data={**ACCOUNT_DATA, CONF_EMAIL: "otra@example.com"}, unique_id="K3"
+    )
+    unrelated.add_to_hass(hass)
+    await load(hass, entry)
+    with Service(), patch(
+        "custom_components.meteoveo.MeteoVeoClient.async_revoke_key", new=AsyncMock()
+    ):
+        await delete_form(hass, entry)
+        await hass.async_block_till_done()
+    remaining = {e.entry_id for e in hass.config_entries.async_entries(DOMAIN)}
+    assert remaining == {unrelated.entry_id}
