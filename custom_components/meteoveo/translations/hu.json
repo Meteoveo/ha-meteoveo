@@ -40,12 +40,12 @@
       },
       "verify_code": {
         "title": "Nézd meg a leveleidet",
-        "description": "Kódot küldtünk ide: {email}. Egy percig is eltarthat — a spam mappát is nézd meg.\n\nHa ehhez a címhez már van fiók, kód helyett erről kapsz levelet: zárd be ezt az ablakot, és válaszd a „Már van fiókom” lehetőséget.\n\n[Telepítési útmutató]({docs_url})",
+        "description": "6 jegyű kódot küldtünk ide: {email}; 24 óráig érvényes. Egy percig is eltarthat — a spam mappát is nézd meg.\n\nHa ehhez a címhez már van fiók, kód helyett erről kapsz levelet: zárd be ezt az ablakot, és válaszd a „Már van fiókom” lehetőséget.\n\n[Telepítési útmutató]({docs_url})",
         "data": {
           "code": "Kód"
         },
         "data_description": {
-          "code": "A levélben kapott kód."
+          "code": "A levélben kapott 6 jegyű kód."
         }
       },
       "login": {
