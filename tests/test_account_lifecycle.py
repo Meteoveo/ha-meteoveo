@@ -237,6 +237,21 @@ async def test_changing_the_place_outside_the_service_area(hass: HomeAssistant) 
     assert result["errors"] == {"location": "invalid_location"}
 
 
+async def test_changing_the_place_too_often(hass: HomeAssistant) -> None:
+    """ADR-0834 D2: the place may change at most 3 times a day / 10 a month."""
+    entry = add_entry(hass, ACCOUNT_DATA)
+    await load(hass, entry)
+    result = await open_options(hass, entry, "location")
+    with patch(
+        "custom_components.meteoveo.client.MeteoVeoClient.async_set_location",
+        new=AsyncMock(side_effect=ApiError(429, "location_change_limit")),
+    ):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"location": {"latitude": 39.0, "longitude": -1.0}}
+        )
+    assert result["errors"] == {"base": "location_change_limit"}
+
+
 async def test_changing_the_place_with_a_revoked_key(hass: HomeAssistant) -> None:
     entry = add_entry(hass, ACCOUNT_DATA)
     await load(hass, entry)

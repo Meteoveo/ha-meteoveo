@@ -415,7 +415,18 @@ async def _call(
                 return status, None, response_headers
             if status == 204:
                 return status, None, response_headers
-            if 400 <= status < 500 and status != 429:
+            if status == 429:
+                # ADR-0834: a quota 429 is temporary (an outage for the
+                # callers, retried next round); a place-change limit is a
+                # reason the user must see.
+                try:
+                    limited = await response.json(content_type=None)
+                except _TRANSPORT_ERRORS:
+                    limited = None
+                if _error_code(limited) == "location_change_limit":
+                    raise ApiError(status, "location_change_limit")
+                raise ServiceUnavailable(f"{method} {path}: service answered 429")
+            if 400 <= status < 500:
                 try:
                     body = await response.json(content_type=None)
                 except _TRANSPORT_ERRORS:
