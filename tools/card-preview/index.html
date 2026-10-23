@@ -55,6 +55,9 @@ const G = {
   "mdi:weather-windy": `<g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 9h10a2.2 2.2 0 1 0-2.2-2.2M3 13h14a2.2 2.2 0 1 1-2.2 2.2M3 17h7"/></g>`,
   "mdi:water-percent": `<path fill="currentColor" d="M12 2.5S5.5 9.3 5.5 14a6.5 6.5 0 0 0 13 0c0-4.7-6.5-11.5-6.5-11.5z"/><g stroke="var(--card-background-color)" stroke-width="1.3"><circle cx="9.8" cy="12" r="1.3"/><circle cx="14.2" cy="16" r="1.3"/><path d="M14.5 11l-5 6"/></g>`,
   "mdi:alert": `<path fill="currentColor" d="M12 3L1.5 21h21L12 3z"/><path stroke="var(--card-background-color)" stroke-width="2" stroke-linecap="round" d="M12 10v4.5M12 17.6v.2"/>`,
+  "mdi:alert-outline": `<path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 4L2.5 20.5h19L12 4z"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 10v4.5M12 17.6v.2"/>`,
+  "mdi:weather-sunset-up": `<path fill="currentColor" d="M5 16a7 7 0 0 1 14 0z"/><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 19h20M12 3v4M8.5 4.5l1.2 2M15.5 4.5l-1.2 2"/><path fill="none" d="M9.5 5.5L12 3l2.5 2.5"/></g>`,
+  "mdi:weather-sunset-down": `<path fill="currentColor" d="M5 16a7 7 0 0 1 14 0z"/><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 19h20M12 3v4"/><path fill="none" d="M9.5 4.5L12 7l2.5-2.5"/></g>`,
 };
 class HaIcon extends HTMLElement {
   static get observedAttributes() { return ["icon"]; }
@@ -89,12 +92,14 @@ function hourly(night) {
   for (let i = 0; i < 24; i++) {
     const at = new Date(Date.parse("2026-10-23T12:00:00Z") + i * 3600000);
     const h = (at.getUTCHours() + 2) % 24;
-    const day = h >= 8 && h < 19;
+    const day = !night && h >= 8 && h < 19;
     let condition = CONDS[i % CONDS.length];
     if (!day && (condition === "sunny" || condition === "partlycloudy")) condition = condition === "sunny" ? "clear-night" : "partlycloudy";
     if (night && day) condition = "sunny";
+    // A rainy afternoon: 0.4 / 1.2 / 4.6 mm in the three wet hours, a trace in the fourth.
+    const mm = night ? 0 : [0, 0, 0, 1.2, 4.6, 0.4, 0.05][i] || 0;
     out.push({ datetime: at.toISOString(), condition, temperature: 23 - i * 0.6 + (i > 12 ? i - 12 : 0), apparent_temperature: 23,
-      precipitation: condition === "rainy" ? 1.2 : 0, precipitation_probability: condition === "rainy" ? 70 : i === 2 ? 25 : 0,
+      precipitation: mm, precipitation_probability: mm >= 0.1 ? (mm > 1 ? 80 : 45) : i === 2 ? 25 : 0,
       wind_speed: 12, wind_bearing: 110, humidity: 50, uv_index: day ? 3 : 0, is_daytime: day });
   }
   return out;
@@ -112,42 +117,87 @@ function steps(spec, issued = "2026-10-23T11:50:00Z") {
 const fillTo = (arr, band = "none", source = "model") => { while (arr.length < 19) arr.push([band, source, false]); return arr; };
 const none = (n, source = "radar") => Array.from({ length: n }, () => ["none", source, false]);
 
+// `now` = the 0.2.0 details: on the weather entity's attributes (`attrs: true`) or on the
+// sibling sensors (the fallback path); `old: true` = an installation without any of them.
+const SUN = { next_rising: "2026-10-24T06:17:00Z", next_setting: "2026-10-23T17:22:00Z" };
 const CASES = [
-  { title: "Día seco", name: "Castellonet de la Conquesta", condition: "partlycloudy", temp: 23.1, hum: 44, wind: 9, bearing: 113,
+  { title: "Día seco · UV 7 en los atributos del weather", name: "Castellonet de la Conquesta", condition: "partlycloudy", temp: 23.1, hum: 44, wind: 9, bearing: 113,
+    now: { attrs: true, feels: 24.6, dew: 10.2, uv: 7, uvMax: 8 },
     rain: { state: "off", rain_now: false, age_minutes: 2, issued_at: "2026-10-23T11:48:00Z", steps: steps(fillTo(none(7), "none"), "2026-10-23T11:48:00Z") } },
-  { title: "Lluvia en 20 min", name: "Gandia", condition: "cloudy", temp: 19.4, hum: 78, wind: 21, bearing: 70,
+  { title: "Lluvia en 20 min · detalles desde los sensores", name: "Gandia", condition: "cloudy", temp: 19.4, hum: 78, wind: 21, bearing: 70,
+    now: { attrs: false, feels: 18.1, dew: 15.5, uv: 2, uvMax: 4 },
     rain: { state: "on", rain_now: false, age_minutes: 1, starts_at: iso(20), steps: steps(fillTo([...none(2), ["weak"], ["moderate"], ["moderate"], ["weak"], ["weak"], ...none(3)], "none")) } },
   { title: "Llueve hasta las 14:30, cola incierta", name: "Almiserà", condition: "rainy", temp: 16.2, hum: 93, wind: 7, bearing: 300,
+    now: { attrs: true, feels: 15.0, dew: 15.1, uv: 1 },
     rain: { state: "on", rain_now: true, age_minutes: 1, ends_at: iso(40), steps: steps(fillTo([["moderate"], ["moderate"], ["weak", "radar", true], ["weak", "radar", true], ...none(4), ["weak", "model", true], ["weak", "model", true]], "none")) } },
-  { title: "Aviso naranja", name: "Oliva", condition: "lightning-rainy", temp: 21.0, hum: 88, wind: 34, bearing: 95,
+  { title: "Cuatro avisos: dos activos, dos próximos (uno caducado, oculto)", name: "Oliva", condition: "lightning-rainy", temp: 21.0, hum: 88, wind: 34, bearing: 95,
+    now: { attrs: true, feels: 22.4, dew: 19.0, uv: 3, uvMax: 5 },
     rain: { state: "on", rain_now: true, age_minutes: 3, steps: steps(fillTo([["heavy"], ["heavy"], ["heavy"], ["moderate"], ["moderate"], ["moderate"], ["weak"], ["weak"]], "weak", "model")) },
     warnings: [
-      { level: "orange", phenomenon: "PR", phenomenon_name: "Lluvias", headline: "Precipitación acumulada en una hora: 40 mm. Precipitación acumulada en 12 horas: 100 mm.", onset: "2026-10-23T10:00:00Z", expires: "2026-10-23T22:00:00Z" },
-      { level: "yellow", phenomenon: "TO", phenomenon_name: "Tormentas", headline: "Tormentas con granizo.", onset: "2026-10-23T10:00:00Z", expires: "2026-10-23T22:00:00Z" },
+      { level: "yellow", phenomenon: "TO", phenomenon_name: "Tormentas", headline: "Tormentas con granizo.", onset: "2026-10-23T10:00:00Z", expires: "2026-10-23T23:00:00Z" },
+      { level: "orange", phenomenon: "PR", phenomenon_name: "Lluvias", headline: "Precipitación acumulada en una hora: 40 mm. Precipitación acumulada en 12 horas: 100 mm.", onset: "2026-10-23T10:00:00Z", expires: "2026-10-23T19:00:00Z" },
+      { level: "yellow", phenomenon: "VI", phenomenon_name: "Viento", headline: "Rachas máximas: 70 km/h.", onset: "2026-10-24T04:00:00Z", expires: "2026-10-24T16:00:00Z" },
+      { level: "orange", phenomenon: "CO", phenomenon_name: "Fenómenos costeros", headline: "Viento del nordeste fuerza 7 y olas de 4 a 5 metros.", onset: "2026-10-25T06:00:00Z", expires: "2026-10-25T22:00:00Z" },
+      { level: "red", phenomenon: "PR", phenomenon_name: "Lluvias", headline: "Caducado: no debe aparecer.", onset: "2026-10-22T10:00:00Z", expires: "2026-10-23T06:00:00Z" },
     ] },
+  { title: "Los mismos avisos, desplegados («+2 más» pulsado)", name: "Oliva", condition: "lightning-rainy", temp: 21.0, hum: 88, wind: 34, bearing: 95, expand: true,
+    config: { show_hourly: false, show_daily: false, show_next_hour: false },
+    now: { attrs: true, feels: 22.4, dew: 19.0, uv: 3, uvMax: 5 },
+    warnings: [
+      { level: "yellow", phenomenon: "TO", phenomenon_name: "Tormentas", headline: "Tormentas con granizo.", onset: "2026-10-23T10:00:00Z", expires: "2026-10-23T23:00:00Z" },
+      { level: "orange", phenomenon: "PR", phenomenon_name: "Lluvias", headline: "Precipitación acumulada en una hora: 40 mm.", onset: "2026-10-23T10:00:00Z", expires: "2026-10-23T19:00:00Z" },
+      { level: "yellow", phenomenon: "VI", phenomenon_name: "Viento", headline: "Rachas máximas: 70 km/h.", onset: "2026-10-24T04:00:00Z", expires: "2026-10-24T16:00:00Z" },
+      { level: "orange", phenomenon: "CO", phenomenon_name: "Fenómenos costeros", headline: "Viento del nordeste fuerza 7 y olas de 4 a 5 metros.", onset: "2026-10-25T06:00:00Z", expires: "2026-10-25T22:00:00Z" },
+    ] },
+  { title: "Modo compacto (compact: true)", name: "Gandia", condition: "cloudy", temp: 19.4, hum: 78, wind: 21, bearing: 70, config: { compact: true },
+    now: { attrs: true, feels: 18.1, dew: 15.5, uv: 2 },
+    warnings: [{ level: "yellow", phenomenon: "TO", phenomenon_name: "Tormentas", headline: "Tormentas con granizo.", onset: "2026-10-23T10:00:00Z", expires: "2026-10-23T23:00:00Z" }],
+    rain: { state: "on", rain_now: false, age_minutes: 1, starts_at: iso(20), steps: steps(fillTo([...none(2), ["weak"], ["moderate"], ["moderate"], ["weak"], ["weak"], ...none(3)], "none")) } },
+  { title: "Instalación antigua: sin sensores nuevos ni atributos (como hasta ahora)", name: "Ontinyent", condition: "partlycloudy", temp: 22.0, hum: 50, wind: 10, bearing: 90, old: true,
+    warnings: [{ level: "yellow", phenomenon: "TO", phenomenon_name: "Tormentas", headline: "Tormentas con granizo." }],
+    rain: { state: "off", rain_now: false, age_minutes: 2, issued_at: "2026-10-23T11:48:00Z", steps: steps(fillTo(none(7), "none"), "2026-10-23T11:48:00Z") } },
   { title: "Noche", name: "Xàtiva", condition: "clear-night", temp: 12.3, hum: 71, wind: 4, bearing: 350, night: true,
+    now: { attrs: true, feels: 11.0, dew: 7.4, uv: 0 },
     rain: { state: "off", rain_now: false, age_minutes: 5, steps: steps(fillTo(none(19)), "2026-10-23T11:46:00Z") } },
   { title: "Radar de hace 75 min (envejecido)", name: "Alcoi", condition: "cloudy", temp: 15.0, hum: 60, wind: 11, bearing: 200,
+    now: { attrs: true, feels: 13.2, uv: 4 },
     rain: { state: "off", rain_now: false, age_minutes: 75, steps: steps(fillTo([...none(10), ["weak"], ["weak"]], "none"), "2026-10-23T10:36:00Z") } },
   { title: "Nowcast no disponible (fuera de cobertura)", name: "Las Palmas de Gran Canaria", condition: "sunny", temp: 26.4, hum: 55, wind: 18, bearing: 20,
+    now: { attrs: true, feels: 27.9, dew: 17.0, uv: 11, uvMax: 11 },
     rain: { state: "unavailable" } },
   { title: "Entidad no disponible", name: "Benidorm", condition: "unavailable", temp: null },
 ];
 
 function hassFor(c, i) {
   const slug = `mv${i}`;
+  const now = c.now || {};
+  const sensor = (key, value, unit) => (value === undefined ? undefined : { entity_id: `sensor.${slug}_${key}`, state: String(value), attributes: { unit_of_measurement: unit } });
   const states = {
-    "sun.sun": { entity_id: "sun.sun", state: c.night ? "below_horizon" : "above_horizon", attributes: {} },
+    "sun.sun": { entity_id: "sun.sun", state: c.night ? "below_horizon" : "above_horizon", attributes: c.old ? {} : SUN },
     [`weather.${slug}`]: { entity_id: `weather.${slug}`, state: c.condition, attributes: {
       friendly_name: c.name, temperature: c.temp, humidity: c.hum, pressure: 1014, wind_speed: c.wind, wind_bearing: c.bearing,
       temperature_unit: "°C", wind_speed_unit: "km/h", precipitation_unit: "mm", pressure_unit: "hPa",
+      ...(now.attrs ? { apparent_temperature: now.feels, dew_point: now.dew, uv_index: now.uv } : {}),
       attribution: "Datos: © AEMET, MeteoVeo. Avisos: © AEMET (Plan Meteoalerta)." } },
     [`binary_sensor.${slug}_rain_soon`]: c.rain ? { entity_id: `binary_sensor.${slug}_rain_soon`, state: c.rain.state, attributes: { ...c.rain, state: undefined } } : undefined,
     [`sensor.${slug}_warnings`]: { entity_id: `sensor.${slug}_warnings`, state: String((c.warnings || []).length),
       attributes: { highest_level: c.warnings ? c.warnings[0].level : "none", warnings: c.warnings || [] } },
   };
+  const siblings = [[`weather.${slug}`, "forecast"], [`binary_sensor.${slug}_rain_soon`, "rain_soon"], [`sensor.${slug}_warnings`, "warnings"]];
+  if (!c.old && c.now) {
+    // The 0.2.0 sensors are always there on a new install; the weather attributes may carry the same values.
+    const extra = { apparent_temperature: sensor("apparent_temperature", now.feels, "°C"), dew_point: sensor("dew_point", now.dew, "°C"),
+      uv_index: sensor("uv_index", now.uv, ""), uv_index_max_today: sensor("uv_index_max_today", now.uvMax, ""),
+      minutes_to_rain: sensor("minutes_to_rain", c.rain && c.rain.state === "on" ? 20 : "unknown", "min"),
+      rain_intensity_now: sensor("rain_intensity_now", c.rain && c.rain.rain_now ? "moderate" : "none", "") };
+    for (const [key, st] of Object.entries(extra)) {
+      if (!st) continue;
+      states[st.entity_id] = st;
+      siblings.push([st.entity_id, key]);
+    }
+  }
   const entities = {};
-  for (const [id, key] of [[`weather.${slug}`, "forecast"], [`binary_sensor.${slug}_rain_soon`, "rain_soon"], [`sensor.${slug}_warnings`, "warnings"]]) {
+  for (const [id, key] of siblings) {
     entities[id] = { entity_id: id, platform: "meteoveo", device_id: `dev-${slug}`, translation_key: key };
   }
   return {
@@ -174,10 +224,11 @@ function build() {
     const label = document.createElement("span");
     label.textContent = c.title;
     const card = document.createElement("meteoveo-card");
-    card.setConfig({ entity: `weather.mv${i}` });
+    card.setConfig({ entity: `weather.mv${i}`, ...(c.config || {}) });
     wrap.append(label, card);
     grid.append(wrap);
     card.hass = hassFor(c, i);
+    if (c.expand) card.shadowRoot.querySelector(".more").click();
   });
   // The stub-config path and the editor schema, for a quick sanity check in the console.
   const Card = customElements.get("meteoveo-card");

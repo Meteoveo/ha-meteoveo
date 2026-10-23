@@ -8,8 +8,10 @@
  *
  * Everything the card shows comes from the integration's entities — the
  * weather entity (current + forecasts over the websocket), the "rain soon"
- * binary sensor (the 10-minute steps of the next 3 hours) and the warnings
- * sensor. The card never talks to the network on its own.
+ * binary sensor (the 10-minute steps of the next 3 hours), the warnings
+ * sensor and, when the integration is new enough to have them, the feels-like,
+ * dew point and UV sensors (sunrise/sunset come from HA's own `sun.sun`).
+ * The card never talks to the network on its own.
  *
  * The pure helpers at the top (step model → sentence) are exported so they
  * can be unit-tested with `node --test`; the element is only defined when a
@@ -57,10 +59,18 @@ const TEXT = {
     band: { weak: "débil", moderate: "moderada", strong: "fuerte" },
     warning: { yellow: "Aviso amarillo", orange: "Aviso naranja", red: "Aviso rojo" },
     moreWarnings: "+{n} más",
+    lessWarnings: "menos",
+    until: "hasta las {t}", untilTomorrow: "hasta mañana a las {t}", untilDay: "hasta el {d} a las {t}",
+    from: "desde las {t}", fromTomorrow: "desde mañana a las {t}", fromDay: "desde el {d} a las {t}",
     noEntity: "Añade la integración de MeteoVeo y elige su entidad weather.",
     unavailable: "Sin datos de MeteoVeo ahora mismo",
     humidity: "Humedad",
     wind: "Viento",
+    feelsLike: "Sensación", feelsLikeLong: "Sensación térmica",
+    dewPoint: "Rocío", dewPointLong: "Punto de rocío",
+    uv: "UV", uvLong: "Índice UV", uvMax: "máx. {n}",
+    uvLevel: { low: "bajo", moderate: "moderado", high: "alto", veryHigh: "muy alto", extreme: "extremo" },
+    sunrise: "Salida del sol", sunset: "Puesta de sol",
     compass: ["N", "NE", "E", "SE", "S", "SO", "O", "NO"],
     condition: {
       "clear-night": "Despejado", cloudy: "Nublado", fog: "Niebla", hail: "Granizo",
@@ -73,6 +83,8 @@ const TEXT = {
       warnings_entity: "Sensor de avisos (opcional)", show_next_hour: "Próximas 3 horas",
       show_hourly: "Por horas", show_daily: "Próximos días", show_warnings: "Avisos AEMET",
       hourly_count: "Horas mostradas", daily_count: "Días mostrados",
+      compact: "Modo compacto (ahora + próximas 3 horas)", show_details: "Detalles de ahora (sensación, UV, sol)",
+      show_precipitation: "Lluvia por horas (mm)",
     },
   },
   en: {
@@ -101,10 +113,18 @@ const TEXT = {
     band: { weak: "light", moderate: "moderate", strong: "heavy" },
     warning: { yellow: "Yellow warning", orange: "Orange warning", red: "Red warning" },
     moreWarnings: "+{n} more",
+    lessWarnings: "less",
+    until: "until {t}", untilTomorrow: "until tomorrow {t}", untilDay: "until {d} {t}",
+    from: "from {t}", fromTomorrow: "from tomorrow {t}", fromDay: "from {d} {t}",
     noEntity: "Add the MeteoVeo integration and pick its weather entity.",
     unavailable: "MeteoVeo data unavailable right now",
     humidity: "Humidity",
     wind: "Wind",
+    feelsLike: "Feels like", feelsLikeLong: "Feels like",
+    dewPoint: "Dew point", dewPointLong: "Dew point",
+    uv: "UV", uvLong: "UV index", uvMax: "max {n}",
+    uvLevel: { low: "low", moderate: "moderate", high: "high", veryHigh: "very high", extreme: "extreme" },
+    sunrise: "Sunrise", sunset: "Sunset",
     compass: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
     condition: {
       "clear-night": "Clear", cloudy: "Cloudy", fog: "Fog", hail: "Hail", lightning: "Thunderstorm",
@@ -117,6 +137,8 @@ const TEXT = {
       warnings_entity: "Warnings sensor (optional)", show_next_hour: "Next 3 hours",
       show_hourly: "Hourly", show_daily: "Next days", show_warnings: "AEMET warnings",
       hourly_count: "Hours shown", daily_count: "Days shown",
+      compact: "Compact mode (now + next 3 hours)", show_details: "Now details (feels like, UV, sun)",
+      show_precipitation: "Hourly rain (mm)",
     },
   },
   ca: {
@@ -145,10 +167,18 @@ const TEXT = {
     band: { weak: "feble", moderate: "moderada", strong: "forta" },
     warning: { yellow: "Avís groc", orange: "Avís taronja", red: "Avís vermell" },
     moreWarnings: "+{n} més",
+    lessWarnings: "menys",
+    until: "fins a les {t}", untilTomorrow: "fins demà a les {t}", untilDay: "fins {d} a les {t}",
+    from: "des de les {t}", fromTomorrow: "des de demà a les {t}", fromDay: "des de {d} a les {t}",
     noEntity: "Afegeix la integració de MeteoVeo i tria la seva entitat weather.",
     unavailable: "Sense dades de MeteoVeo ara mateix",
     humidity: "Humitat",
     wind: "Vent",
+    feelsLike: "Sensació", feelsLikeLong: "Sensació tèrmica",
+    dewPoint: "Rosada", dewPointLong: "Punt de rosada",
+    uv: "UV", uvLong: "Índex UV", uvMax: "màx. {n}",
+    uvLevel: { low: "baix", moderate: "moderat", high: "alt", veryHigh: "molt alt", extreme: "extrem" },
+    sunrise: "Sortida del sol", sunset: "Posta de sol",
     compass: ["N", "NE", "E", "SE", "S", "SO", "O", "NO"],
     condition: {
       "clear-night": "Serè", cloudy: "Ennuvolat", fog: "Boira", hail: "Calamarsa", lightning: "Tempesta",
@@ -161,6 +191,63 @@ const TEXT = {
       warnings_entity: "Sensor d’avisos (opcional)", show_next_hour: "Pròximes 3 hores",
       show_hourly: "Per hores", show_daily: "Pròxims dies", show_warnings: "Avisos AEMET",
       hourly_count: "Hores mostrades", daily_count: "Dies mostrats",
+      compact: "Mode compacte (ara + pròximes 3 hores)", show_details: "Detalls d’ara (sensació, UV, sol)",
+      show_precipitation: "Pluja per hores (mm)",
+    },
+  },
+  // Hungarian: for the owner's review, not a product language.
+  hu: {
+    nextHours: "Következő 3 óra",
+    hourly: "Óránként",
+    daily: "Következő napok",
+    now: "most",
+    today: "ma",
+    tomorrow: "holnap",
+    ago: "{n} perce",
+    radar: "radar",
+    model: "modell",
+    dry: "Nem esik a következő 3 órában",
+    dryHour: "Nem esik a következő órában",
+    dryUncertain: "Valószínűleg nem esik · bizonytalan ~{n} perctől",
+    maybeNow: "Lehet, hogy most esik",
+    rainNow: "Most esik ({band})",
+    ends: "Eső {t}-ig ({band})",
+    throughout: "Eső a következő 3 órában ({band})",
+    startsIn: "Eső ~{n} perc múlva ({band})",
+    startsAt: "Eső {t}-tól ({band})",
+    maybeIn: "~{n} perc múlva eshet",
+    noData: "Most nincs csapadékadat",
+    stale: "Nincs friss radaradat",
+    uncertainLegend: "Pontozott: bizonytalan",
+    band: { weak: "gyenge", moderate: "mérsékelt", strong: "erős" },
+    warning: { yellow: "Sárga figyelmeztetés", orange: "Narancs figyelmeztetés", red: "Piros figyelmeztetés" },
+    moreWarnings: "+{n} további",
+    lessWarnings: "kevesebb",
+    until: "{t}-ig", untilTomorrow: "holnap {t}-ig", untilDay: "{d} {t}-ig",
+    from: "{t}-tól", fromTomorrow: "holnap {t}-tól", fromDay: "{d} {t}-tól",
+    noEntity: "Add hozzá a MeteoVeo-integrációt, és válaszd ki a weather entitását.",
+    unavailable: "Most nincs MeteoVeo-adat",
+    humidity: "Páratartalom",
+    wind: "Szél",
+    feelsLike: "Hőérzet", feelsLikeLong: "Hőérzet",
+    dewPoint: "Harmatpont", dewPointLong: "Harmatpont",
+    uv: "UV", uvLong: "UV-index", uvMax: "max. {n}",
+    uvLevel: { low: "alacsony", moderate: "mérsékelt", high: "magas", veryHigh: "nagyon magas", extreme: "extrém" },
+    sunrise: "Napkelte", sunset: "Napnyugta",
+    compass: ["É", "ÉK", "K", "DK", "D", "DNy", "Ny", "ÉNy"],
+    condition: {
+      "clear-night": "Derült", cloudy: "Borult", fog: "Köd", hail: "Jégeső", lightning: "Zivatar",
+      "lightning-rainy": "Zivatar", partlycloudy: "Részben felhős", pouring: "Heves eső",
+      rainy: "Eső", snowy: "Havazás", "snowy-rainy": "Havas eső", sunny: "Napos", windy: "Szeles",
+      "windy-variant": "Szeles", exceptional: "Rendkívüli",
+    },
+    editor: {
+      entity: "MeteoVeo weather entitás", rain_entity: "„Eső a következő órában” szenzor (nem kötelező)",
+      warnings_entity: "Figyelmeztetés-szenzor (nem kötelező)", show_next_hour: "Következő 3 óra",
+      show_hourly: "Óránként", show_daily: "Következő napok", show_warnings: "AEMET-figyelmeztetések",
+      hourly_count: "Mutatott órák", daily_count: "Mutatott napok",
+      compact: "Kompakt mód (most + következő 3 óra)", show_details: "A „most” részletei (hőérzet, UV, nap)",
+      show_precipitation: "Órás csapadék (mm)",
     },
   },
 };
@@ -323,6 +410,66 @@ function esc(value) {
 const WARN_COLOR = { yellow: "#f2c200", orange: "#ef6c00", red: "#f2003c" };
 const WARN_RANK = { none: 0, yellow: 1, orange: 2, red: 3 };
 
+/** The WHO UV index scale and its colours. */
+const UV_LEVELS = [
+  [2, "low", "#3ea72d"], [5, "moderate", "#f7d117"], [7, "high", "#f18b00"], [10, "veryHigh", "#e53210"], [Infinity, "extreme", "#b567a4"],
+];
+export function uvLevel(value) {
+  const n = Number(value);
+  if (value === null || value === undefined || value === "" || !Number.isFinite(n) || n < 0) return null;
+  const [, key, color] = UV_LEVELS.find(([max]) => Math.round(n) <= max);
+  return { key, color };
+}
+
+/** An hourly amount on the app's mm scale: 0.2–1 weak, 1–5 moderate, 5+ strong. */
+export function precipBand(mm) {
+  const n = Number(mm);
+  if (mm === null || mm === undefined || mm === "" || !Number.isFinite(n) || n < 0.1) return null;
+  return n < 1 ? "weak" : n < 5 ? "moderate" : "strong";
+}
+
+/**
+ * The warnings sensor's list → what to show, in order: the active ones (highest
+ * level first, the one ending soonest first among equals), then the upcoming
+ * ones by onset. Expired entries are dropped; one without dates counts as active.
+ */
+export function warningSchedule(list, nowMs) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const w of list) {
+    if (!w || typeof w !== "object") continue;
+    const onset = Date.parse(w.onset || "");
+    const expires = Date.parse(w.expires || "");
+    if (Number.isFinite(expires) && expires <= nowMs) continue;
+    const phase = Number.isFinite(onset) && onset > nowMs ? "upcoming" : "active";
+    const level = WARN_COLOR[w.level] ? w.level : "yellow";
+    out.push({ ...w, level, phase, onsetMs: Number.isFinite(onset) ? onset : null, expiresMs: Number.isFinite(expires) ? expires : null });
+  }
+  const far = Number.MAX_SAFE_INTEGER;
+  return out.sort((a, b) => {
+    if (a.phase !== b.phase) return a.phase === "active" ? -1 : 1;
+    if (a.phase === "upcoming" && a.onsetMs !== b.onsetMs) return (a.onsetMs ?? far) - (b.onsetMs ?? far);
+    if (WARN_RANK[a.level] !== WARN_RANK[b.level]) return WARN_RANK[b.level] - WARN_RANK[a.level];
+    return (a.expiresMs ?? far) - (b.expiresMs ?? far);
+  });
+}
+
+/**
+ * "hasta las 21:00" / "desde mañana a las 06:00". `rel` is "today", "tomorrow"
+ * or an already formatted day ("sáb 25"); `time` the formatted clock.
+ */
+export function validityText(phase, rel, time, lang) {
+  const t = TEXT[lang] || TEXT.en;
+  if (!time) return "";
+  const key = phase === "upcoming" ? "from" : "until";
+  if (rel === "today") return fill(t[key], { t: time });
+  if (rel === "tomorrow") return fill(t[`${key}Tomorrow`], { t: time });
+  return fill(t[`${key}Day`], { d: rel, t: time });
+}
+
+/** How many warnings are shown before the "+N more" fold. */
+const WARNINGS_FOLD = 2;
+
 // ---------------------------------------------------------------------------
 // Styles. HA theme variables carry the surface and the type; the MeteoVeo
 // accents (the rain blue, amber, terracotta, green) come from the app's palette
@@ -354,6 +501,12 @@ ha-card { overflow: hidden; }
 .meta ha-icon { --mdc-icon-size: 16px; color: var(--mv-ink-2); }
 .meta b { font-weight: 500; color: var(--mv-ink); }
 .hero-icon { --mdc-icon-size: 52px; flex: none; color: var(--mv-ink); margin-top: 2px; }
+.details { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 13px; color: var(--mv-ink-2); }
+.details span { display: inline-flex; align-items: center; gap: 4px; }
+.details ha-icon { --mdc-icon-size: 16px; color: var(--mv-ink-2); }
+.details b { font-weight: 500; color: var(--mv-ink); }
+.details .uv-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; margin-left: 1px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+.details .uv-max { font-size: 11.5px; }
 section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--mv-line); }
 .sentence { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.3; }
 .sentence.soft { font-weight: 400; color: var(--mv-ink-2); }
@@ -372,9 +525,24 @@ section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--mv-li
 .legend { margin-top: 6px; font-size: 10.5px; color: var(--mv-ink-2); opacity: .8; }
 .warn { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 10px 12px; border-radius: 10px;
   border-left: 4px solid var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.warn + .warn { margin-top: 8px; }
+.warn.upcoming { background: color-mix(in srgb, var(--warn) 6%, transparent); border-left-style: dashed; }
 .warn ha-icon { --mdc-icon-size: 22px; color: var(--warn); flex: none; }
+.warn-body { flex: 1 1 auto; min-width: 0; }
+.warn-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .warn-title { font-size: 14px; font-weight: 600; }
+.warn-when { font-size: 12px; font-weight: 500; color: var(--mv-ink-2); white-space: nowrap; }
 .warn-text { font-size: 12.5px; color: var(--mv-ink-2); margin-top: 2px; line-height: 1.35; }
+.more { display: block; margin: 6px 0 0; padding: 4px 0; border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 500;
+  color: var(--mv-blue); cursor: pointer; }
+.more:focus-visible { outline: 2px solid var(--mv-blue); outline-offset: 2px; border-radius: 4px; }
+.hour .mm { font-size: 10.5px; font-weight: 500; color: var(--mv-blue); min-height: 1.2em; }
+.pbar { display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 18px; padding: 0 14px; }
+.pbar i { display: block; width: 100%; border-radius: 2px 2px 0 0; background: var(--mv-line-strong); }
+.pbar i.weak { background: var(--mv-blue-soft); }
+.pbar i.moderate { background: var(--mv-blue); }
+.pbar i.strong { background: var(--mv-blue-deep); }
+.pbar i.none { height: 2px; background: var(--mv-track); }
 .scroll { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
 .scroll::-webkit-scrollbar { display: none; }
 .hour { flex: 0 0 52px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; }
@@ -425,8 +593,11 @@ export class MeteoVeoCard extends Base {
             { name: "show_warnings", default: true, selector: { boolean: {} } },
             { name: "show_hourly", default: true, selector: { boolean: {} } },
             { name: "show_daily", default: true, selector: { boolean: {} } },
+            { name: "show_details", default: true, selector: { boolean: {} } },
+            { name: "show_precipitation", default: true, selector: { boolean: {} } },
           ],
         },
+        { name: "compact", default: false, selector: { boolean: {} } },
         {
           type: "grid", name: "",
           schema: [
@@ -453,15 +624,18 @@ export class MeteoVeoCard extends Base {
     this._subscribedTo = null;
     this._snapshot = null;
     this._connected = false;
+    this._warningsExpanded = false;
   }
 
   setConfig(config) {
     if (!config || !config.entity) throw new Error("MeteoVeo: set `entity` to the MeteoVeo weather entity");
     this._config = {
       show_next_hour: true, show_hourly: true, show_daily: true, show_warnings: true,
+      show_details: true, show_precipitation: true, compact: false,
       hourly_count: 12, daily_count: 7, ...config,
     };
     this._snapshot = null;
+    this._warningsExpanded = false;
     this._resubscribe();
     this._render();
   }
@@ -474,10 +648,11 @@ export class MeteoVeoCard extends Base {
     this._resubscribe();
     // Re-render only when something the card shows has changed.
     const ids = this._entityIds();
+    const watched = [ids.weather, ids.rain, ids.warnings, ids.apparent, ids.dewPoint, ids.uv, ids.uvMax, "sun.sun"];
     const snap = [
-      ids.weather, ids.rain, ids.warnings, this._lang,
+      ...watched, this._lang,
       hass.themes && hass.themes.darkMode, hass.locale && hass.locale.time_format,
-      ...[ids.weather, ids.rain, ids.warnings, "sun.sun"].map((id) => (id && hass.states[id]) || null),
+      ...watched.map((id) => (id && hass.states[id]) || null),
     ];
     if (this._snapshot && snap.every((v, i) => v === this._snapshot[i])) return;
     this._snapshot = snap;
@@ -498,6 +673,7 @@ export class MeteoVeoCard extends Base {
 
   getCardSize() {
     const c = this._config || {};
+    if (c.compact) return 2 + (c.show_next_hour ? 2 : 0);
     return 2 + (c.show_next_hour ? 2 : 0) + (c.show_hourly ? 2 : 0) + (c.show_daily ? Math.ceil((c.daily_count || 7) / 2) : 0);
   }
 
@@ -514,7 +690,20 @@ export class MeteoVeoCard extends Base {
       weather,
       rain: c.rain_entity || this._sibling(weather, "rain_soon", "binary_sensor."),
       warnings: c.warnings_entity || this._sibling(weather, "warnings", "sensor."),
+      // 0.2.0 sensors; an older integration simply has none of them.
+      apparent: this._sibling(weather, "apparent_temperature", "sensor."),
+      dewPoint: this._sibling(weather, "dew_point", "sensor."),
+      uv: this._sibling(weather, "uv_index", "sensor."),
+      uvMax: this._sibling(weather, "uv_index_max_today", "sensor."),
     };
+  }
+
+  /** A sensor's numeric state, or null when it is missing, unavailable or not a number. */
+  _sensorNumber(id) {
+    const s = id && this._hass && this._hass.states[id];
+    if (!s || s.state === "unavailable" || s.state === "unknown" || s.state === "") return null;
+    const n = Number(s.state);
+    return Number.isFinite(n) ? n : null;
   }
 
   /** A sibling entity of the same device, found by the integration's fixed translation key. */
@@ -589,14 +778,27 @@ export class MeteoVeoCard extends Base {
     try { return new Intl.DateTimeFormat(this._locale(), { hour: "numeric", timeZone: this._timeZone() }).format(new Date(ms)); } catch (e) { return ""; }
   }
 
-  _dayLabel(ms, nowMs) {
-    const t = TEXT[this._lang];
+  /** "today", "tomorrow", or the short weekday and day ("sáb 25") in the user's locale. */
+  _relDay(ms, nowMs) {
     const tz = this._timeZone();
     const dayKey = (x) => { try { return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(x)); } catch (e) { return new Date(x).toDateString(); } };
     const k = dayKey(ms);
-    if (k === dayKey(nowMs)) return t.today;
-    if (k === dayKey(nowMs + 86400000)) return t.tomorrow;
-    try { return new Intl.DateTimeFormat(this._locale(), { weekday: "short", day: "numeric", timeZone: tz }).format(new Date(ms)); } catch (e) { return k; }
+    if (k === dayKey(nowMs)) return "today";
+    if (k === dayKey(nowMs + 86400000)) return "tomorrow";
+    try {
+      const d = new Date(ms);
+      // Hungarian puts the weekday first ("V 25."); Intl's own "25., V" reads badly in a row.
+      if (this._lang === "hu") return `${new Intl.DateTimeFormat("hu", { weekday: "short", timeZone: tz }).format(d)} ${new Intl.DateTimeFormat("hu", { day: "numeric", timeZone: tz }).format(d)}.`;
+      // Plain "en" orders it "25 Sun"; the English speakers of HA read "Sun 25".
+      const locale = this._locale() === "en" ? "en-US" : this._locale();
+      return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", timeZone: tz }).format(d);
+    } catch (e) { return k; }
+  }
+
+  _dayLabel(ms, nowMs) {
+    const t = TEXT[this._lang];
+    const rel = this._relDay(ms, nowMs);
+    return rel === "today" ? t.today : rel === "tomorrow" ? t.tomorrow : rel;
   }
 
   _num(value, digits = 0) {
@@ -625,6 +827,8 @@ export class MeteoVeoCard extends Base {
     const dark = !!(this._hass && this._hass.themes && this._hass.themes.darkMode);
     if (dark) this.setAttribute("data-dark", ""); else this.removeAttribute("data-dark");
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${body}</ha-card>`;
+    const more = this.shadowRoot.querySelector && this.shadowRoot.querySelector(".more");
+    if (more) more.addEventListener("click", () => { this._warningsExpanded = !this._warningsExpanded; this._render(); });
   }
 
   _body() {
@@ -635,14 +839,19 @@ export class MeteoVeoCard extends Base {
     const weather = hass.states[ids.weather];
     if (!weather) return `<div class="mv"><div class="empty">${esc(t.noEntity)}</div></div>`;
     const nowMs = Date.now();
+    const c = this._config;
     const parts = [this._hero(weather, nowMs)];
     if (weather.state === "unavailable" || weather.state === "unknown") {
       parts.push(`<div class="empty">${esc(t.unavailable)}</div>`);
+    } else if (c.compact) {
+      // Compact: the "now" header and the next 3 hours, nothing else.
+      if (c.show_next_hour) parts.push(this._nextHour(ids.rain ? hass.states[ids.rain] : null, nowMs));
     } else {
-      if (this._config.show_next_hour) parts.push(this._nextHour(ids.rain ? hass.states[ids.rain] : null, nowMs));
-      if (this._config.show_warnings) parts.push(this._warnings(ids.warnings ? hass.states[ids.warnings] : null));
-      if (this._config.show_hourly) parts.push(this._hourly(weather, nowMs));
-      if (this._config.show_daily) parts.push(this._daily(weather, nowMs));
+      if (c.show_details) parts.push(this._details(weather, ids));
+      if (c.show_next_hour) parts.push(this._nextHour(ids.rain ? hass.states[ids.rain] : null, nowMs));
+      if (c.show_warnings) parts.push(this._warnings(ids.warnings ? hass.states[ids.warnings] : null, nowMs));
+      if (c.show_hourly) parts.push(this._hourly(weather, nowMs));
+      if (c.show_daily) parts.push(this._daily(weather, nowMs));
     }
     const attribution = weather.attributes.attribution;
     if (attribution) parts.push(`<div class="attr">${esc(attribution)}</div>`);
@@ -686,6 +895,39 @@ export class MeteoVeoCard extends Base {
     </header>`;
   }
 
+  /**
+   * The "now" detail row: feels-like, UV with the WHO colour, sunrise/sunset,
+   * dew point. The weather entity's own attributes come first (HA's standard
+   * names), the 0.2.0 sensors are the fallback; each item only when it exists.
+   */
+  _details(weather, ids) {
+    const t = TEXT[this._lang];
+    const a = weather.attributes;
+    const pick = (attr, id) => {
+      const own = this._num(a[attr], 0) !== null ? Number(a[attr]) : null;
+      return own !== null ? own : this._sensorNumber(id);
+    };
+    const items = [];
+    const feels = pick("apparent_temperature", ids.apparent);
+    if (feels !== null) items.push(`<span title="${esc(t.feelsLikeLong)}">${esc(t.feelsLike)} <b>${this._deg(feels)}</b></span>`);
+    const uv = pick("uv_index", ids.uv);
+    const level = uvLevel(uv);
+    // UV 0 at night says nothing; UV 0 by day ("low") does.
+    if (level && !(uv === 0 && this._isDay(weather) === false)) {
+      const uvMax = this._sensorNumber(ids.uvMax);
+      const max = uvMax !== null && uvMax > uv ? ` <span class="uv-max">${esc(fill(t.uvMax, { n: this._num(uvMax, 0) }))}</span>` : "";
+      items.push(`<span title="${esc(`${t.uvLong}: ${t.uvLevel[level.key]}`)}">${esc(t.uv)} <b>${this._num(uv, 0)}</b><i class="uv-dot" style="background:${level.color}"></i>${max}</span>`);
+    }
+    const sun = this._hass.states["sun.sun"];
+    const rising = sun && Date.parse(sun.attributes.next_rising || "");
+    const setting = sun && Date.parse(sun.attributes.next_setting || "");
+    if (Number.isFinite(rising)) items.push(`<span title="${esc(t.sunrise)}"><ha-icon icon="mdi:weather-sunset-up"></ha-icon><b>${esc(this._clock(rising))}</b></span>`);
+    if (Number.isFinite(setting)) items.push(`<span title="${esc(t.sunset)}"><ha-icon icon="mdi:weather-sunset-down"></ha-icon><b>${esc(this._clock(setting))}</b></span>`);
+    const dew = pick("dew_point", ids.dewPoint);
+    if (dew !== null) items.push(`<span title="${esc(t.dewPointLong)}">${esc(t.dewPoint)} <b>${this._deg(dew)}</b></span>`);
+    return items.length ? `<div class="details">${items.join("")}</div>` : "";
+  }
+
   _nextHour(rain, nowMs) {
     const t = TEXT[this._lang];
     // No sensor, or outside the nowcast coverage: the block disappears rather than lying.
@@ -719,20 +961,30 @@ export class MeteoVeoCard extends Base {
     </section>`;
   }
 
-  _warnings(sensor) {
+  _warnings(sensor, nowMs) {
     const t = TEXT[this._lang];
     if (!sensor || sensor.state === "unavailable" || sensor.state === "unknown") return "";
-    const list = Array.isArray(sensor.attributes.warnings) ? sensor.attributes.warnings : [];
-    if (!list.length || Number(sensor.state) === 0) return "";
-    const sorted = [...list].sort((a, b) => (WARN_RANK[b.level] || 0) - (WARN_RANK[a.level] || 0));
-    const top = sorted[0];
-    const level = WARN_COLOR[top.level] ? top.level : "yellow";
-    const title = `${t.warning[level]}${top.phenomenon_name ? ` · ${top.phenomenon_name}` : ""}`;
-    const more = sorted.length > 1 ? ` <span class="age">${esc(fill(t.moreWarnings, { n: sorted.length - 1 }))}</span>` : "";
-    return `<div class="warn" style="--warn:${WARN_COLOR[level]}">
-      <ha-icon icon="mdi:alert"></ha-icon>
-      <div><div class="warn-title">${esc(title)}${more}</div>${top.headline ? `<div class="warn-text">${esc(top.headline)}</div>` : ""}</div>
-    </div>`;
+    const all = warningSchedule(sensor.attributes.warnings, nowMs);
+    if (!all.length) return "";
+    const shown = this._warningsExpanded ? all : all.slice(0, WARNINGS_FOLD);
+    const banners = shown.map((w) => {
+      const title = `${t.warning[w.level]}${w.phenomenon_name ? ` · ${w.phenomenon_name}` : ""}`;
+      // An active warning says until when, an upcoming one from when.
+      const ms = w.phase === "upcoming" ? w.onsetMs : w.expiresMs;
+      const when = ms !== null ? validityText(w.phase, this._relDay(ms, nowMs), this._clock(ms), this._lang) : "";
+      return `<div class="warn${w.phase === "upcoming" ? " upcoming" : ""}" style="--warn:${WARN_COLOR[w.level]}">
+        <ha-icon icon="${w.phase === "upcoming" ? "mdi:alert-outline" : "mdi:alert"}"></ha-icon>
+        <div class="warn-body">
+          <div class="warn-head"><span class="warn-title">${esc(title)}</span>${when ? `<span class="warn-when">${esc(when)}</span>` : ""}</div>
+          ${w.headline ? `<div class="warn-text">${esc(w.headline)}</div>` : ""}
+        </div>
+      </div>`;
+    });
+    const hidden = all.length - shown.length;
+    const fold = all.length > WARNINGS_FOLD
+      ? `<button type="button" class="more">${esc(hidden ? fill(t.moreWarnings, { n: hidden }) : t.lessWarnings)}</button>`
+      : "";
+    return `<div class="warns">${banners.join("")}${fold}</div>`;
   }
 
   _hourly(weather, nowMs) {
@@ -741,14 +993,28 @@ export class MeteoVeoCard extends Base {
     if (!Array.isArray(list) || list.length === 0) return "";
     const fromNow = list.filter((h) => Date.parse(h.datetime) >= nowMs - 3600000).slice(0, Math.max(1, this._config.hourly_count));
     if (!fromNow.length) return "";
-    const cols = fromNow.map((h) => {
+    // The mm bars appear only when some visible hour is wet; a dry window looks as before.
+    const amounts = fromNow.map((h) => (precipBand(h.precipitation) ? Number(h.precipitation) : 0));
+    const wet = this._config.show_precipitation && amounts.some((mm) => mm > 0);
+    const scale = Math.max(5, ...amounts);
+    const unit = weather.attributes.precipitation_unit || "mm";
+    const cols = fromNow.map((h, i) => {
       const ms = Date.parse(h.datetime);
       const p = Number(h.precipitation_probability);
       const icon = conditionIcon(h.condition, typeof h.is_daytime === "boolean" ? h.is_daytime : undefined);
+      let bar = "";
+      if (wet) {
+        const mm = amounts[i];
+        const band = precipBand(mm);
+        const height = band ? Math.max(3, Math.round(18 * Math.min(1, mm / scale))) : 2;
+        bar = `<span class="mm">${band ? `${this._num(mm, mm < 10 ? 1 : 0)} ${esc(unit)}` : ""}</span>
+        <span class="pbar"><i class="${band || "none"}" style="height:${height}px"></i></span>`;
+      }
       return `<div class="hour">
         <span class="h">${esc(this._hourLabel(ms))}</span>
         <ha-icon icon="${icon}"></ha-icon>
         <span class="t">${this._deg(h.temperature)}</span>
+        ${bar}
         <span class="p">${Number.isFinite(p) && p >= 10 ? `${this._num(p, 0)} %` : ""}</span>
       </div>`;
     });
@@ -791,7 +1057,7 @@ if (typeof customElements !== "undefined" && !customElements.get("meteoveo-card"
   window.customCards.push({
     type: "meteoveo-card",
     name: "MeteoVeo",
-    description: "Current weather, the next 3 hours of rain in 10-minute steps, AEMET warnings, hourly and daily forecast.",
+    description: "Current weather with feels-like, UV and sun times; the next 3 hours of rain in 10-minute steps; AEMET warnings with their validity; hourly (with mm) and daily forecast. Compact mode available.",
     preview: true,
     documentationURL: "https://github.com/meteoveo/ha-meteoveo/blob/main/docs/card.md",
   });
