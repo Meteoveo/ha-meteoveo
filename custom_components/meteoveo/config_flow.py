@@ -391,8 +391,14 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="verify_code",
             data_schema=vol.Schema(
                 {
+                    # The code is digits only (6, valid 24 h): "tel" brings up the
+                    # number pad on phones and, unlike "number", keeps leading
+                    # zeros. It still accepts letters, so older codes work too.
                     vol.Required(CONF_CODE): selector.TextSelector(
-                        selector.TextSelectorConfig(autocomplete="one-time-code")
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.TEL,
+                            autocomplete="one-time-code",
+                        )
                     )
                 }
             ),
