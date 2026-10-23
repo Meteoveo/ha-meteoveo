@@ -153,7 +153,9 @@ async def test_rain_soon(hass: HomeAssistant) -> None:
     assert state.attributes["starts_at"] == "2026-10-23T13:20:00Z"
     assert state.attributes["ends_at"] is None
     assert state.attributes["issued_at"] == "2026-10-23T12:48:00Z"
-    assert state.attributes["age_minutes"] == 2
+    # Counted from issued_at at update time (a reused 304 reply must not freeze it).
+    assert isinstance(state.attributes["age_minutes"], int)
+    assert state.attributes["age_minutes"] >= 0
     assert state.attributes["steps"][1] == {
         "at": "2026-10-23T13:20:00Z",
         "lead_minutes": 30,
@@ -313,3 +315,11 @@ async def test_best_model_paused_while_the_station_is_silent(hass: HomeAssistant
     assert state.state == "paused"
     assert state.attributes["hours_silent"] == 30
     assert state.attributes["grace_hours"] == 12
+
+
+async def test_rain_soon_age_counts_from_issued_at(hass: HomeAssistant, freezer) -> None:
+    """The age is counted from issued_at, not copied from the reply."""
+    freezer.move_to("2026-10-23T13:05:30Z")
+    await setup(hass, ACCOUNT_DATA)
+    # issuedAt 12:48:00 -> 17 minutes, although the reply said 2.
+    assert hass.states.get(RAIN_SOON).attributes["age_minutes"] == 17
