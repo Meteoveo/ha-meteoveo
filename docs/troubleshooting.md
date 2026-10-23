@@ -1,5 +1,42 @@
 # Troubleshooting
 
+## "Email or password not accepted"
+
+- Check the password; it is case-sensitive.
+- An account created with **Google, Apple or a passkey** has no password
+  yet, and the integration can only sign in with one. Set a password in the
+  MeteoVeo app (**Account → Password**) and try again — or, if you have a
+  station already set up on meteoveo.com, use the station-key option.
+
+## The confirmation code does not arrive
+
+It can take a minute; check the spam folder. If the address already has a
+MeteoVeo account, you get an email saying so instead of a code — close the
+setup window and choose **I already have an account**.
+
+## "MeteoVeo has no forecast there"
+
+The pin is outside the area MeteoVeo covers: Spain, including the Balearic
+and Canary Islands, Ceuta and Melilla.
+
+## "This account already has 5 home-automation connections"
+
+Each Home Assistant (or Homey) connection uses one integration key, and an
+account can have five. Delete MeteoVeo from a Home Assistant you no longer
+use — removing the integration revokes its key — and try again.
+
+## The integration asks me to sign in again
+
+MeteoVeo no longer accepts this connection's key — for example because the
+connection was removed from your account elsewhere. Sign in with the same
+account; a new key is issued, and the place, the station and the entity IDs
+stay as they are.
+
+## The rain entities are unavailable
+
+The place is outside radar nowcast coverage, so there is no next hour to
+report. The forecast itself is unaffected.
+
 ## "The station ID or key was not accepted"
 
 - The ID starts with `MV` and is shown on the station's page — it is not
@@ -10,7 +47,7 @@
 - Both fields are trimmed of surrounding whitespace automatically, but a
   character missing from the middle is still a wrong key.
 
-## The integration asks for the key again (re-authentication)
+## A station-key entry asks for the key again (re-authentication)
 
 Someone generated a new key on the station's page — perhaps you, on another
 device. This is by design: rotating the key is the way to lock out anything
@@ -33,10 +70,12 @@ Common causes are covered in [measurements](measurements.md) — indoor
 sensors mapped as outdoor, rain rate mapped as daily rain, absolute
 pressure at altitude.
 
-## "Forecast access remaining" is counting down
+## "Station extras remaining" is counting down
 
-Your station has stopped reporting regularly. See
-[reciprocity](reciprocity.md) for the exact rules. The usual causes:
+Your station has stopped reporting regularly. The forecast is not affected;
+only the station-specific extras (the best-model verdict) pause after 12
+hours. See [reciprocity](reciprocity.md) for the exact rules. The usual
+causes:
 
 - Home Assistant restarted and the source entities are `unavailable` —
   readings without a value are not uploaded.
@@ -44,7 +83,7 @@ Your station has stopped reporting regularly. See
   the mapping.
 - The station itself is offline (power, Wi-Fi).
 
-Access is restored instantly once two readings arrive no more than
+The extras are restored instantly once two readings arrive no more than
 10 minutes apart.
 
 ## The best-model sensor says "Collecting data"
@@ -58,4 +97,5 @@ first readings arrive.
 
 Open an issue: <https://github.com/meteoveo/ha-meteoveo/issues>. Include the
 Home Assistant log lines for `custom_components.meteoveo` — they never
-contain your station key.
+contain your password or keys — or the integration's diagnostics download,
+which redacts keys, your email and your coordinates.
