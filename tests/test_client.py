@@ -7,7 +7,12 @@ not, or every hiccup would ask the user to type their key again.
 
 from __future__ import annotations
 
+import traceback
+
+import aiohttp
 import pytest
+from multidict import CIMultiDict, CIMultiDictProxy
+from yarl import URL
 
 from custom_components.meteoveo.auth import Credentials
 from custom_components.meteoveo.client import (
@@ -51,6 +56,47 @@ class FakeSession:
 
     def get(self, url: str, **kwargs):
         return self.request("GET", url, **kwargs)
+
+
+class UnreachableResponse(FakeResponse):
+    """A request that fails before the service answers.
+
+    aiohttp raises when the request context is entered, not from ``get()``.
+    """
+
+    def __init__(self, failure: BaseException):
+        super().__init__(0)
+        self._failure = failure
+
+    async def __aenter__(self):
+        raise self._failure
+
+
+class UnreadableResponse(FakeResponse):
+    """A 200 whose body is not JSON -- typically a proxy's error page."""
+
+    def __init__(self, failure: BaseException):
+        super().__init__(200)
+        self._failure = failure
+
+    async def json(self):
+        raise self._failure
+
+
+def request_info_carrying_the_key() -> aiohttp.RequestInfo:
+    # The upload protocol puts the key in the query string, and aiohttp puts
+    # the request URL into its exception messages.
+    url = URL(
+        f"https://example.invalid/upload?ID={CREDS.station_id}&PASSWORD={CREDS.station_key}"
+    )
+    return aiohttp.RequestInfo(url, "GET", CIMultiDictProxy(CIMultiDict()), url)
+
+
+NETWORK_FAILURES = [
+    pytest.param(aiohttp.ClientConnectionError("connection refused"), id="refused"),
+    pytest.param(aiohttp.ServerDisconnectedError(), id="disconnected"),
+    pytest.param(TimeoutError(), id="timeout"),
+]
 
 
 class TestStationView:
@@ -115,6 +161,55 @@ class TestFailureModes:
         with pytest.raises(ServiceUnavailable) as caught:
             await MeteoVeoClient(session, CREDS).async_get_station()
         assert CREDS.station_key not in str(caught.value)
+
+
+class TestNetworkFailures:
+    """No answer at all is an outage too -- never a credential problem."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", NETWORK_FAILURES)
+    async def test_unreachable_station_view_raises_service_unavailable(self, failure):
+        session = FakeSession(UnreachableResponse(failure))
+        with pytest.raises(ServiceUnavailable):
+            await MeteoVeoClient(session, CREDS).async_get_station()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("failure", NETWORK_FAILURES)
+    async def test_unreachable_upload_raises_service_unavailable(self, failure):
+        session = FakeSession(UnreachableResponse(failure))
+        with pytest.raises(ServiceUnavailable):
+            await MeteoVeoClient(session, CREDS).async_upload(
+                {"tempf": 70.0}, now_iso="2026-08-20 10:00:00"
+            )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "failure",
+        [
+            pytest.param(ValueError("Expecting value: line 1 column 1"), id="not-json"),
+            pytest.param(
+                aiohttp.ContentTypeError(request_info_carrying_the_key(), ()),
+                id="wrong-content-type",
+            ),
+        ],
+    )
+    async def test_a_body_that_is_not_json_is_an_outage(self, failure):
+        session = FakeSession(UnreadableResponse(failure))
+        with pytest.raises(ServiceUnavailable):
+            await MeteoVeoClient(session, CREDS).async_get_station()
+
+    @pytest.mark.asyncio
+    async def test_a_network_failure_never_carries_the_key_into_a_traceback(self):
+        failure = aiohttp.ClientResponseError(
+            request_info_carrying_the_key(), (), status=0, message="connection dropped"
+        )
+        session = FakeSession(UnreachableResponse(failure))
+        with pytest.raises(ServiceUnavailable) as caught:
+            await MeteoVeoClient(session, CREDS).async_upload(
+                {"tempf": 70.0}, now_iso="2026-08-20 10:00:00"
+            )
+        printed = "".join(traceback.format_exception(caught.value))
+        assert CREDS.station_key not in printed
 
 
 class TestUpload:

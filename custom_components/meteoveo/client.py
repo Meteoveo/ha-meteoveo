@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+import aiohttp
+
 from .auth import Credentials, api_headers, redact, upload_url_and_params
 from .const import API_BASE
 
@@ -30,6 +32,12 @@ class ServiceUnavailable(MeteoVeoError):
 # a request arrives without a usable token.
 _AUTH_STATUSES = frozenset({401, 403})
 
+# Failures that happen before the service has given a usable answer: DNS, a
+# refused or dropped connection, a timeout, a body that is not JSON (a proxy's
+# error page, typically). All of them mean "try again later" -- none of them
+# says anything about the key.
+_TRANSPORT_ERRORS = (aiohttp.ClientError, TimeoutError, ValueError)
+
 
 class MeteoVeoClient:
     """Reads station data and uploads readings."""
@@ -42,6 +50,16 @@ class MeteoVeoClient:
         """Strip credentials before text goes into an exception or a log."""
         return redact(text, self._credentials.station_key)
 
+    def _unreachable(self, what: str, failure: BaseException) -> ServiceUnavailable:
+        """An outage error whose message is safe to log.
+
+        aiohttp puts the request URL into its messages, and the upload URL
+        carries the key. The caller raises this ``from None`` for the same
+        reason: a chained original would print the URL in any traceback.
+        """
+        detail = self._safe(str(failure)) or type(failure).__name__
+        return ServiceUnavailable(f"{what} unreachable: {detail}")
+
     async def async_get_station(self) -> dict[str, Any]:
         """Station view: position, sensor findings, model verdict, upload state.
 
@@ -49,13 +67,20 @@ class MeteoVeoClient:
         keyed by the token -- sending our own could only ever disagree with it.
         """
         url = f"{API_BASE}/v1/station/self"
-        async with self._session.get(url, headers=api_headers(self._credentials)) as response:
-            if response.status in _AUTH_STATUSES:
-                raise InvalidCredentials("station id or key was rejected")
-            if response.status >= 400:
-                detail = self._safe(await response.text())
-                raise ServiceUnavailable(f"station view unavailable ({response.status}): {detail}")
-            return await response.json()
+        try:
+            async with self._session.get(
+                url, headers=api_headers(self._credentials)
+            ) as response:
+                if response.status in _AUTH_STATUSES:
+                    raise InvalidCredentials("station id or key was rejected")
+                if response.status >= 400:
+                    detail = self._safe(await response.text())
+                    raise ServiceUnavailable(
+                        f"station view unavailable ({response.status}): {detail}"
+                    )
+                return await response.json()
+        except _TRANSPORT_ERRORS as failure:
+            raise self._unreachable("station view", failure) from None
 
     async def async_upload(self, fields: Mapping[str, float], *, now_iso: str) -> bool:
         """Upload one set of readings. Returns False when there was nothing to send.
@@ -67,10 +92,13 @@ class MeteoVeoClient:
             return False
 
         url, params = upload_url_and_params(self._credentials, fields, now_iso=now_iso)
-        async with self._session.get(url, params=params) as response:
-            if response.status in _AUTH_STATUSES:
-                raise InvalidCredentials("station id or key was rejected")
-            if response.status >= 400:
-                detail = self._safe(await response.text())
-                raise ServiceUnavailable(f"upload failed ({response.status}): {detail}")
-            return True
+        try:
+            async with self._session.get(url, params=params) as response:
+                if response.status in _AUTH_STATUSES:
+                    raise InvalidCredentials("station id or key was rejected")
+                if response.status >= 400:
+                    detail = self._safe(await response.text())
+                    raise ServiceUnavailable(f"upload failed ({response.status}): {detail}")
+                return True
+        except _TRANSPORT_ERRORS as failure:
+            raise self._unreachable("upload", failure) from None
