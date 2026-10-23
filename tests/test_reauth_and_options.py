@@ -79,6 +79,12 @@ async def test_options_flow_stores_the_selection(hass: HomeAssistant) -> None:
 
         result = await hass.config_entries.options.async_init(entry.entry_id)
         assert result["step_id"] == "init"
+        # A station-key entry has only the measurement mapping to change.
+        assert result["menu_options"] == ["measurements"]
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"next_step_id": "measurements"}
+        )
+        assert result["step_id"] == "measurements"
 
         result = await hass.config_entries.options.async_configure(
             result["flow_id"], {"temperature": "sensor.outside_temperature"}
@@ -100,6 +106,9 @@ async def test_options_flow_accepts_an_empty_selection(hass: HomeAssistant) -> N
         await hass.async_block_till_done()
 
         result = await hass.config_entries.options.async_init(entry.entry_id)
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"next_step_id": "measurements"}
+        )
         result = await hass.config_entries.options.async_configure(result["flow_id"], {})
         await hass.async_block_till_done()
 

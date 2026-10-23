@@ -2,8 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Állomás bekötése",
-        "description": "Írd be a beküldési azonosítót és kulcsot, amit az állomás létrehozásakor kaptál.\n\nMég nincs állomásod? Hozd létre itt: {signup_url}, aztán gyere vissza.\n\n[Telepítési útmutató]({docs_url})",
+        "title": "MeteoVeo",
+        "description": "Előrejelzés az otthonodra, eső a következő órában és hivatalos figyelmeztetések Spanyolországra — időjárás-állomással vagy anélkül.\n\n[Telepítési útmutató]({docs_url})",
+        "menu_options": {
+          "create_account": "Ingyenes MeteoVeo-fiók létrehozása",
+          "login": "Már van fiókom",
+          "station_key": "Van állomás-azonosítóm és -kulcsom (haladó)"
+        }
+      },
+      "station_key": {
+        "title": "Bekötés állomás-kulccsal",
+        "description": "Írd be az állomás azonosítóját és kulcsát az állomásod oldaláról: {signup_url}. Ez az út a MeteoVeo weboldalán már létrehozott állomásoknak való.\n\n[Telepítési útmutató]({docs_url})",
         "data": {
           "station_id": "Állomás-azonosító",
           "station_key": "Állomás-kulcs"
@@ -11,6 +20,76 @@
         "data_description": {
           "station_id": "Az MV… kezdetű azonosító az állomásod oldaláról. Nem titok, és soha nem változik.",
           "station_key": "Az állomás oldalán generált titok. Új kulcs készítése a régit azonnal érvényteleníti."
+        }
+      },
+      "create_account": {
+        "title": "MeteoVeo-fiók létrehozása",
+        "description": "Ingyenes. E-mailben küldünk egy kódot a cím megerősítéséhez. A jelszavad egyszer megy át a MeteoVeóhoz, a Home Assistant nem tárolja.\n\nOlvasd el a [felhasználási feltételeket]({terms_url}) és az [adatvédelmi tájékoztatót]({privacy_url}).\n\n[Telepítési útmutató]({docs_url})",
+        "data": {
+          "email": "E-mail-cím",
+          "password": "Jelszó",
+          "accept_terms": "Elfogadom a felhasználási feltételeket és az adatvédelmi tájékoztatót",
+          "marketing": "Kérek MeteoVeo-híreket e-mailben"
+        },
+        "data_description": {
+          "email": "Ide érkezik a megerősítő kód. Ezzel is lépsz be.",
+          "password": "Legalább 8 karakter.",
+          "accept_terms": "A fiók létrehozásához szükséges.",
+          "marketing": "Nem kötelező. Bármikor leiratkozhatsz."
+        }
+      },
+      "verify_code": {
+        "title": "Nézd meg a leveleidet",
+        "description": "Kódot küldtünk ide: {email}. Egy percig is eltarthat — a spam mappát is nézd meg.\n\nHa ehhez a címhez már van fiók, kód helyett erről kapsz levelet: zárd be ezt az ablakot, és válaszd a „Már van fiókom” lehetőséget.\n\n[Telepítési útmutató]({docs_url})",
+        "data": {
+          "code": "Kód"
+        },
+        "data_description": {
+          "code": "A levélben kapott kód."
+        }
+      },
+      "login": {
+        "title": "Belépés a MeteoVeóba",
+        "description": "Lépj be a MeteoVeo e-mail-címeddel és jelszavaddal. A jelszót a Home Assistant nem tárolja.\n\nGoogle-lel, Apple-lel vagy passkey-vel hoztad létre a fiókot? Előbb állíts be jelszót a MeteoVeo appban (Fiók → Jelszó), vagy használd az állomás-kulcsos utat.\n\n[Telepítési útmutató]({docs_url})",
+        "data": {
+          "email": "E-mail-cím",
+          "password": "Jelszó"
+        },
+        "data_description": {
+          "email": "A cím, amivel regisztráltál.",
+          "password": "A MeteoVeo-jelszavad."
+        }
+      },
+      "location": {
+        "title": "Hova kéred az előrejelzést?",
+        "description": "A Home Assistant otthona van kijelölve; a jelölő húzásával módosíthatod. A MeteoVeo Spanyolországot fedi le, a Baleár- és a Kanári-szigetekkel, Ceutával és Melillával együtt. A helyet kb. 1 km-re kerekítve tároljuk.\n\n[Telepítési útmutató]({docs_url})",
+        "data": {
+          "location": "Hely"
+        },
+        "data_description": {
+          "location": "Húzd a jelölőt, vagy hagyd az otthonodon."
+        }
+      },
+      "has_station": {
+        "title": "Időjárás-állomás",
+        "description": "Ha a Home Assistant már olvas egy időjárás-állomást, megoszthatja a méréseit a MeteoVeóval. Cserébe többletet kapsz az állomásodhoz, például hogy ott melyik előrejelzési modell a legpontosabb. Állomás nélkül is megkapod az előrejelzést.\n\n[Telepítési útmutató]({docs_url})",
+        "data": {
+          "has_station": "Van időjárás-állomásod a Home Assistantben?"
+        },
+        "data_description": {
+          "has_station": "Hagyd kikapcsolva, ha nincs."
+        }
+      },
+      "station_details": {
+        "title": "Az állomásod",
+        "description": "A méréseket percenként küldjük, HTTPS-en.\n\n[A mérésekről]({docs_url})",
+        "data": {
+          "station_name": "Az állomás neve",
+          "sensor_height_cm": "Szenzor-magasság"
+        },
+        "data_description": {
+          "station_name": "Így látod majd az állomásodat a MeteoVeóban.",
+          "sensor_height_cm": "A hőmérséklet-szenzor magassága a talaj felett, centiméterben (általában 150–200)."
         }
       },
       "measurements": {
@@ -46,21 +125,63 @@
         "data_description": {
           "station_key": "Az új kulcs az állomás oldaláról. A régi abban a pillanatban megszűnt, amikor lecserélted."
         }
+      },
+      "reauth_login": {
+        "title": "Lépj be újra",
+        "description": "A MeteoVeo már nem fogadja el ennek a kapcsolatnak a kulcsát. Lépj be, és új kulcsot adunk ki; a hely, az állomás és az entitások maradnak.\n\n[Hibaelhárítás]({docs_url})",
+        "data": {
+          "email": "E-mail-cím",
+          "password": "Jelszó"
+        },
+        "data_description": {
+          "email": "A fiók, amivel ezt a kapcsolatot beállítottad.",
+          "password": "A MeteoVeo-jelszavad."
+        }
       }
     },
     "error": {
       "invalid_auth": "Az azonosítót vagy a kulcsot nem fogadta el a szolgáltatás. Nézd meg mindkettőt — és vedd figyelembe, hogy új kulcs generálása a régit azonnal érvényteleníti.",
       "cannot_connect": "Nem sikerült elérni a MeteoVeót. Az adataidat nem ellenőriztük; próbáld újra kicsit később.",
-      "unknown": "Valami olyan történt, amire nem számítottunk. A részletek a naplóban vannak."
+      "unknown": "Valami olyan történt, amire nem számítottunk. A részletek a naplóban vannak.",
+      "invalid_login": "Az e-mail-címet vagy a jelszót nem fogadta el a szolgáltatás. A Google-lel, Apple-lel vagy passkey-vel létrehozott fióknak még nincs jelszava: állíts be egyet a MeteoVeo appban (Fiók → Jelszó), vagy használd az állomás-kulcsos utat.",
+      "invalid_email": "Ez nem tűnik e-mail-címnek.",
+      "password_too_short": "A jelszónak legalább 8 karakteresnek kell lennie.",
+      "weak_password": "A MeteoVeo nem fogadta el ezt a jelszót. Válassz hosszabbat vagy nehezebben kitalálhatót.",
+      "terms_required": "A fiók létrehozásához fogadd el a felhasználási feltételeket és az adatvédelmi tájékoztatót.",
+      "invalid_code": "A kód nem jó, vagy lejárt. Nézd meg a MeteoVeo legutóbbi levelét.",
+      "invalid_location": "Erre a helyre a MeteoVeónak nincs előrejelzése. Válassz pontot Spanyolországban, a Baleár- vagy a Kanári-szigeteken, Ceutában vagy Melillában.",
+      "wrong_account": "Ez a kapcsolat egy másik MeteoVeo-fiókhoz tartozik. Azt az e-mail-címet használd, amivel beállítottad."
     },
     "abort": {
       "already_configured": "Ez az állomás már be van kötve.",
-      "reauth_successful": "Az új kulcs működik."
+      "reauth_successful": "Kész — a kapcsolat újra működik.",
+      "registration_closed": "A MeteoVeo most nem fogad új fiókot. Ha már van fiókod, kezdd újra, és válaszd a „Már van fiókom” lehetőséget.",
+      "too_many_keys": "Ehhez a fiókhoz már 5 okosotthon-kapcsolat tartozik, ez a maximum. Távolítsd el a MeteoVeót egy már nem használt Home Assistantből vagy Homeyból, és próbáld újra.",
+      "session_expired": "A belépés lejárt, amíg a beállítás nyitva volt. Kezdd újra."
     }
   },
   "options": {
     "step": {
       "init": {
+        "title": "MeteoVeo-beállítások",
+        "description": "Mit szeretnél módosítani?\n\n[Telepítési útmutató]({docs_url})",
+        "menu_options": {
+          "location": "A hely módosítása",
+          "measurements": "Az állomás mérései",
+          "delete_account": "A MeteoVeo-fiókom törlése"
+        }
+      },
+      "location": {
+        "title": "A hely módosítása",
+        "description": "Húzd el a jelölőt. Az előrejelzés az új helyre vált.\n\n[Telepítési útmutató]({docs_url})",
+        "data": {
+          "location": "Hely"
+        },
+        "data_description": {
+          "location": "Húzd a jelölőt, vagy hagyd az otthonodon."
+        }
+      },
+      "measurements": {
         "title": "Melyik entitás adja melyik mérést",
         "description": "Hagyd üresen azt a mérést, amit az állomásod nem mér. Mérésenként egy entitás.\n\n[A mérésekről]({docs_url})",
         "data": {
@@ -83,7 +204,35 @@
           "daily_rain": "Éjféltől gyűlt csapadék — nem az intenzitás.",
           "solar_radiation": "Napsugárzás, W/m²-ben."
         }
+      },
+      "delete_account": {
+        "title": "A MeteoVeo-fiókom törlése",
+        "description": "Nem vonható vissza. Törlődik a fiókod, a profilod, a fotóid, az állomásaid neve és kulcsa, és a fiók minden Home Assistant-kapcsolata leáll. A már elküldött mérések névtelenül megmaradnak.\n\nAz App Store- vagy Google Play-előfizetést ez **nem** mondja le — azt az áruházban mondd le.\n\nNincs jelszó a fiókodon (Google, Apple vagy passkey)? Akkor a MeteoVeo appban töröld.\n\n[Hibaelhárítás]({docs_url})",
+        "data": {
+          "email": "E-mail-cím",
+          "password": "Jelszó",
+          "confirm": "Írd be újra az e-mail-címed a megerősítéshez"
+        },
+        "data_description": {
+          "email": "A fiók e-mail-címe.",
+          "password": "A MeteoVeo-jelszavad.",
+          "confirm": "A fiók csak akkor törlődik, ha ez egyezik a fenti e-mail-címmel."
+        }
       }
+    },
+    "error": {
+      "cannot_connect": "Nem sikerült elérni a MeteoVeót. Az adataidat nem ellenőriztük; próbáld újra kicsit később.",
+      "unknown": "Valami olyan történt, amire nem számítottunk. A részletek a naplóban vannak.",
+      "invalid_login": "Az e-mail-címet vagy a jelszót nem fogadta el a szolgáltatás. A Google-lel, Apple-lel vagy passkey-vel létrehozott fióknak még nincs jelszava: állíts be egyet a MeteoVeo appban (Fiók → Jelszó), vagy használd az állomás-kulcsos utat.",
+      "invalid_location": "Erre a helyre a MeteoVeónak nincs előrejelzése. Válassz pontot Spanyolországban, a Baleár- vagy a Kanári-szigeteken, Ceutában vagy Melillában.",
+      "wrong_account": "Ez a kapcsolat egy másik MeteoVeo-fiókhoz tartozik. Azt az e-mail-címet használd, amivel beállítottad.",
+      "confirm_mismatch": "A két e-mail-cím nem egyezik.",
+      "invalid_password": "Hibás jelszó.",
+      "password_required": "Ennek a fióknak nincs jelszava. A MeteoVeo appban vagy a meteoveo.com-on töröld."
+    },
+    "abort": {
+      "account_deleted": "A MeteoVeo-fiókodat töröltük. Az integráció most eltávolítja magát.",
+      "reauth_required": "A MeteoVeo már nem fogadja el ennek a kapcsolatnak a kulcsát. Lépj be újra az értesítésből, aztán próbáld újra."
     }
   },
   "entity": {
@@ -91,7 +240,8 @@
       "best_model": {
         "name": "Legjobb előrejelzési modell",
         "state": {
-          "collecting": "Adatgyűjtés folyik"
+          "collecting": "Adatgyűjtés folyik",
+          "paused": "Szünetel (az állomás hallgat)"
         }
       },
       "accepted_uploads": {
@@ -101,13 +251,44 @@
         "name": "Utolsó beküldés"
       },
       "grace_remaining": {
-        "name": "Hátralévő előrejelzés-hozzáférés"
+        "name": "Hátralévő idő az állomás-többletből"
+      },
+      "rain_start": {
+        "name": "Eső kezdete"
+      },
+      "rain_end": {
+        "name": "Eső vége"
+      },
+      "warnings": {
+        "name": "Időjárási figyelmeztetések",
+        "state_attributes": {
+          "highest_level": {
+            "name": "Legmagasabb szint",
+            "state": {
+              "none": "Nincs",
+              "yellow": "Sárga",
+              "orange": "Narancs",
+              "red": "Piros"
+            }
+          }
+        }
       }
     },
     "binary_sensor": {
       "sensor_problem": {
         "name": "Szenzor-probléma"
+      },
+      "rain_soon": {
+        "name": "Eső a következő órában"
       }
+    }
+  },
+  "exceptions": {
+    "account_deleted_title": {
+      "message": "MeteoVeo-fiók törölve"
+    },
+    "account_deleted": {
+      "message": "A MeteoVeo-fiókodat töröltük, és a MeteoVeo-integrációt eltávolítottuk a Home Assistantből. Ne feledd: az App Store- vagy Google Play-előfizetést ez nem mondja le — azt az áruházban mondd le."
     }
   }
 }

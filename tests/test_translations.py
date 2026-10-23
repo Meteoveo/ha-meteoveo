@@ -67,10 +67,38 @@ def test_no_value_was_left_untranslated(language):
 
 @pytest.mark.parametrize("language", LANGUAGES)
 def test_the_signup_placeholder_survives_translation(language):
-    # The setup screen substitutes this; a translation that dropped it would
-    # leave someone without an account with nowhere to go.
-    description = load(language)["config"]["step"]["user"]["description"]
+    # The station-key screen substitutes this; a translation that dropped it
+    # would leave a station owner without the page where the key is shown.
+    description = load(language)["config"]["step"]["station_key"]["description"]
     assert "{signup_url}" in description
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_legal_links_survive_translation(language):
+    # Accepting the terms is only meaningful if they can be read from the form.
+    description = load(language)["config"]["step"]["create_account"]["description"]
+    assert "{terms_url}" in description
+    assert "{privacy_url}" in description
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_code_screen_names_the_address(language):
+    assert "{email}" in load(language)["config"]["step"]["verify_code"]["description"]
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_every_menu_option_has_a_label(language):
+    data = load(language)
+    assert set(data["config"]["step"]["user"]["menu_options"]) == {
+        "create_account",
+        "login",
+        "station_key",
+    }
+    assert set(data["options"]["step"]["init"]["menu_options"]) == {
+        "location",
+        "measurements",
+        "delete_account",
+    }
 
 
 # --- Tooltips and knowledge-base links (added with the docs pages) ---------
@@ -78,10 +106,17 @@ def test_the_signup_placeholder_survives_translation(language):
 
 def data_description_steps(data: dict):
     """Every (step, fields) pair that renders input fields."""
-    yield "config.user", data["config"]["step"]["user"]
-    yield "config.measurements", data["config"]["step"]["measurements"]
-    yield "config.reauth_confirm", data["config"]["step"]["reauth_confirm"]
-    yield "options.init", data["options"]["step"]["init"]
+    for flow in ("config", "options"):
+        for name, step in data[flow]["step"].items():
+            if "data" in step:
+                yield f"{flow}.{name}", step
+
+
+def test_every_form_step_is_checked():
+    # Guards the generic walk above: a step that renders fields must be found.
+    names = {name for name, _ in data_description_steps(load("en"))}
+    assert {"config.station_key", "config.create_account", "config.login",
+            "config.location", "options.delete_account"} <= names
 
 
 @pytest.mark.parametrize("language", LANGUAGES)

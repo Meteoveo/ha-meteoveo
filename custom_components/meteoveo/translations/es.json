@@ -2,8 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Conecta tu estación",
-        "description": "Escribe el ID y la clave de envío que viste al crear la estación.\n\n¿Aún no tienes estación? Créala en {signup_url} y vuelve aquí.\n\n[Guía de instalación]({docs_url})",
+        "title": "MeteoVeo",
+        "description": "Previsión para tu casa, lluvia en la próxima hora y avisos oficiales en España, con o sin estación meteorológica.\n\n[Guía de instalación]({docs_url})",
+        "menu_options": {
+          "create_account": "Crear una cuenta gratis",
+          "login": "Ya tengo cuenta",
+          "station_key": "Tengo el ID y la clave de una estación (avanzado)"
+        }
+      },
+      "station_key": {
+        "title": "Conectar con clave de estación",
+        "description": "Escribe el ID y la clave que aparecen en la página de tu estación en {signup_url}. Esta opción es para estaciones que ya diste de alta en la web de MeteoVeo.\n\n[Guía de instalación]({docs_url})",
         "data": {
           "station_id": "ID de la estación",
           "station_key": "Clave de la estación"
@@ -11,6 +20,76 @@
         "data_description": {
           "station_id": "El identificador MV… que aparece en la página de tu estación. No es secreto y nunca cambia.",
           "station_key": "El secreto generado en la página de la estación. Crear una clave nueva invalida la anterior al instante."
+        }
+      },
+      "create_account": {
+        "title": "Crea tu cuenta de MeteoVeo",
+        "description": "Es gratis. Te enviaremos un código por correo para confirmar la dirección. La contraseña llega a MeteoVeo una sola vez y no se guarda en Home Assistant.\n\nLee las [condiciones de uso]({terms_url}) y la [política de privacidad]({privacy_url}).\n\n[Guía de instalación]({docs_url})",
+        "data": {
+          "email": "Correo electrónico",
+          "password": "Contraseña",
+          "accept_terms": "Acepto las condiciones de uso y la política de privacidad",
+          "marketing": "Quiero recibir novedades de MeteoVeo por correo"
+        },
+        "data_description": {
+          "email": "Aquí te llegará el código. También será tu usuario.",
+          "password": "Mínimo 8 caracteres.",
+          "accept_terms": "Necesario para crear la cuenta.",
+          "marketing": "Opcional. Puedes darte de baja cuando quieras."
+        }
+      },
+      "verify_code": {
+        "title": "Revisa tu correo",
+        "description": "Te hemos enviado un código a {email}. Puede tardar un minuto; mira también en la carpeta de spam.\n\nSi esta dirección ya tiene cuenta, en vez del código te llegará un correo avisándote: cierra esta ventana y elige «Ya tengo cuenta».\n\n[Guía de instalación]({docs_url})",
+        "data": {
+          "code": "Código"
+        },
+        "data_description": {
+          "code": "El código que aparece en el correo."
+        }
+      },
+      "login": {
+        "title": "Inicia sesión en MeteoVeo",
+        "description": "Entra con tu correo y tu contraseña de MeteoVeo. La contraseña no se guarda en Home Assistant.\n\n¿Creaste la cuenta con Google, Apple o una llave de acceso? Primero ponle una contraseña en la app de MeteoVeo (Cuenta → Contraseña) o usa la opción de clave de estación.\n\n[Guía de instalación]({docs_url})",
+        "data": {
+          "email": "Correo electrónico",
+          "password": "Contraseña"
+        },
+        "data_description": {
+          "email": "La dirección con la que te registraste.",
+          "password": "Tu contraseña de MeteoVeo."
+        }
+      },
+      "location": {
+        "title": "¿Para dónde quieres la previsión?",
+        "description": "Viene marcada tu casa de Home Assistant; mueve el marcador para cambiarla. MeteoVeo cubre España, Baleares, Canarias, Ceuta y Melilla. Guardamos el lugar redondeado a 1 km, más o menos.\n\n[Guía de instalación]({docs_url})",
+        "data": {
+          "location": "Lugar"
+        },
+        "data_description": {
+          "location": "Arrastra el marcador o déjalo en tu casa."
+        }
+      },
+      "has_station": {
+        "title": "Estación meteorológica",
+        "description": "Si Home Assistant ya lee una estación meteorológica, puede compartir sus datos con MeteoVeo. A cambio tendrás extras para tu estación, como qué modelo de predicción acierta más allí. Sin estación, la previsión la tienes igual.\n\n[Guía de instalación]({docs_url})",
+        "data": {
+          "has_station": "¿Tienes una estación meteorológica en Home Assistant?"
+        },
+        "data_description": {
+          "has_station": "Déjalo desactivado si no tienes."
+        }
+      },
+      "station_details": {
+        "title": "Tu estación",
+        "description": "Los datos se envían una vez por minuto, por HTTPS.\n\n[Sobre las medidas]({docs_url})",
+        "data": {
+          "station_name": "Nombre de la estación",
+          "sensor_height_cm": "Altura del sensor"
+        },
+        "data_description": {
+          "station_name": "Así verás tu estación en MeteoVeo.",
+          "sensor_height_cm": "Altura del sensor de temperatura sobre el suelo, en centímetros (lo normal es 150–200)."
         }
       },
       "measurements": {
@@ -46,21 +125,63 @@
         "data_description": {
           "station_key": "La clave nueva de la página de la estación. La anterior dejó de funcionar en el momento en que fue sustituida."
         }
+      },
+      "reauth_login": {
+        "title": "Vuelve a iniciar sesión",
+        "description": "MeteoVeo ya no acepta la clave de esta conexión. Inicia sesión para generar una nueva; el lugar, la estación y las entidades no cambian.\n\n[Solución de problemas]({docs_url})",
+        "data": {
+          "email": "Correo electrónico",
+          "password": "Contraseña"
+        },
+        "data_description": {
+          "email": "La cuenta con la que configuraste esta conexión.",
+          "password": "Tu contraseña de MeteoVeo."
+        }
       }
     },
     "error": {
       "invalid_auth": "No se ha aceptado el ID o la clave. Revisa ambos; ten en cuenta que generar una clave nueva invalida la anterior al instante.",
       "cannot_connect": "No se ha podido contactar con MeteoVeo. Tus datos no se han comprobado; inténtalo dentro de un momento.",
-      "unknown": "Ha ocurrido algo que no habíamos previsto. Los detalles están en el registro."
+      "unknown": "Ha ocurrido algo que no habíamos previsto. Los detalles están en el registro.",
+      "invalid_login": "Correo o contraseña incorrectos. Las cuentas creadas con Google, Apple o una llave de acceso aún no tienen contraseña: ponle una en la app de MeteoVeo (Cuenta → Contraseña) o usa la opción de clave de estación.",
+      "invalid_email": "Eso no parece una dirección de correo.",
+      "password_too_short": "La contraseña necesita al menos 8 caracteres.",
+      "weak_password": "MeteoVeo no ha aceptado esta contraseña. Elige una más larga o más difícil de adivinar.",
+      "terms_required": "Para crear la cuenta, acepta las condiciones de uso y la política de privacidad.",
+      "invalid_code": "El código no es correcto o ha caducado. Mira el último correo de MeteoVeo.",
+      "invalid_location": "MeteoVeo no tiene previsión para ese lugar. Elige un punto de España, Baleares, Canarias, Ceuta o Melilla.",
+      "wrong_account": "Esta conexión es de otra cuenta de MeteoVeo. Usa el correo con el que la configuraste."
     },
     "abort": {
       "already_configured": "Esta estación ya está configurada.",
-      "reauth_successful": "La clave nueva funciona."
+      "reauth_successful": "Listo: la conexión vuelve a funcionar.",
+      "registration_closed": "Ahora mismo MeteoVeo no admite cuentas nuevas. Si ya tienes una, empieza de nuevo y elige «Ya tengo cuenta».",
+      "too_many_keys": "Esta cuenta ya tiene 5 conexiones domóticas, el máximo. Quita MeteoVeo de algún Home Assistant o Homey que ya no uses y vuelve a intentarlo.",
+      "session_expired": "La sesión ha caducado mientras configurabas. Empieza de nuevo."
     }
   },
   "options": {
     "step": {
       "init": {
+        "title": "Opciones de MeteoVeo",
+        "description": "¿Qué quieres cambiar?\n\n[Guía de instalación]({docs_url})",
+        "menu_options": {
+          "location": "Cambiar el lugar",
+          "measurements": "Medidas de la estación",
+          "delete_account": "Eliminar mi cuenta de MeteoVeo"
+        }
+      },
+      "location": {
+        "title": "Cambiar el lugar",
+        "description": "Mueve el marcador. La previsión pasará al nuevo lugar.\n\n[Guía de instalación]({docs_url})",
+        "data": {
+          "location": "Lugar"
+        },
+        "data_description": {
+          "location": "Arrastra el marcador o déjalo en tu casa."
+        }
+      },
+      "measurements": {
         "title": "Qué entidad alimenta cada medida",
         "description": "Deja vacía una medida si tu estación no la mide. Una entidad por medida.\n\n[Sobre las medidas]({docs_url})",
         "data": {
@@ -83,7 +204,35 @@
           "daily_rain": "Lluvia acumulada desde medianoche — no la intensidad.",
           "solar_radiation": "Irradiancia solar, en W/m²."
         }
+      },
+      "delete_account": {
+        "title": "Eliminar mi cuenta de MeteoVeo",
+        "description": "No se puede deshacer. Se borran tu cuenta, tu perfil, tus fotos y los nombres y claves de tus estaciones, y todas las conexiones de Home Assistant de la cuenta dejan de funcionar. Los datos ya enviados se quedan, de forma anónima.\n\nEsto **no** cancela una suscripción de App Store o Google Play: cancélala en la tienda.\n\n¿Tu cuenta no tiene contraseña (Google, Apple o llave de acceso)? Elimínala desde la app de MeteoVeo.\n\n[Solución de problemas]({docs_url})",
+        "data": {
+          "email": "Correo electrónico",
+          "password": "Contraseña",
+          "confirm": "Escribe otra vez tu correo para confirmar"
+        },
+        "data_description": {
+          "email": "El correo de la cuenta.",
+          "password": "Tu contraseña de MeteoVeo.",
+          "confirm": "La cuenta solo se elimina si coincide con el correo de arriba."
+        }
       }
+    },
+    "error": {
+      "cannot_connect": "No se ha podido contactar con MeteoVeo. Tus datos no se han comprobado; inténtalo dentro de un momento.",
+      "unknown": "Ha ocurrido algo que no habíamos previsto. Los detalles están en el registro.",
+      "invalid_login": "Correo o contraseña incorrectos. Las cuentas creadas con Google, Apple o una llave de acceso aún no tienen contraseña: ponle una en la app de MeteoVeo (Cuenta → Contraseña) o usa la opción de clave de estación.",
+      "invalid_location": "MeteoVeo no tiene previsión para ese lugar. Elige un punto de España, Baleares, Canarias, Ceuta o Melilla.",
+      "wrong_account": "Esta conexión es de otra cuenta de MeteoVeo. Usa el correo con el que la configuraste.",
+      "confirm_mismatch": "Los dos correos no coinciden.",
+      "invalid_password": "Contraseña incorrecta.",
+      "password_required": "Esta cuenta no tiene contraseña. Elimínala desde la app de MeteoVeo o en meteoveo.com."
+    },
+    "abort": {
+      "account_deleted": "Tu cuenta de MeteoVeo se ha eliminado. La integración se quita sola ahora.",
+      "reauth_required": "MeteoVeo ya no acepta la clave de esta conexión. Vuelve a iniciar sesión desde el aviso y repite el cambio."
     }
   },
   "entity": {
@@ -91,7 +240,8 @@
       "best_model": {
         "name": "Mejor modelo de predicción",
         "state": {
-          "collecting": "Recogiendo datos"
+          "collecting": "Recogiendo datos",
+          "paused": "En pausa (estación sin enviar)"
         }
       },
       "accepted_uploads": {
@@ -101,13 +251,44 @@
         "name": "Último envío"
       },
       "grace_remaining": {
-        "name": "Acceso a predicción restante"
+        "name": "Margen de los extras de la estación"
+      },
+      "rain_start": {
+        "name": "Inicio de la lluvia"
+      },
+      "rain_end": {
+        "name": "Fin de la lluvia"
+      },
+      "warnings": {
+        "name": "Avisos meteorológicos",
+        "state_attributes": {
+          "highest_level": {
+            "name": "Nivel más alto",
+            "state": {
+              "none": "Ninguno",
+              "yellow": "Amarillo",
+              "orange": "Naranja",
+              "red": "Rojo"
+            }
+          }
+        }
       }
     },
     "binary_sensor": {
       "sensor_problem": {
         "name": "Problema de sensor"
+      },
+      "rain_soon": {
+        "name": "Lluvia en la próxima hora"
       }
+    }
+  },
+  "exceptions": {
+    "account_deleted_title": {
+      "message": "Cuenta de MeteoVeo eliminada"
+    },
+    "account_deleted": {
+      "message": "Tu cuenta de MeteoVeo se ha eliminado y la integración de MeteoVeo se ha quitado de Home Assistant. Recuerda: esto no cancela una suscripción de App Store o Google Play; cancélala en la tienda."
     }
   }
 }

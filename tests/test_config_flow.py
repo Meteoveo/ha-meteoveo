@@ -21,15 +21,28 @@ CREDENTIALS = {CONF_STATION_ID: "MVEXAMPLE1", CONF_STATION_KEY: "key-value"}
 
 
 async def start(hass: HomeAssistant):
-    return await hass.config_entries.flow.async_init(
+    """Open the flow and take the station-key option from the first menu."""
+    result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
+    assert result["type"] is FlowResultType.MENU
+    return await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "station_key"}
+    )
+
+
+async def test_the_first_screen_offers_all_three_routes(hass: HomeAssistant) -> None:
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    assert result["type"] is FlowResultType.MENU
+    assert result["menu_options"] == ["create_account", "login", "station_key"]
 
 
 async def test_full_setup_creates_an_entry(hass: HomeAssistant, mock_station_view) -> None:
     result = await start(hass)
     assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "user"
+    assert result["step_id"] == "station_key"
 
     result = await hass.config_entries.flow.async_configure(result["flow_id"], CREDENTIALS)
     assert result["step_id"] == "measurements"
