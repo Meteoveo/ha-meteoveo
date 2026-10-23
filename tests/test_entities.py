@@ -162,7 +162,7 @@ async def test_grace_sensor_shows_the_margin_before_it_runs_out(hass: HomeAssist
     }
     await setup_entry(hass, view)
 
-    state = hass.states.get("sensor.garden_forecast_access_remaining")
+    state = hass.states.get("sensor.garden_station_extras_remaining")
     assert state.state == "9.5"
     assert state.attributes["derived_data_available"] is True
     assert state.attributes["grace_hours"] == 12
@@ -179,7 +179,7 @@ async def test_grace_sensor_reads_zero_once_access_has_paused(hass: HomeAssistan
     }
     await setup_entry(hass, view)
 
-    state = hass.states.get("sensor.garden_forecast_access_remaining")
+    state = hass.states.get("sensor.garden_station_extras_remaining")
     assert state.state == "0.0"
     assert state.attributes["derived_data_available"] is False
 
@@ -190,4 +190,4 @@ async def test_grace_sensor_is_unknown_when_the_service_says_nothing(
     # An older service version, or a response without the field: report
     # nothing rather than inventing a reassuring zero.
     await setup_entry(hass, READY_VIEW)
-    assert hass.states.get("sensor.garden_forecast_access_remaining").state == "unknown"
+    assert hass.states.get("sensor.garden_station_extras_remaining").state == "unknown"

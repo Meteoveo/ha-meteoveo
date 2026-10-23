@@ -53,5 +53,8 @@ rules:
   test-coverage: done
 
   # --- Gold: not claimed --------------------------------------------------
-  # Discovery, devices, diagnostics, repair issues and translated exceptions
-  # are the remaining work; the integration does not claim gold.
+  # Discovery, repair issues and translated exceptions are the remaining
+  # work; the integration does not claim gold.
+  diagnostics:
+    status: done
+    comment: Keys, station id, email and coordinates are redacted.
