@@ -94,6 +94,7 @@ daily_count: 7           # 1–14 days in the list
 | `show_daily` | `true` | Show the daily list. |
 | `show_details` | `true` | Show the detail row under the header (feels like, UV, sun, dew point). |
 | `show_precipitation` | `true` | Show the mm bars in the hourly strip when the window has rain. |
+| `show_radar` | `true` | The radar loop — the last hour of radar and the next hour's nowcast around your place (the integration's `image` entity). Not shown in compact mode. |
 | `compact` | `false` | Header and the next-3-hours strip only. |
 | `compact_warnings` | `severe` | In compact mode: `severe` = active orange and red warnings, `all` = every active warning, `none` = no warnings. |
 | `hourly_count` | `12` | Hours in the strip. |
