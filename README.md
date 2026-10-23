@@ -154,13 +154,14 @@ daily list, in your theme's light or dark colours. Options and YAML:
 
 ### Blueprints
 
-Four ready-made automations, imported with one click:
+Five ready-made automations, imported with one click:
 
 | Blueprint | What it does | Import |
 |---|---|---|
 | **Rain in the next minutes** | Runs your actions when rain is expected within the minutes you choose (10–120, default 30) — close the awning, shut the skylight, bring in the laundry, pause the irrigation. Fires once per rain spell. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Frain_soon.yaml) |
 | **Rain has stopped** | Runs your actions once the rain is over and the sensor has stayed dry for the minutes you choose — reopen the awning, resume the irrigation. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Frain_stopped.yaml) |
 | **Frost tomorrow** | Every evening checks tomorrow's minimum in the forecast and runs your actions at or below your threshold (default 2 °C); the minimum is available as `{{ low }}`. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Ffrost_tomorrow.yaml) |
+| **Voice assistant answers** | Ask Assist — with Home Assistant's own local assistant — *"¿Va a llover hoy?"*, *"¿Cuándo va a llover?"*, *"¿Hay avisos?"*, *"¿Qué tiempo hará mañana?"* (also in English and Catalan) and get the answer from MeteoVeo: rain now or coming and until when, the next rainy day, warnings with their validity, tomorrow's forecast. Pick only your MeteoVeo weather entity. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Fvoice_assistant.yaml) |
 | **AEMET weather warning** | Runs your actions when an official warning reaches yellow, orange or red at your place; the warning text is available as `{{ headline }}`. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Faemet_warning.yaml) |
 
 ## Why a station owner would use this
