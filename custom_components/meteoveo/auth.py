@@ -17,7 +17,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-from .const import UPLOAD_URL
+from .const import UPLOAD_URL, USER_AGENT
 
 # Enough characters remain visible to tell two stations apart in a support
 # thread, without disclosing anything usable.
@@ -70,9 +70,15 @@ def api_headers(credentials: Credentials) -> dict[str, str]:
     of which are under our control.
     """
     return {
-        "Authorization": f"Bearer {credentials.station_id}.{credentials.station_key}",
+        "Authorization": f"Bearer {station_token(credentials)}",
         "Accept": "application/json",
+        "User-Agent": USER_AGENT,
     }
+
+
+def station_token(credentials: Credentials) -> str:
+    """The station credential in the form the read API accepts as a bearer."""
+    return f"{credentials.station_id}.{credentials.station_key}"
 
 
 def _mask(secret: str) -> str:

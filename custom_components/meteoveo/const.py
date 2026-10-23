@@ -18,9 +18,36 @@ UPLOAD_URL: Final = "https://www.meteoveo.com/weatherstation/updateweatherstatio
 # Read-only API for forecast, nowcast and station health.
 API_BASE: Final = "https://www.meteoveo.com/api"
 
-# Where to send someone who does not have a station yet. Account creation uses
-# passkeys, which need a real browser -- it cannot happen inside Home Assistant.
+# The integration's own version, sent in the User-Agent so the service can tell
+# released clients apart. A test keeps it equal to manifest.json.
+VERSION: Final = "0.2.0"
+USER_AGENT: Final = f"ha-meteoveo/{VERSION}"
+
+# The MeteoVeo account page on the web. An account can be created, and later
+# deleted, from inside Home Assistant (email, password and an emailed code --
+# no browser needed); this page is only where a station owner manages the
+# station itself.
 SIGNUP_URL: Final = "https://www.meteoveo.com/#/account"
+
+# Linked from the sign-up form. Accepting them is required to create an
+# account; marketing email is a separate, optional choice.
+TERMS_URL: Final = "https://www.meteoveo.com/legal/terminos"
+PRIVACY_URL: Final = "https://www.meteoveo.com/legal/privacidad"
+
+# Every request is bounded. Home Assistant's shared session would otherwise
+# wait for minutes on a stalled connection.
+REQUEST_TIMEOUT_S: Final = 30
+# Removing the integration must never hang on the network.
+REVOKE_TIMEOUT_S: Final = 10
+
+# The API's client kind for this integration (the same key type also serves
+# other home-automation clients).
+CLIENT_KIND: Final = "home_assistant"
+
+# Languages the service writes in. Anything else falls back to Spanish, the
+# product's language.
+API_LANGUAGES: Final = ("es", "en", "ca")
+DEFAULT_API_LANGUAGE: Final = "es"
 
 # Knowledge-base pages, linked from each config-flow step. They live in this
 # repository so the linked text is versioned together with the code it
@@ -34,6 +61,25 @@ DOCS_TROUBLESHOOTING_URL: Final = f"{_DOCS_BASE}/troubleshooting.md"
 CONF_STATION_ID: Final = "station_id"
 CONF_STATION_KEY: Final = "station_key"
 CONF_MEASUREMENTS: Final = "measurements"
+
+# Account-based entries (0.2.0+). The account's session token is used only
+# while a flow runs and is never stored; what is stored is a restricted
+# integration key that can read the forecast for one place and nothing else.
+CONF_INTEGRATION_KEY: Final = "integration_key"
+CONF_KEY_ID: Final = "key_id"
+CONF_EMAIL: Final = "email"
+# The service's numeric id of a station created from Home Assistant. The
+# ingest id (CONF_STATION_ID) and key (CONF_STATION_KEY) are what uploads use.
+CONF_STATION_REF: Final = "station_ref"
+
+# Bounds the service accepts for the sensor height above ground.
+MIN_SENSOR_HEIGHT_CM: Final = 10
+MAX_SENSOR_HEIGHT_CM: Final = 5000
+DEFAULT_SENSOR_HEIGHT_CM: Final = 200
+
+# The home view (forecast, next hour, warnings) changes at most every few
+# minutes; the service asks clients not to poll more often than this.
+HOME_UPDATE_INTERVAL_S: Final = 300
 
 # One upload per minute -- the rate consumer stations report at, and the rate
 # the service expects.
