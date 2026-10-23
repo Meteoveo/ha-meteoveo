@@ -40,12 +40,12 @@
       },
       "verify_code": {
         "title": "Revisa el correu",
-        "description": "T'hem enviat un codi a {email}. Pot trigar un minut; mira també a la carpeta de correu brossa.\n\nSi aquesta adreça ja té compte, en lloc del codi rebràs un correu que t'ho diu: tanca aquesta finestra i tria «Ja tinc compte».\n\n[Guia d'instal·lació]({docs_url})",
+        "description": "T'hem enviat un codi de 6 dígits a {email}; és vàlid durant 24 hores. Pot trigar un minut; mira també a la carpeta de correu brossa.\n\nSi aquesta adreça ja té compte, en lloc del codi rebràs un correu que t'ho diu: tanca aquesta finestra i tria «Ja tinc compte».\n\n[Guia d'instal·lació]({docs_url})",
         "data": {
           "code": "Codi"
         },
         "data_description": {
-          "code": "El codi que apareix al correu."
+          "code": "El codi de 6 dígits que apareix al correu."
         }
       },
       "login": {
