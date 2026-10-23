@@ -1,0 +1,55 @@
+blueprint:
+  name: MeteoVeo — rain in the next minutes
+  description: >-
+    Runs your actions when MeteoVeo expects rain at your place within the minutes
+    you choose — close the awning, shut the skylight, bring in the laundry, pause
+    the irrigation. It uses the 10-minute radar nowcast behind the
+    "Rain in the next hour" sensor and fires once per rain spell, when the rain
+    first comes inside your window (also if it is already raining).
+
+
+    Lluvia en los próximos minutos: ejecuta tus acciones cuando MeteoVeo prevé
+    lluvia dentro del margen que elijas.
+  domain: automation
+  source_url: https://github.com/Meteoveo/ha-meteoveo/blob/main/blueprints/automation/meteoveo/rain_soon.yaml
+  input:
+    rain_sensor:
+      name: Rain in the next hour sensor
+      description: The MeteoVeo binary sensor "Rain in the next hour" of your place.
+      selector:
+        entity:
+          filter:
+            - integration: meteoveo
+              domain: binary_sensor
+    lead_minutes:
+      name: Warn this many minutes ahead
+      description: Fire when rain is expected to start within this many minutes.
+      default: 30
+      selector:
+        number:
+          min: 10
+          max: 120
+          step: 10
+          unit_of_measurement: min
+    actions:
+      name: Actions
+      description: What to do — for example close a cover or send a notification.
+      default: []
+      selector:
+        action: {}
+
+mode: single
+max_exceeded: silent
+
+trigger_variables:
+  rain_sensor: !input rain_sensor
+  lead_minutes: !input lead_minutes
+
+triggers:
+  - trigger: template
+    value_template: >-
+      {% set starts = state_attr(rain_sensor, 'starts_at') %}
+      {{ starts is not none and starts != ''
+         and (as_datetime(starts) - now()).total_seconds() <= lead_minutes * 60 }}
+
+actions: !input actions

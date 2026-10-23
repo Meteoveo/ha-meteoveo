@@ -1,0 +1,44 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "rain_soon": {
+        "default": "mdi:weather-partly-cloudy",
+        "state": {
+          "on": "mdi:weather-pouring"
+        }
+      },
+      "sensor_problem": {
+        "default": "mdi:check-circle-outline",
+        "state": {
+          "on": "mdi:alert-circle-outline"
+        }
+      }
+    },
+    "sensor": {
+      "rain_start": {
+        "default": "mdi:weather-rainy"
+      },
+      "rain_end": {
+        "default": "mdi:weather-partly-rainy"
+      },
+      "warnings": {
+        "default": "mdi:alert-outline",
+        "state": {
+          "0": "mdi:shield-check-outline"
+        }
+      },
+      "best_model": {
+        "default": "mdi:trophy-outline"
+      },
+      "accepted_uploads": {
+        "default": "mdi:upload-outline"
+      },
+      "last_upload": {
+        "default": "mdi:clock-check-outline"
+      },
+      "grace_remaining": {
+        "default": "mdi:timer-sand"
+      }
+    }
+  }
+}

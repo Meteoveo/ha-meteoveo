@@ -1,0 +1,71 @@
+blueprint:
+  name: MeteoVeo — AEMET weather warning
+  description: >-
+    Runs your actions when an official AEMET weather warning (Meteoalerta) reaches
+    the level you choose at your place — for example a phone notification for an
+    orange or red warning. The warning text is available to your actions as
+    {{ headline }} and the level as {{ level }}.
+
+
+    Aviso de AEMET: ejecuta tus acciones cuando un aviso oficial alcanza el nivel
+    que elijas en tu zona.
+  domain: automation
+  source_url: https://github.com/Meteoveo/ha-meteoveo/blob/main/blueprints/automation/meteoveo/aemet_warning.yaml
+  input:
+    warnings_sensor:
+      name: Weather warnings sensor
+      description: The MeteoVeo sensor "Weather warnings" of your place.
+      selector:
+        entity:
+          filter:
+            - integration: meteoveo
+              domain: sensor
+    min_level:
+      name: From this level
+      default: orange
+      selector:
+        select:
+          options:
+            - label: Yellow / Amarillo
+              value: yellow
+            - label: Orange / Naranja
+              value: orange
+            - label: Red / Rojo
+              value: red
+    actions:
+      name: Actions
+      description: What to do — for example send a notification using {{ headline }}.
+      default: []
+      selector:
+        action: {}
+
+mode: queued
+max: 5
+
+variables:
+  warnings_sensor: !input warnings_sensor
+  min_level: !input min_level
+  ranks:
+    none: 0
+    yellow: 1
+    orange: 2
+    red: 3
+  level: "{{ state_attr(warnings_sensor, 'highest_level') or 'none' }}"
+  headline: >-
+    {% set items = state_attr(warnings_sensor, 'warnings') or [] %}
+    {% set top = items | selectattr('level', 'eq', level) | list %}
+    {{ (top[0].headline if top else '') }}
+
+triggers:
+  - trigger: state
+    entity_id: !input warnings_sensor
+    attribute: highest_level
+
+conditions:
+  - condition: template
+    value_template: >-
+      {{ ranks.get(trigger.to_state.attributes.highest_level | default('none'), 0) >= ranks[min_level]
+         and ranks.get(trigger.to_state.attributes.highest_level | default('none'), 0)
+             > ranks.get(trigger.from_state.attributes.highest_level | default('none') if trigger.from_state else 'none', 0) }}
+
+actions: !input actions

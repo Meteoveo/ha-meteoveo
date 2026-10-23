@@ -6,6 +6,12 @@ and the official weather warnings — in Home Assistant. **No weather station
 needed.** If you do have one, the integration can also share its readings
 with MeteoVeo and bring station-specific extras back.
 
+<p align="center">
+  <img src="docs/images/card-light.png" alt="The MeteoVeo card, light theme: conditions now, the next three hours of rain in ten-minute steps, the hourly strip and the daily list" width="360">
+  &nbsp;
+  <img src="docs/images/card-dark.png" alt="The same card in a dark theme" width="360">
+</p>
+
 > **Status: early development.** Submitted to the HACS default list.
 
 The integration ships its own brand icons in `custom_components/meteoveo/brand/`.
@@ -52,6 +58,12 @@ repository: HACS → ⋮ → **Custom repositories** → add
 | **I already have an account** | MeteoVeo app or web users | Email and password |
 | **I have a station ID and key (advanced)** | Stations already set up on meteoveo.com | Station ID and key — the 0.1.x setup, unchanged |
 
+<p align="center">
+  <img src="docs/images/setup-menu.png" alt="Adding MeteoVeo: create an account, sign in, or use a station key" width="380">
+  &nbsp;
+  <img src="docs/images/setup-account.png" alt="Creating a MeteoVeo account inside Home Assistant: email, password, terms, optional newsletter" width="380">
+</p>
+
 The first two continue with:
 
 1. **The place** — your Home Assistant home is preselected; drag the pin to
@@ -84,6 +96,10 @@ upload key is stored as well.
 ## What you get
 
 **For everyone** — one device, named “MeteoVeo <town>” (you can rename it):
+
+<p align="center">
+  <img src="docs/images/entities.png" alt="The MeteoVeo device in Home Assistant with its weather entity and its rain and warnings sensors" width="560">
+</p>
 
 | Entity | Meaning |
 |---|---|
@@ -126,7 +142,17 @@ physically impossible is **left out** rather than sent as zero.
 The integration includes a dashboard card — no separate download, no
 resource to add. Edit a dashboard → **Add card** → search **MeteoVeo**. It
 shows the conditions now, the next hour's rain, the hourly strip and the
-daily list, in your theme's light or dark colours.
+daily list, in your theme's light or dark colours. Options and YAML:
+[docs/card.md](docs/card.md).
+
+### Blueprints
+
+Two ready-made automations, imported with one click:
+
+| Blueprint | What it does | Import |
+|---|---|---|
+| **Rain in the next minutes** | Runs your actions when rain is expected within the minutes you choose (10–120, default 30) — close the awning, shut the skylight, bring in the laundry, pause the irrigation. Fires once per rain spell. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Frain_soon.yaml) |
+| **AEMET weather warning** | Runs your actions when an official warning reaches yellow, orange or red at your place; the warning text is available as `{{ headline }}`. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Faemet_warning.yaml) |
 
 ## Why a station owner would use this
 
