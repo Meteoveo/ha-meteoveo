@@ -40,12 +40,12 @@
       },
       "verify_code": {
         "title": "Check your email",
-        "description": "We sent a code to {email}. It can take a minute — check the spam folder too.\n\nIf this address already has an account, you'll get an email saying so instead of a code: close this window and choose \"I already have an account\".\n\n[Setup guide]({docs_url})",
+        "description": "We sent a 6-digit code to {email}; it is valid for 24 hours. It can take a minute — check the spam folder too.\n\nIf this address already has an account, you'll get an email saying so instead of a code: close this window and choose \"I already have an account\".\n\n[Setup guide]({docs_url})",
         "data": {
           "code": "Code"
         },
         "data_description": {
-          "code": "The code from the email."
+          "code": "The 6-digit code from the email."
         }
       },
       "login": {
