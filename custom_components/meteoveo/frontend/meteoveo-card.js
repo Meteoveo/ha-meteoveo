@@ -85,6 +85,7 @@ const TEXT = {
       hourly_count: "Horas mostradas", daily_count: "Días mostrados",
       compact: "Modo compacto (ahora + próximas 3 horas)", show_details: "Detalles de ahora (sensación, UV, sol)",
       show_precipitation: "Lluvia por horas (mm)",
+      show_radar: "Radar (última hora y próxima)",
       compact_warnings: "Avisos en modo compacto",
       compact_warnings_options: { severe: "Solo naranja y rojo", all: "Todos los activos", none: "Ninguno" },
     },
@@ -141,6 +142,7 @@ const TEXT = {
       hourly_count: "Hours shown", daily_count: "Days shown",
       compact: "Compact mode (now + next 3 hours)", show_details: "Now details (feels like, UV, sun)",
       show_precipitation: "Hourly rain (mm)",
+      show_radar: "Radar (last hour and next)",
       compact_warnings: "Warnings in compact mode",
       compact_warnings_options: { severe: "Orange and red only", all: "All active", none: "None" },
     },
@@ -197,6 +199,7 @@ const TEXT = {
       hourly_count: "Hores mostrades", daily_count: "Dies mostrats",
       compact: "Mode compacte (ara + pròximes 3 hores)", show_details: "Detalls d’ara (sensació, UV, sol)",
       show_precipitation: "Pluja per hores (mm)",
+      show_radar: "Radar (última hora i pròxima)",
       compact_warnings: "Avisos en mode compacte",
       compact_warnings_options: { severe: "Només taronja i vermell", all: "Tots els actius", none: "Cap" },
     },
@@ -254,6 +257,7 @@ const TEXT = {
       hourly_count: "Mutatott órák", daily_count: "Mutatott napok",
       compact: "Kompakt mód (most + következő 3 óra)", show_details: "A „most” részletei (hőérzet, UV, nap)",
       show_precipitation: "Órás csapadék (mm)",
+      show_radar: "Radar (az elmúlt és a következő óra)",
       compact_warnings: "Figyelmeztetések kompakt módban",
       compact_warnings_options: { severe: "Csak narancs és piros", all: "Minden aktív", none: "Egyik sem" },
     },
@@ -583,6 +587,9 @@ section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--mv-li
   background: linear-gradient(90deg, var(--mv-blue-soft), var(--mv-amber)); }
 .empty { padding: 4px 0; font-size: 14px; color: var(--mv-ink-2); line-height: 1.4; }
 .attr { margin-top: 12px; font-size: 10.5px; color: var(--mv-ink-2); opacity: .75; }
+
+  .radar { margin: 4px 0 12px; }
+  .radar img { display: block; width: 100%; height: auto; border-radius: 10px; }
 `;
 
 // ---------------------------------------------------------------------------
@@ -615,6 +622,7 @@ export class MeteoVeoCard extends Base {
             { name: "show_daily", default: true, selector: { boolean: {} } },
             { name: "show_details", default: true, selector: { boolean: {} } },
             { name: "show_precipitation", default: true, selector: { boolean: {} } },
+            { name: "show_radar", default: true, selector: { boolean: {} } },
           ],
         },
         { name: "compact", default: false, selector: { boolean: {} } },
@@ -664,7 +672,7 @@ export class MeteoVeoCard extends Base {
     if (!config || !config.entity) throw new Error("MeteoVeo: set `entity` to the MeteoVeo weather entity");
     this._config = {
       show_next_hour: true, show_hourly: true, show_daily: true, show_warnings: true,
-      show_details: true, show_precipitation: true, compact: false, compact_warnings: "severe",
+      show_details: true, show_precipitation: true, show_radar: true, compact: false, compact_warnings: "severe",
       hourly_count: 12, daily_count: 7, ...config,
     };
     this._snapshot = null;
@@ -681,7 +689,7 @@ export class MeteoVeoCard extends Base {
     this._resubscribe();
     // Re-render only when something the card shows has changed.
     const ids = this._entityIds();
-    const watched = [ids.weather, ids.rain, ids.warnings, ids.apparent, ids.dewPoint, ids.uv, ids.uvMax, "sun.sun"];
+    const watched = [ids.weather, ids.rain, ids.warnings, ids.apparent, ids.dewPoint, ids.uv, ids.uvMax, ids.radar, "sun.sun"];
     const snap = [
       ...watched, this._lang,
       hass.themes && hass.themes.darkMode, hass.locale && hass.locale.time_format,
@@ -728,6 +736,8 @@ export class MeteoVeoCard extends Base {
       dewPoint: this._sibling(weather, "dew_point", "sensor."),
       uv: this._sibling(weather, "uv_index", "sensor."),
       uvMax: this._sibling(weather, "uv_index_max_today", "sensor."),
+      // ADR-0833: the radar loop (an image entity); older integrations have none.
+      radar: this._sibling(weather, "radar", "image."),
     };
   }
 
@@ -888,6 +898,7 @@ export class MeteoVeoCard extends Base {
     } else {
       if (c.show_details) parts.push(this._details(weather, ids));
       if (c.show_next_hour) parts.push(this._nextHour(ids.rain ? hass.states[ids.rain] : null, nowMs));
+      if (c.show_radar) parts.push(this._radar(ids.radar ? hass.states[ids.radar] : null));
       if (c.show_warnings) parts.push(this._warnings(ids.warnings ? hass.states[ids.warnings] : null, nowMs));
       if (c.show_hourly) parts.push(this._hourly(weather, nowMs));
       if (c.show_daily) parts.push(this._daily(weather, nowMs));
@@ -1025,6 +1036,12 @@ export class MeteoVeoCard extends Base {
       ? `<button type="button" class="more">${esc(hidden ? fill(t.moreWarnings, { n: hidden }) : t.lessWarnings)}</button>`
       : "";
     return `<div class="warns">${banners.join("")}${fold}</div>`;
+  }
+
+  /** The radar loop (ADR-0833): the image entity's picture, played by the browser. */
+  _radar(image) {
+    if (!image || image.state === "unavailable" || !image.attributes.entity_picture) return "";
+    return `<div class="radar"><img src="${esc(image.attributes.entity_picture)}" alt="Radar" loading="lazy"></div>`;
   }
 
   _hourly(weather, nowMs) {
