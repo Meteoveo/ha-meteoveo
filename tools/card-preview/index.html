@@ -158,7 +158,8 @@ function hassFor(c, i) {
     connection: {
       subscribeMessage(cb, msg) {
         if (c.condition === "unavailable") return Promise.resolve(() => {});
-        setTimeout(() => cb({ type: msg.forecast_type, forecast: msg.forecast_type === "hourly" ? hourly(c.night) : DAILY }), 30);
+        // Asynchronous like HA's websocket, but settled before the load event so headless screenshots are deterministic.
+        queueMicrotask(() => cb({ type: msg.forecast_type, forecast: msg.forecast_type === "hourly" ? hourly(c.night) : DAILY }));
         return Promise.resolve(() => {});
       },
     },
