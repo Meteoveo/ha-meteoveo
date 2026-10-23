@@ -331,6 +331,11 @@
           }
         }
       }
+    },
+    "image": {
+      "radar": {
+        "name": "Radar"
+      }
     }
   },
   "exceptions": {

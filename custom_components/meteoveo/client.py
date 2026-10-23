@@ -118,6 +118,34 @@ class MeteoVeoClient:
             raise ServiceUnavailable("home view: unexpected response shape")
         return body, new_etag
 
+    async def async_get_radar(
+        self, lang: str, etag: str | None = None
+    ) -> tuple[bytes | None, str | None, str]:
+        """The radar loop for the configured place (ADR-0833): an animated WEBP.
+
+        Returns ``(None, etag, content_type)`` when nothing changed since ``etag``.
+        Outside radar coverage the service refuses with a reason code
+        (:class:`ApiError`, e.g. ``no_coverage``).
+        """
+        status, body, response_headers = await _call(
+            self._session,
+            "GET",
+            "/v1/integration/radar.webp",
+            bearer=self._bearer,
+            params={"lang": lang},
+            extra_headers={"If-None-Match": etag} if etag else None,
+            accept_not_modified=True,
+            secrets=(self._bearer,),
+            binary=True,
+        )
+        content_type = response_headers.get("Content-Type", "image/webp")
+        new_etag = response_headers.get("ETag") or etag
+        if status == 304:
+            return None, new_etag, content_type
+        if not isinstance(body, (bytes, bytearray)) or not body:
+            raise ServiceUnavailable("radar: empty response")
+        return bytes(body), new_etag, content_type
+
     async def async_set_location(self, lat: float, lon: float) -> dict[str, Any]:
         """Move the integration key to a new place. Returns the new place."""
         _, body, _ = await _call(
@@ -354,6 +382,7 @@ async def _call(
     timeout: float = REQUEST_TIMEOUT_S,
     accept_not_modified: bool = False,
     secrets: tuple[str, ...] = (),
+    binary: bool = False,
 ) -> tuple[int, Any, Mapping[str, str]]:
     """One request, with failures sorted into the three kinds the flows need.
 
@@ -364,7 +393,7 @@ async def _call(
 
     No message raised here contains the request body or a credential.
     """
-    headers = {"Accept": "application/json", "User-Agent": USER_AGENT}
+    headers = {"Accept": "image/*" if binary else "application/json", "User-Agent": USER_AGENT}
     if bearer:
         headers["Authorization"] = f"Bearer {bearer}"
     if extra_headers:
@@ -399,7 +428,7 @@ async def _call(
                 raise ServiceUnavailable(f"{method} {path}: unexpected status {status}")
             if status >= 400:
                 raise ServiceUnavailable(f"{method} {path}: service answered {status}")
-            body = await response.json(content_type=None)
+            body = await response.read() if binary else await response.json(content_type=None)
             return status, body, response_headers
     except _TRANSPORT_ERRORS as failure:
         detail = redact(str(failure), *secrets) or type(failure).__name__

@@ -84,6 +84,11 @@
       "warning": {
         "default": "mdi:alert-decagram-outline"
       }
+    },
+    "image": {
+      "radar": {
+        "default": "mdi:radar"
+      }
     }
   }
 }

@@ -62,6 +62,8 @@ MORE = {
     "binary_sensor.meteoveo_villa_ejemplo_orange_warning": "warning_orange",
     "binary_sensor.meteoveo_villa_ejemplo_red_warning": "warning_red",
     "event.meteoveo_villa_ejemplo_new_warning": "warning",
+    # ADR-0833 R4: the radar loop.
+    "image.meteoveo_villa_ejemplo_radar": "radar",
 }
 
 
