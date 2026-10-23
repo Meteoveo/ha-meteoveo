@@ -28,6 +28,12 @@ INTEGRATION_KEY = "mvik_EXAMPLEKEY.example-secret-value"
 STATION = Credentials(station_id="MVEXAMPLE1", station_key="station-secret-value")
 
 
+@pytest.fixture(autouse=True)
+def mock_home_view():
+    """These tests exercise the real home-view request; do not patch it."""
+    yield
+
+
 class FakeResponse:
     def __init__(self, status: int, payload=None, *, headers=None, raw: str | None = None):
         self.status = status
