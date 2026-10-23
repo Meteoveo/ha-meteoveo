@@ -44,11 +44,11 @@ STATION_DATA = {
     CONF_STATION_REF: 123,
 }
 
-WEATHER = "weather.villa_ejemplo"
-RAIN_SOON = "binary_sensor.villa_ejemplo_rain_in_the_next_hour"
-RAIN_START = "sensor.villa_ejemplo_rain_start"
-RAIN_END = "sensor.villa_ejemplo_rain_end"
-WARNINGS = "sensor.villa_ejemplo_weather_warnings"
+WEATHER = "weather.meteoveo_villa_ejemplo"
+RAIN_SOON = "binary_sensor.meteoveo_villa_ejemplo_rain_in_the_next_hour"
+RAIN_START = "sensor.meteoveo_villa_ejemplo_rain_start"
+RAIN_END = "sensor.meteoveo_villa_ejemplo_rain_end"
+WARNINGS = "sensor.meteoveo_villa_ejemplo_weather_warnings"
 
 
 async def setup(hass: HomeAssistant, data: dict, home=None, unique_id="EXAMPLEKEY"):
@@ -78,7 +78,7 @@ async def test_account_entry_without_station_gets_the_forecast_only(
     assert ids == {WEATHER, RAIN_SOON, RAIN_START, RAIN_END, WARNINGS}
 
     device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "EXAMPLEKEY")})
-    assert device.name == "Villa Ejemplo"
+    assert device.name == "MeteoVeo Villa Ejemplo"
 
 
 async def test_translation_keys_are_the_ones_the_card_relies_on(hass: HomeAssistant) -> None:
@@ -211,11 +211,11 @@ async def test_account_entry_with_station_has_both_sets(hass: HomeAssistant) -> 
     registry = er.async_get(hass)
     ids = {e.entity_id for e in er.async_entries_for_config_entry(registry, entry.entry_id)}
     assert WEATHER in ids
-    assert "sensor.villa_ejemplo_best_forecast_model" in ids
-    assert "binary_sensor.villa_ejemplo_sensor_problem" in ids
+    assert "sensor.meteoveo_villa_ejemplo_best_forecast_model" in ids
+    assert "binary_sensor.meteoveo_villa_ejemplo_sensor_problem" in ids
     # One device, named after the place -- not the station.
     devices = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)
-    assert [d.name for d in devices] == ["Villa Ejemplo"]
+    assert [d.name for d in devices] == ["MeteoVeo Villa Ejemplo"]
 
 
 async def test_station_key_entry_gets_the_forecast_too(hass: HomeAssistant) -> None:

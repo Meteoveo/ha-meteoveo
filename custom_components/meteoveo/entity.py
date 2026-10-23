@@ -46,7 +46,10 @@ def device_info_for(
     """The one device every entity of an entry belongs to."""
     if is_account_entry(entry.data):
         place = (home or {}).get("place") or {}
-        name = place.get("name") or entry.title
+        # The brand leads (owner, 2026-10-23): "MeteoVeo Almiserà" makes every
+        # entity ID say where it comes from (weather.meteoveo_almisera), on the
+        # dashboard and in automations alike. Users can still rename it.
+        name = f"MeteoVeo {place.get('name') or entry.title}"
         model = "Forecast"
     else:
         station = (station_view or {}).get("station") or {}

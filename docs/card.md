@@ -42,16 +42,16 @@ the same entry are found automatically.
 
 ```yaml
 type: custom:meteoveo-card
-entity: weather.castellonet_de_la_conquesta
+entity: weather.meteoveo_castellonet_de_la_conquesta
 ```
 
 All options:
 
 ```yaml
 type: custom:meteoveo-card
-entity: weather.castellonet_de_la_conquesta   # required, a MeteoVeo weather entity
-rain_entity: binary_sensor.castellonet_de_la_conquesta_rain_soon   # optional override
-warnings_entity: sensor.castellonet_de_la_conquesta_warnings       # optional override
+entity: weather.meteoveo_castellonet_de_la_conquesta   # required, a MeteoVeo weather entity
+rain_entity: binary_sensor.meteoveo_castellonet_de_la_conquesta_rain_in_the_next_hour   # optional override
+warnings_entity: sensor.meteoveo_castellonet_de_la_conquesta_weather_warnings       # optional override
 show_next_hour: true     # the 3-hour rain strip
 show_warnings: true      # the AEMET banner
 show_hourly: true

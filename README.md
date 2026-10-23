@@ -87,10 +87,10 @@ upload key is stored as well.
 
 | Entity | Meaning |
 |---|---|
-| `weather.<town>` | Current conditions, hourly forecast (48 h) and daily forecast (7 days). Attribution to the data sources is in the entity's attributes. |
-| `binary_sensor.<town>_rain_in_the_next_hour` | On when rain is expected within 60 minutes. Attributes: `rain_now`, `starts_at`, `ends_at`, `issued_at`, `age_minutes`, and `steps` — ten-minute steps with `band` (`none`, `light`, `moderate`, `heavy`), `source` (`radar` or `model`) and `uncertain`. Unavailable outside nowcast coverage. |
-| `sensor.<town>_rain_start` / `_rain_end` | When the next rain starts / when the current rain stops (timestamps). |
-| `sensor.<town>_weather_warnings` | Number of active official warnings; `highest_level` (`none`, `yellow`, `orange`, `red`) and the `warnings` list as attributes. |
+| `weather.meteoveo_<town>` | Current conditions, hourly forecast (48 h) and daily forecast (7 days). Attribution to the data sources is in the entity's attributes. |
+| `binary_sensor.meteoveo_<town>_rain_in_the_next_hour` | On when rain is expected within 60 minutes. Attributes: `rain_now`, `starts_at`, `ends_at`, `issued_at`, `age_minutes`, and `steps` — ten-minute steps with `band` (`none`, `light`, `moderate`, `heavy`), `source` (`radar` or `model`) and `uncertain`. Unavailable outside nowcast coverage. |
+| `sensor.meteoveo_<town>_rain_start` / `_rain_end` | When the next rain starts / when the current rain stops (timestamps). |
+| `sensor.meteoveo_<town>_weather_warnings` | Number of active official warnings; `highest_level` (`none`, `yellow`, `orange`, `red`) and the `warnings` list as attributes. |
 
 A MeteoVeo Plus account sees its Plus level in Home Assistant as well, as
 soon as it is active.
