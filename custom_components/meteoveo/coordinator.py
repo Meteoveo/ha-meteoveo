@@ -120,6 +120,11 @@ class HomeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._owns_auth = owns_auth
         self._etag: str | None = None
 
+    @property
+    def lang(self) -> str:
+        """The language the home view (and the radar loop) is asked in."""
+        return self._lang
+
     async def _async_update_data(self) -> dict[str, Any]:
         try:
             data, etag = await self.client.async_get_home(

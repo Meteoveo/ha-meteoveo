@@ -79,15 +79,20 @@ HOME_VIEW = {
 
 
 @pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(hass, enable_custom_integrations):
+async def auto_enable_custom_integrations(hass, enable_custom_integrations):
     """Load the integration from custom_components during tests.
 
     The integration depends on ``http`` and ``frontend`` (it serves its card).
-    The test harness has no frontend build, so both are marked as already
-    loaded; the card registration itself is tested separately.
+    ``http`` is set up for real -- the radar image entity is served through it
+    (ADR-0833). The test harness has no frontend build, so ``frontend`` is only
+    marked as loaded; the card registration itself is tested separately.
     """
-    hass.config.components.update({"http", "frontend"})
-    yield
+    from homeassistant.setup import async_setup_component
+
+    await async_setup_component(hass, "http", {"http": {}})
+    hass.config.components.add("frontend")
+    with patch("custom_components.meteoveo.async_register_card", new=AsyncMock(return_value=True)):
+        yield
 
 
 @pytest.fixture(autouse=True)
