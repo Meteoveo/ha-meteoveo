@@ -53,7 +53,6 @@ class Service:
             "async_signup": AsyncMock(return_value=None),
             "async_verify": AsyncMock(return_value=None),
             "async_login": AsyncMock(return_value=TOKEN),
-            "async_logout": AsyncMock(return_value=None),
             "async_create_station": AsyncMock(return_value=dict(STATION)),
             "async_create_integration_key": AsyncMock(return_value=dict(ISSUED)),
             "async_delete_integration_key": AsyncMock(return_value=None),
@@ -158,7 +157,6 @@ async def test_new_account_without_station(hass: HomeAssistant) -> None:
     assert (kwargs["lat"], kwargs["lon"]) == (38.92, -0.26)
     assert kwargs["label"] == "Casa"
     assert kwargs["station_ref"] is None
-    service.async_logout.assert_awaited_once_with(TOKEN)
     service.async_create_station.assert_not_awaited()
 
 

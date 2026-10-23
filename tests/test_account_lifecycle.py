@@ -98,7 +98,6 @@ async def test_reauth_signs_in_and_replaces_the_key(hass: HomeAssistant) -> None
     service.async_delete_integration_key.assert_awaited_once_with(TOKEN, "OLDKEY")
     kwargs = service.async_create_integration_key.await_args.kwargs
     assert (kwargs["lat"], kwargs["lon"], kwargs["station_ref"]) == (38.92, -0.26, None)
-    service.async_logout.assert_awaited_once_with(TOKEN)
 
 
 async def test_reauth_refuses_another_account(hass: HomeAssistant) -> None:

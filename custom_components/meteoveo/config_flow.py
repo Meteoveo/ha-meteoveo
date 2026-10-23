@@ -548,8 +548,8 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(str(issued["keyId"]))
         self._abort_if_unique_id_configured()
 
-        # The session token's job is done: sign it out and forget it.
-        await account.async_logout(self._token)
+        # The session token's job is done: forget it. It is a short-lived
+        # sign-in token without a refresh token, so there is nothing to revoke.
         self._token = None
 
         place = issued.get("place") if isinstance(issued.get("place"), dict) else {}
@@ -658,42 +658,39 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> dict[str, Any]:
         account = _account(self.hass)
         token = await account.async_login(email, password)
-        try:
-            updates: dict[str, Any] = {}
-            station_ref = entry.data.get(CONF_STATION_REF)
-            if has_station(entry.data) and station_ref is not None:
-                try:
-                    await _verify(
-                        self.hass,
-                        Credentials(
-                            station_id=entry.data[CONF_STATION_ID],
-                            station_key=entry.data[CONF_STATION_KEY],
-                        ),
-                    )
-                except InvalidCredentials:
-                    renewed = await account.async_renew_ingest_key(token, station_ref)
-                    updates[CONF_STATION_KEY] = renewed["secret"]
-                    if renewed.get("ingestId"):
-                        updates[CONF_STATION_ID] = renewed["ingestId"]
-
-            # The old key goes first, so it does not count against the
-            # per-account limit. Revoking an already revoked key is a no-op.
+        updates: dict[str, Any] = {}
+        station_ref = entry.data.get(CONF_STATION_REF)
+        if has_station(entry.data) and station_ref is not None:
             try:
-                await account.async_delete_integration_key(token, entry.data[CONF_KEY_ID])
-            except ServiceUnavailable:
-                pass
-            issued = await account.async_create_integration_key(
-                token,
-                lat=entry.data[CONF_LATITUDE],
-                lon=entry.data[CONF_LONGITUDE],
-                label=self.hass.config.location_name,
-                station_ref=station_ref if has_station(entry.data) else None,
-            )
-            updates[CONF_INTEGRATION_KEY] = issued["key"]
-            updates[CONF_KEY_ID] = str(issued["keyId"])
-            return updates
-        finally:
-            await account.async_logout(token)
+                await _verify(
+                    self.hass,
+                    Credentials(
+                        station_id=entry.data[CONF_STATION_ID],
+                        station_key=entry.data[CONF_STATION_KEY],
+                    ),
+                )
+            except InvalidCredentials:
+                renewed = await account.async_renew_ingest_key(token, station_ref)
+                updates[CONF_STATION_KEY] = renewed["secret"]
+                if renewed.get("ingestId"):
+                    updates[CONF_STATION_ID] = renewed["ingestId"]
+
+        # The old key goes first, so it does not count against the
+        # per-account limit. Revoking an already revoked key is a no-op.
+        try:
+            await account.async_delete_integration_key(token, entry.data[CONF_KEY_ID])
+        except ServiceUnavailable:
+            pass
+        issued = await account.async_create_integration_key(
+            token,
+            lat=entry.data[CONF_LATITUDE],
+            lon=entry.data[CONF_LONGITUDE],
+            label=self.hass.config.location_name,
+            station_ref=station_ref if has_station(entry.data) else None,
+        )
+        updates[CONF_INTEGRATION_KEY] = issued["key"]
+        updates[CONF_KEY_ID] = str(issued["keyId"])
+        return updates
 
     @staticmethod
     @callback
