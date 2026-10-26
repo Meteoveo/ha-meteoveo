@@ -12,7 +12,9 @@ with MeteoVeo and bring station-specific extras back.
   <img src="docs/images/card-dark.png" alt="The same card in a dark theme" width="360">
 </p>
 
-> **Status: early development.** Submitted to the HACS default list.
+> **In the HACS default list since 24 October 2026** — install it from the HACS
+> search, see [Installation](#installation). The integration is young: things may
+> still change between releases.
 
 The integration ships its own brand icons in `custom_components/meteoveo/brand/`.
 Since Home Assistant 2026.3.0 that is the supported route for custom
