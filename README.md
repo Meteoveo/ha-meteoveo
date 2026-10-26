@@ -7,7 +7,7 @@ needed.** If you do have one, the integration can also share its readings
 with MeteoVeo and bring station-specific extras back.
 
 <p align="center">
-  <img src="docs/images/card-light.png" alt="The MeteoVeo card, light theme: conditions now, the next three hours of rain in ten-minute steps, the hourly strip and the daily list" width="360">
+  <img src="docs/images/card-light.png" alt="The MeteoVeo card, light theme: conditions now, the next three hours of rain in ten-minute steps, the radar loop, the hourly strip and the daily list" width="360">
   &nbsp;
   <img src="docs/images/card-dark.png" alt="The same card in a dark theme" width="360">
 </p>

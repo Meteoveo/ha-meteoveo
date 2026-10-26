@@ -5,3 +5,6 @@ __pycache__/
 venv/
 .DS_Store
 .coverage
+
+# Frames of the README radar animation (tools/screenshots/shoot.mjs)
+.radar-frames/
