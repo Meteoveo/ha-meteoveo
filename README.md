@@ -98,7 +98,7 @@ upload key is stored as well.
 **For everyone** — one device, named “MeteoVeo <town>” (you can rename it):
 
 <p align="center">
-  <img src="docs/images/entities.png" alt="The MeteoVeo device in Home Assistant with its weather entity and its rain and warnings sensors" width="560">
+  <img src="docs/images/entities.png" alt="The MeteoVeo device in Home Assistant: the weather entity, the rain sensors (start, end, minutes to rain, intensity now), UV, dew point, feels like, the warning sensors by level, the radar image and the new-warning event" width="560">
 </p>
 
 | Entity | Meaning |

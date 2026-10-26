@@ -59,6 +59,13 @@ const CARD = "meteoveo-card";
  * the sentence above the map is what gives the moving radar its meaning.
  */
 const HERO_PARTS = [`${CARD} section.nexthour`, `${CARD} .radar`];
+/** The weather entity whose device page carries every entity of the integration. */
+const WEATHER_ENTITY = process.env.HA_WEATHER_ENTITY ?? "weather.meteoveo_valencia";
+/**
+ * The device-page cards that list entities. The element, not the heading: the heading
+ * is in Home Assistant's own language, while this tag name is the same everywhere.
+ */
+const ENTITY_CARD = "ha-device-entities-card";
 
 async function heroBox(page) {
   const boxes = [];
@@ -142,6 +149,61 @@ async function shoot(page, selector, file) {
   return box;
 }
 
+/**
+ * The device page, clipped to the cards that list the entities. The page is wide, so
+ * the viewport grows for the shot and shrinks back; the cards are found by their
+ * heading, not by a column position, because the layout reflows with the window.
+ */
+async function devicePage(page) {
+  const response = await fetch(`${HA_URL}/api/template`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ template: `{{ device_id('${WEATHER_ENTITY}') }}` }),
+  });
+  const deviceId = (await response.text()).trim();
+  if (!/^[0-9a-f]{32}$/.test(deviceId)) throw new Error(`the template API gave no device id`);
+
+  await page.setViewportSize({ width: 1000, height: 2200 });
+  try {
+    await page.goto(`${HA_URL}/config/devices/device/${deviceId}`, { waitUntil: "domcontentloaded" });
+    await page.locator("ha-config-device-page").waitFor({ timeout: 120000 });
+    await page.locator(ENTITY_CARD).first().waitFor({ timeout: 60000 });
+    await page.waitForTimeout(3000); // the state values arrive after the rows
+
+    const box = await page.evaluate((tag) => {
+      const found = [];
+      const walk = (root, depth) => {
+        if (depth > 12) return;
+        for (const el of root.querySelectorAll("*")) {
+          if (el.tagName.toLowerCase() === tag) {
+            const r = el.getBoundingClientRect();
+            if (r.height > 0) found.push({ x: r.x, y: r.y, w: r.width, h: r.height });
+          }
+          if (el.shadowRoot) walk(el.shadowRoot, depth + 1);
+        }
+      };
+      walk(document, 0);
+      if (found.length === 0) return null;
+      const x = Math.min(...found.map((b) => b.x));
+      const y = Math.min(...found.map((b) => b.y));
+      return {
+        x: Math.max(0, x - 12),
+        y: Math.max(0, y - 12),
+        width: Math.max(...found.map((b) => b.x + b.w)) - x + 24,
+        height: Math.max(...found.map((b) => b.y + b.h)) - y + 24,
+      };
+    }, ENTITY_CARD);
+    if (!box) throw new Error("no entity cards on the device page");
+    await page.screenshot({ path: path.join(OUT, "entities.png"), clip: box });
+    return deviceId;
+  } finally {
+    // Whatever happened, the card shots that follow must get the narrow viewport back -
+    // on 2026-10-26 a thrown error left it at 1000 px and the dark card came out wider
+    // than the light one.
+    await page.setViewportSize({ width: 440, height: 2000 });
+  }
+}
+
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch();
 
@@ -164,6 +226,19 @@ for (let i = 0; i < FRAMES; i += 1) {
 }
 console.log(`${FRAMES} frames of the next-3-hours block (${Math.round(hero.width)}×${Math.round(hero.height)} css px)`);
 
+// The device page: the entities the integration creates. Its own picture goes stale
+// fastest, because every new sensor changes it. The device id comes from the template
+// API, so nothing here is written down that a reinstall would invalidate.
+try {
+  const deviceId = await devicePage(page);
+  console.log(`entities.png — device page ${deviceId.slice(0, 8)}…`);
+} catch (error) {
+  console.warn(`  (no device-page picture: ${String(error).slice(0, 120)})`);
+}
+
+await page.goto(`${HA_URL}${DASHBOARD}`, { waitUntil: "domcontentloaded" });
+await page.locator(CARD).waitFor({ state: "visible", timeout: 120000 });
+await page.waitForTimeout(2500);
 await page.emulateMedia({ colorScheme: "dark" });
 await page.waitForTimeout(2000); // the theme travels through hass.themes to the card
 const dark = await shoot(page, CARD, path.join(OUT, "card-dark.png"));
