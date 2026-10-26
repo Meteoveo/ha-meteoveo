@@ -7,9 +7,9 @@ needed.** If you do have one, the integration can also share its readings
 with MeteoVeo and bring station-specific extras back.
 
 <p align="center">
-  <img src="docs/images/card-light.png" alt="The MeteoVeo card, light theme: conditions now, the next three hours of rain in ten-minute steps, the radar loop, the hourly strip and the daily list" width="360">
+  <img src="https://raw.githubusercontent.com/Meteoveo/ha-meteoveo/main/docs/images/card-light.png" alt="The MeteoVeo card, light theme: conditions now, the next three hours of rain in ten-minute steps, the radar loop, the hourly strip and the daily list" width="360">
   &nbsp;
-  <img src="docs/images/card-dark.png" alt="The same card in a dark theme" width="360">
+  <img src="https://raw.githubusercontent.com/Meteoveo/ha-meteoveo/main/docs/images/card-dark.png" alt="The same card in a dark theme" width="360">
 </p>
 
 > **In the HACS default list since 24 October 2026** — install it from the HACS
@@ -22,10 +22,10 @@ integrations — the `home-assistant/brands` repository no longer accepts them.
 
 ## Documentation
 
-- [Setup guide](docs/setup.md) — creating an account or signing in, the place, an optional station
-- [Measurements](docs/measurements.md) — what each station field expects, units, pitfalls
-- [Reciprocity](docs/reciprocity.md) — what a station that stops reporting loses (and what it never loses)
-- [Troubleshooting](docs/troubleshooting.md) — errors and what they mean
+- [Setup guide](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/setup.md) — creating an account or signing in, the place, an optional station
+- [Measurements](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/measurements.md) — what each station field expects, units, pitfalls
+- [Reciprocity](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/reciprocity.md) — what a station that stops reporting loses (and what it never loses)
+- [Troubleshooting](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/troubleshooting.md) — errors and what they mean
 
 ## Installation
 
@@ -61,9 +61,9 @@ repository: HACS → ⋮ → **Custom repositories** → add
 | **I have a station ID and key (advanced)** | Stations already set up on meteoveo.com | Station ID and key — the 0.1.x setup, unchanged |
 
 <p align="center">
-  <img src="docs/images/setup-menu.png" alt="Adding MeteoVeo: create an account, sign in, or use a station key" width="380">
+  <img src="https://raw.githubusercontent.com/Meteoveo/ha-meteoveo/main/docs/images/setup-menu.png" alt="Adding MeteoVeo: create an account, sign in, or use a station key" width="380">
   &nbsp;
-  <img src="docs/images/setup-account.png" alt="Creating a MeteoVeo account inside Home Assistant: email, password, terms, optional newsletter" width="380">
+  <img src="https://raw.githubusercontent.com/Meteoveo/ha-meteoveo/main/docs/images/setup-account.png" alt="Creating a MeteoVeo account inside Home Assistant: email, password, terms, optional newsletter" width="380">
 </p>
 
 The first two continue with:
@@ -100,7 +100,7 @@ upload key is stored as well.
 **For everyone** — one device, named “MeteoVeo <town>” (you can rename it):
 
 <p align="center">
-  <img src="docs/images/entities.png" alt="The MeteoVeo device in Home Assistant: the weather entity, the rain sensors (start, end, minutes to rain, intensity now), UV, dew point, feels like, the warning sensors by level, the radar image and the new-warning event" width="560">
+  <img src="https://raw.githubusercontent.com/Meteoveo/ha-meteoveo/main/docs/images/entities.png" alt="The MeteoVeo device in Home Assistant: the weather entity, the rain sensors (start, end, minutes to rain, intensity now), UV, dew point, feels like, the warning sensors by level, the radar image and the new-warning event" width="560">
 </p>
 
 | Entity | Meaning |
@@ -152,7 +152,7 @@ The integration includes a dashboard card — no separate download, no
 resource to add. Edit a dashboard → **Add card** → search **MeteoVeo**. It
 shows the conditions now, the next hour's rain, the hourly strip and the
 daily list, in your theme's light or dark colours. Options and YAML:
-[docs/card.md](docs/card.md).
+[docs/card.md](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/card.md).
 
 ### Blueprints
 
