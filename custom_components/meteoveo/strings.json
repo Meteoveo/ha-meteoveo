@@ -392,6 +392,14 @@
           "12h": "Last 12 hours",
           "24h": "Last 24 hours"
         }
+      },
+      "radar_extent": {
+        "name": "Radar area",
+        "state": {
+          "local": "Around the town",
+          "region": "Region",
+          "spain": "Peninsula and Balearics"
+        }
       }
     }
   },

@@ -179,10 +179,11 @@ PLUS_ENTITY_KEYS = {
     "sensor": ("account_level", "nearest_lightning"),
     "binary_sensor": ("lightning_nearby",),
     "camera": ("radar_playback",),
-    "select": ("radar_window",),
+    "select": ("radar_window", "radar_extent"),
 }
 
 RADAR_WINDOW_OPTIONS = {"1h", "3h", "6h", "12h", "24h"}
+RADAR_EXTENT_OPTIONS = {"local", "region", "spain"}
 
 
 @pytest.mark.parametrize("language", LANGUAGES)
@@ -216,6 +217,7 @@ def test_the_plus_entities_are_named_and_their_states_translated(language):
             assert entity[platform][key]["name"].strip(), f"{language}: {platform}.{key}"
     assert set(entity["sensor"]["account_level"]["state"]) == {"free", "plus"}
     assert set(entity["select"]["radar_window"]["state"]) == RADAR_WINDOW_OPTIONS
+    assert set(entity["select"]["radar_extent"]["state"]) == RADAR_EXTENT_OPTIONS
 
 
 @pytest.mark.parametrize("language", LANGUAGES)
@@ -236,3 +238,13 @@ def test_the_user_interface_lists_no_plus_features_and_sells_nothing():
     text = (TRANSLATIONS.parent / "strings.json").read_text(encoding="utf-8").lower()
     for forbidden in ("upgrade", "fire alert", "saved places", "buy ", "store.meteoveo"):
         assert forbidden not in text, forbidden
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_widest_radar_area_does_not_promise_the_canaries(language):
+    # The key is "spain", but the picture is the peninsula and the Balearics:
+    # our radar field measures nothing at all over the Canaries, so a label
+    # saying "Spain" would promise an empty map.
+    label = load(language)["entity"]["select"]["radar_extent"]["state"]["spain"]
+    for promise in ("Canar", "Canàr", "Kanári"):
+        assert promise not in label, language

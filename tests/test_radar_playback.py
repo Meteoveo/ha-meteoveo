@@ -20,8 +20,10 @@ from pytest_homeassistant_custom_component.common import mock_restore_cache
 
 from custom_components.meteoveo.client import ApiError, ServiceUnavailable
 from custom_components.meteoveo.radar import (
+    RADAR_EXTENTS,
     RADAR_WINDOWS,
-    RadarWindow,
+    RadarView,
+    extent_value,
     split_animation,
     window_hours,
 )
@@ -30,6 +32,7 @@ from test_plus_entities import free_view, plus_view
 
 CAMERA = "camera.meteoveo_villa_ejemplo_radar_playback"
 SELECT = "select.meteoveo_villa_ejemplo_radar_window"
+EXTENT = "select.meteoveo_villa_ejemplo_radar_area"
 RADAR_IMAGE = "image.meteoveo_villa_ejemplo_radar"
 NOW = datetime(2026, 10, 23, 13, 5, tzinfo=timezone.utc)
 
@@ -99,17 +102,33 @@ def test_split_animation_returns_nothing_for_rubbish():
     assert split_animation(b"not a picture at all") == ([], 0.2)
 
 
-def test_the_shared_window_notifies_its_watchers():
-    window = RadarWindow()
-    seen: list[str] = []
-    remove = window.subscribe(lambda: seen.append(window.option))
-    assert window.option == "1h" and window.hours == 1
-    window.choose("6h")
-    assert window.hours == 6
-    assert seen == ["6h"]
+def test_the_shared_view_notifies_its_watchers():
+    view = RadarView()
+    seen: list[tuple[str, str]] = []
+    remove = view.subscribe(lambda: seen.append((view.window, view.extent)))
+    assert (view.window, view.hours, view.extent) == ("1h", 1, "local")
+    view.choose_window("6h")
+    view.choose_extent("spain")
+    assert view.hours == 6 and view.extent == "spain"
+    assert seen == [("6h", "local"), ("6h", "spain")]
     remove()
-    window.choose("12h")
-    assert seen == ["6h"]
+    view.choose_window("12h")
+    assert len(seen) == 2
+
+
+def test_the_areas_are_the_three_the_radar_can_show():
+    assert RADAR_EXTENTS == ("local", "region", "spain")
+    # Anything unknown degrades to the area the service serves at every
+    # level, exactly as an unknown window degrades to one hour.
+    assert extent_value("canarias") == "local"
+    assert extent_value(None) == "local"
+
+
+def test_choosing_an_area_clears_a_previous_refusal():
+    view = RadarView()
+    view.set_refused(True)
+    view.choose_extent("region")
+    assert view.refused is False
 
 
 # --- Who gets the entities -------------------------------------------------
@@ -229,7 +248,7 @@ async def test_the_chosen_window_survives_a_restart(hass: HomeAssistant) -> None
     await setup(hass, ACCOUNT_DATA, home=plus_view())
     assert hass.states.get(SELECT).state == "12h"
     entry = hass.config_entries.async_entries("meteoveo")[0]
-    assert entry.runtime_data.radar_window.hours == 12
+    assert entry.runtime_data.radar_view.hours == 12
 
 
 async def test_a_nonsense_restored_value_falls_back_to_one_hour(hass: HomeAssistant) -> None:
@@ -329,7 +348,7 @@ async def test_the_frames_are_split_off_the_event_loop(
             frames = await camera.async_frames()
         assert len(frames) == 3
         assert executor.called
-        assert entry.runtime_data.radar_window.option == "1h"
+        assert entry.runtime_data.radar_view.window == "1h"
 
 
 async def test_the_camera_advertises_no_stream_feature(hass: HomeAssistant) -> None:
@@ -370,3 +389,145 @@ async def test_a_free_account_entry_still_loads_them(hass: HomeAssistant) -> Non
     await setup(hass, ACCOUNT_DATA, home=free_view())
     assert "camera" in hass.config.components
     assert "select" in hass.config.components
+
+
+# --- The area (ADR-0866 follow-up: the radar extent) -----------------------
+
+
+async def test_plus_gets_the_area_select_too(hass: HomeAssistant) -> None:
+    entry = await setup(hass, ACCOUNT_DATA, home=plus_view())
+    registry = er.async_get(hass)
+    select = registry.async_get(EXTENT)
+    assert select.unique_id == f"{entry.unique_id}_radar_extent"
+    assert select.entity_category is EntityCategory.CONFIG
+    state = hass.states.get(EXTENT)
+    assert state.state == "local"
+    assert state.attributes["options"] == list(RADAR_EXTENTS)
+
+
+async def test_a_free_account_gets_no_area_select(hass: HomeAssistant) -> None:
+    await setup(hass, ACCOUNT_DATA, home=free_view())
+    assert hass.states.get(EXTENT) is None
+
+
+async def test_losing_plus_makes_the_area_select_unavailable(
+    hass: HomeAssistant, mock_home_view
+) -> None:
+    entry = await setup(hass, ACCOUNT_DATA, home=plus_view())
+    mock_home_view.return_value = (free_view(), '"e4"')
+    await entry.runtime_data.home.async_refresh()
+    await hass.async_block_till_done()
+    assert hass.states.get(EXTENT).state == "unavailable"
+    assert EXTENT in {
+        e.entity_id
+        for e in er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
+    }
+
+
+async def test_the_default_area_is_not_sent_at_all(
+    hass: HomeAssistant, hass_client, freezer
+) -> None:
+    # "local" is the free area the service serves at every level, so the
+    # request stays the one 0.2.1 makes: no extent parameter.
+    freezer.move_to(NOW)
+    get = radar_answer()
+    with patch("custom_components.meteoveo.client.MeteoVeoClient.async_get_radar", new=get):
+        await setup(hass, ACCOUNT_DATA, home=plus_view())
+        client = await hass_client()
+        await client.get(picture_url(hass))
+        assert get.await_args.kwargs["extent"] == "local"
+
+
+async def test_choosing_an_area_asks_the_service_for_it(
+    hass: HomeAssistant, hass_client, freezer
+) -> None:
+    freezer.move_to(NOW)
+    get = radar_answer()
+    with patch("custom_components.meteoveo.client.MeteoVeoClient.async_get_radar", new=get):
+        await setup(hass, ACCOUNT_DATA, home=plus_view())
+        client = await hass_client()
+        await client.get(picture_url(hass))
+
+        await hass.services.async_call(
+            "select",
+            "select_option",
+            {"entity_id": EXTENT, "option": "spain"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+        assert hass.states.get(EXTENT).state == "spain"
+        assert get.await_count == 2
+        assert get.await_args.kwargs["extent"] == "spain"
+        # An ETag from the local view says nothing about the wide one.
+        assert get.await_args.kwargs["etag"] is None
+
+
+async def test_the_two_selects_describe_one_request(
+    hass: HomeAssistant, hass_client, freezer
+) -> None:
+    freezer.move_to(NOW)
+    get = radar_answer()
+    with patch("custom_components.meteoveo.client.MeteoVeoClient.async_get_radar", new=get):
+        await setup(hass, ACCOUNT_DATA, home=plus_view())
+        client = await hass_client()
+        for entity_id, option in ((SELECT, "6h"), (EXTENT, "spain")):
+            await hass.services.async_call(
+                "select",
+                "select_option",
+                {"entity_id": entity_id, "option": option},
+                blocking=True,
+            )
+        await hass.async_block_till_done()
+        await client.get(picture_url(hass))
+
+        kwargs = get.await_args.kwargs
+        assert (kwargs["window_hours"], kwargs["extent"]) == (6, "spain")
+
+
+async def test_the_chosen_area_survives_a_restart(hass: HomeAssistant) -> None:
+    mock_restore_cache(hass, (State(EXTENT, "region"),))
+    await setup(hass, ACCOUNT_DATA, home=plus_view())
+    assert hass.states.get(EXTENT).state == "region"
+    entry = hass.config_entries.async_entries("meteoveo")[0]
+    assert entry.runtime_data.radar_view.extent == "region"
+
+
+async def test_a_nonsense_restored_area_falls_back_to_local(hass: HomeAssistant) -> None:
+    mock_restore_cache(hass, (State(EXTENT, "canarias"),))
+    await setup(hass, ACCOUNT_DATA, home=plus_view())
+    assert hass.states.get(EXTENT).state == "local"
+
+
+async def test_a_rejected_area_keeps_the_last_loop_and_is_said_once(
+    hass: HomeAssistant, hass_client, freezer, caplog, mock_home_view
+) -> None:
+    # 400 bad_extent is our own bug, not the user's: the picture they have
+    # stays, and the log says it once rather than on every look.
+    freezer.move_to(NOW)
+    mock_home_view.return_value = (plus_view(), '"e"')
+    get = radar_answer()
+    with patch("custom_components.meteoveo.client.MeteoVeoClient.async_get_radar", new=get):
+        await setup(hass, ACCOUNT_DATA, home=plus_view())
+        client = await hass_client()
+        await client.get(picture_url(hass))
+
+        get.side_effect = ApiError(400, "bad_extent")
+        await hass.services.async_call(
+            "select",
+            "select_option",
+            {"entity_id": EXTENT, "option": "region"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+        for _ in range(3):
+            response = await client.get(picture_url(hass))
+        await hass.async_block_till_done()
+
+        # Still there, still the previous loop.
+        assert hass.states.get(EXTENT).state == "region"
+        assert hass.states.get(CAMERA).state != "unavailable"
+        assert response.status == 200
+        assert await response.read() == WEBP
+        assert caplog.text.count("bad_extent") == 1
+        assert "ERROR" not in caplog.text

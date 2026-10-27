@@ -1,11 +1,12 @@
-"""The radar playback window, and turning an animated WEBP into frames.
+"""What the radar playback shows, and turning an animated WEBP into frames.
 
 ADR-0866 D6. The service renders the loop; Home Assistant only chooses how
-far back it should reach and plays what comes back. Two things live here, both
-free of Home Assistant so they can be tested on their own:
+far back it should reach and how wide it should be, then plays what comes
+back. Two things live here, both free of Home Assistant so they can be
+tested on their own:
 
-* :class:`RadarWindow` -- the chosen window, shared by the ``select`` that
-  sets it and the ``camera`` that renders it.
+* :class:`RadarView` -- the chosen window and area, shared by the two
+  ``select`` entities that set them and the ``camera`` that renders them.
 * :func:`split_animation` -- the animation taken apart into JPEG frames for
   the MJPEG stream. It decodes pictures, so it is **blocking**: callers run
   it in an executor, never in the event loop.
@@ -26,6 +27,16 @@ _LOGGER = logging.getLogger(__name__)
 RADAR_WINDOWS: Final[tuple[str, ...]] = ("1h", "3h", "6h", "12h", "24h")
 
 DEFAULT_RADAR_WINDOW: Final = "1h"
+
+#: How wide the picture is. ``local`` is the ~175 km square around the town
+#: that everyone has gotten since ADR-0833; ``region`` is ~350 km and
+#: ``spain`` the fixed peninsula-and-Balearics cut-out, both Plus only.
+#:
+#: There is no Canaries step on purpose: our radar field measures nothing
+#: there, so the option would only ever render an empty map.
+RADAR_EXTENTS: Final[tuple[str, ...]] = ("local", "region", "spain")
+
+DEFAULT_RADAR_EXTENT: Final = "local"
 
 #: The service renders a new loop when a new radar frame is usable.
 SLOT_MINUTES: Final = 10
@@ -50,6 +61,16 @@ def window_hours(option: str | None) -> int:
     return 1
 
 
+def extent_value(option: str | None) -> str:
+    """The area behind the ``select`` option.
+
+    Anything unknown degrades to ``local``, the area the service serves at
+    every level -- the same rule as for an unknown window, and the reason a
+    stale stored value cannot turn into a 400.
+    """
+    return option if option in RADAR_EXTENTS else DEFAULT_RADAR_EXTENT
+
+
 def radar_slot(now: datetime) -> datetime:
     """The ten-minute slot ``now`` belongs to."""
     return now.replace(
@@ -57,32 +78,42 @@ def radar_slot(now: datetime) -> datetime:
     )
 
 
-class RadarWindow:
-    """How far back the playback reaches, shared inside one config entry.
+class RadarView:
+    """What the playback shows, shared inside one config entry.
 
-    The ``select`` entity owns the value and the ``camera`` renders it, so
-    one of them has to hold it and the other has to hear about a change.
-    ``refused`` carries the one other piece of shared news: the service
-    answered that this account may not have a long window, which makes both
-    entities unavailable rather than broken (ADR-0866 D8).
+    The two ``select`` entities own the choices and the ``camera`` renders
+    them, so the values have to live somewhere both can reach, and a change
+    has to reach the camera. ``refused`` carries the one other piece of
+    shared news: the service answered that this account may not have this
+    view, which makes the entities unavailable rather than broken
+    (ADR-0866 D8).
     """
 
-    def __init__(self, option: str = DEFAULT_RADAR_WINDOW) -> None:
-        self._option = option if option in RADAR_WINDOWS else DEFAULT_RADAR_WINDOW
+    def __init__(
+        self,
+        window: str = DEFAULT_RADAR_WINDOW,
+        extent: str = DEFAULT_RADAR_EXTENT,
+    ) -> None:
+        self._window = window if window in RADAR_WINDOWS else DEFAULT_RADAR_WINDOW
+        self._extent = extent_value(extent)
         self._refused = False
         self._listeners: list[Callable[[], None]] = []
 
     @property
-    def option(self) -> str:
-        return self._option
+    def window(self) -> str:
+        return self._window
 
     @property
     def hours(self) -> int:
-        return window_hours(self._option)
+        return window_hours(self._window)
+
+    @property
+    def extent(self) -> str:
+        return self._extent
 
     @property
     def refused(self) -> bool:
-        """Whether the service refused this window as not available to the account."""
+        """Whether the service refused this view as not available to the account."""
         return self._refused
 
     def subscribe(self, listener: Callable[[], None]) -> Callable[[], None]:
@@ -95,25 +126,40 @@ class RadarWindow:
 
         return _remove
 
-    def choose(self, option: str) -> None:
+    def choose_window(self, option: str) -> None:
         """Set the window. Unknown values are ignored, not stored."""
-        if option not in RADAR_WINDOWS or option == self._option:
+        if option not in RADAR_WINDOWS or option == self._window:
             return
-        self._option = option
-        # A new window is a new question for the service, so a previous
-        # refusal says nothing about it.
-        self._refused = False
-        self._notify()
+        self._window = option
+        self._changed()
 
-    def restore(self, option: str | None) -> None:
-        """Take a value back from the state machine after a restart."""
+    def choose_extent(self, option: str) -> None:
+        """Set the area. Unknown values are ignored, not stored."""
+        if option not in RADAR_EXTENTS or option == self._extent:
+            return
+        self._extent = option
+        self._changed()
+
+    def restore_window(self, option: str | None) -> None:
+        """Take a window back from the state machine after a restart."""
         if option in RADAR_WINDOWS:
-            self._option = str(option)
+            self._window = str(option)
+
+    def restore_extent(self, option: str | None) -> None:
+        """Take an area back from the state machine after a restart."""
+        if option in RADAR_EXTENTS:
+            self._extent = str(option)
 
     def set_refused(self, refused: bool) -> None:
         if refused == self._refused:
             return
         self._refused = refused
+        self._notify()
+
+    def _changed(self) -> None:
+        # A new view is a new question for the service, so a previous
+        # refusal says nothing about it.
+        self._refused = False
         self._notify()
 
     def _notify(self) -> None:

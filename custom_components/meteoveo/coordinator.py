@@ -23,7 +23,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .client import InvalidCredentials, MeteoVeoClient, ServiceUnavailable
 from .const import HOME_UPDATE_INTERVAL_S
-from .radar import RadarWindow
+from .radar import RadarView
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,10 +48,10 @@ class MeteoVeoData:
     #: across re-authentication, so entity history is never orphaned.
     base_id: str
     device_info: DeviceInfo
-    #: How far back the radar playback reaches (ADR-0866 D6). The ``select``
-    #: entity sets it, the ``camera`` renders it; neither exists unless the
-    #: account has Plus.
-    radar_window: RadarWindow = field(default_factory=RadarWindow)
+    #: What the radar playback shows -- how far back, and how wide
+    #: (ADR-0866 D6). The two ``select`` entities set it, the ``camera``
+    #: renders it; none of them exists unless the account has Plus.
+    radar_view: RadarView = field(default_factory=RadarView)
 
 
 type MeteoVeoConfigEntry = ConfigEntry[MeteoVeoData]

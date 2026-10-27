@@ -119,7 +119,12 @@ class MeteoVeoClient:
         return body, new_etag
 
     async def async_get_radar(
-        self, lang: str, etag: str | None = None, *, window_hours: int = 1
+        self,
+        lang: str,
+        etag: str | None = None,
+        *,
+        window_hours: int = 1,
+        extent: str = "local",
     ) -> tuple[bytes | None, str | None, str]:
         """The radar loop for the configured place (ADR-0833): an animated WEBP.
 
@@ -127,16 +132,20 @@ class MeteoVeoClient:
         Outside radar coverage the service refuses with a reason code
         (:class:`ApiError`, e.g. ``no_coverage``).
 
-        ``window_hours`` is how far back the loop reaches (ADR-0866 D8). One
-        hour is the default everywhere and is sent **without** the parameter,
-        so the request is byte for byte the one 0.2.1 makes -- a released
-        client must not change because a new option exists. A longer window
+        ``window_hours`` is how far back the loop reaches and ``extent`` how
+        wide it is (ADR-0866 D8). One hour and ``local`` are the defaults
+        everywhere and are sent **without** their parameter, so the request
+        is byte for byte the one 0.2.1 makes -- a released client must not
+        change because a new option exists. A longer window or a wider area
         needs the Plus level; a free key is refused with ``plus_required``
-        rather than quietly given the short loop.
+        rather than quietly given the small loop. An area the service does
+        not know is refused with ``bad_extent``, which is our own bug.
         """
         params = {"lang": lang}
         if window_hours > 1:
             params["window"] = str(window_hours)
+        if extent != "local":
+            params["extent"] = extent
         status, body, response_headers = await _call(
             self._session,
             "GET",

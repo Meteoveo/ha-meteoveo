@@ -392,6 +392,14 @@
           "12h": "Últimas 12 horas",
           "24h": "Últimas 24 horas"
         }
+      },
+      "radar_extent": {
+        "name": "Área del radar",
+        "state": {
+          "local": "Alrededor del municipio",
+          "region": "Región",
+          "spain": "Península y Baleares"
+        }
       }
     }
   },

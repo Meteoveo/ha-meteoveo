@@ -110,6 +110,12 @@
     "select": {
       "radar_window": {
         "default": "mdi:timeline-clock-outline"
+      },
+      "radar_extent": {
+        "default": "mdi:map-marker-radius-outline",
+        "state": {
+          "spain": "mdi:map-outline"
+        }
       }
     }
   }

@@ -107,12 +107,26 @@ narrowed to half.
 
 With MeteoVeo Plus the integration also has a **Radar playback** camera
 entity. Put it on a dashboard with the **Picture entity** card (entity:
-`camera.meteoveo_<town>_radar_playback`, `camera_view: live`), and change
-how far back it goes with the **Radar window** entity (1 to 24 hours) — a
-plain **Entity** or **Tile** card next to it does. The loop is re-rendered
-when the window changes and whenever a new radar run arrives, so it is not
-instant like a live camera: a few seconds is normal. The MeteoVeo card
-itself keeps showing the one-hour loop; the camera is for a bigger view.
+`camera.meteoveo_<town>_radar_playback`, `camera_view: live`), and two
+entities next to it — a plain **Entity** or **Tile** card does — set what it
+shows:
+
+| Entity | Options | What changes |
+|---|---|---|
+| **Radar window** | 1, 3, 6, 12 or 24 hours | How far back the loop reaches. |
+| **Radar area** | *Around the town* (about 175 km, the free view), *Region* (about 350 km) or *Peninsula and Balearics* | How wide the picture is. |
+
+There is **no Canary Islands area**: our radar field measures nothing there,
+so the widest view is the peninsula with the Balearics. Everything else —
+the forecast, the next hour, the warnings — works in the Canaries as
+anywhere else.
+
+The wide views show observed frames only, so they have fewer of them than
+the local one (the peninsula over 24 hours is about a dozen) and play
+faster. The loop is re-rendered when the window or the area changes and
+whenever a new radar run arrives, so it is not instant like a live camera: a
+few seconds is normal. The MeteoVeo card itself keeps showing the one-hour
+local loop; the camera is for a bigger view.
 
 ## Where the data comes from
 

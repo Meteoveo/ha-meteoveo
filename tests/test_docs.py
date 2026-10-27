@@ -122,9 +122,25 @@ def test_the_card_page_explains_the_radar_playback_camera():
     assert "### The 24-hour radar on a dashboard" in text
     assert "camera.meteoveo_<town>_radar_playback" in text
     assert "camera_view: live" in text
-    # The card itself is unchanged -- it keeps the one-hour loop.
-    assert "keeps showing the one-hour loop" in text
+    # The card itself is unchanged -- it keeps the free one-hour local loop.
+    assert "keeps showing the one-hour" in text
+    # The area is settable too, with the three steps named.
+    assert "**Radar area**" in text
+    for step in ("Around the town", "Region", "Peninsula and Balearics"):
+        assert step in text, step
+    # And it does not promise a radar over the Canaries, where we measure
+    # nothing at all.
+    assert "no Canary Islands area" in text
 
 
 def test_the_readme_points_at_the_radar_playback_section():
     assert "docs/card.md#the-24-hour-radar-on-a-dashboard" in readme()
+
+
+def test_the_readme_names_the_radar_area_without_promising_the_canaries():
+    text = readme()
+    assert "**Radar area**" in text
+    assert "Peninsula and Balearics" in text
+    # Nowhere does the radar row offer the Canaries.
+    radar_row = next(line for line in text.splitlines() if "Radar playback" in line and "|" in line)
+    assert "Canar" not in radar_row

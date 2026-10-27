@@ -130,7 +130,7 @@ What Plus adds, and where you see it:
 | Plus feature | In Home Assistant | In the MeteoVeo app and on the web |
 |---|---|---|
 | Lightning nearby — strikes within 15, 30 and 50 km, the nearest one and its bearing | **Lightning nearby** and **Nearest lightning** entities (they appear when the level is `plus`) | Lightning alerts as notifications |
-| Radar playback up to 24 hours back | **Radar playback** camera, with a **Radar window** of 1, 3, 6, 12 or 24 hours (they appear when the level is `plus`). The one-hour radar loop — the last hour and the next hour's nowcast — stays free for everyone as the **Radar** image. | Radar, satellite and cloud playback up to 24 hours back |
+| Radar playback up to 24 hours back, over a wider area | **Radar playback** camera, with a **Radar window** of 1, 3, 6, 12 or 24 hours and a **Radar area** of *Around the town*, *Region* or *Peninsula and Balearics* (they appear when the level is `plus`). The one-hour loop around the town — the last hour and the next hour's nowcast — stays free for everyone as the **Radar** image. | Radar, satellite and cloud playback up to 24 hours back |
 | The day's summary in a sentence or two | — | Yes |
 | More saved places, with warnings for each | — | Yes |
 | Switching between places on the home screen and the widget | — | Yes |
@@ -281,6 +281,7 @@ MeteoVeo app instead.
 | *"Could not reach MeteoVeo"* | The service could not be contacted. Nothing needs changing; try again shortly. |
 | Rain entities are unavailable | The place is outside radar nowcast coverage. The forecast still works. |
 | Lightning or radar-playback entities are missing | The account is on the free level — see the **Level** sensor. A station that reports every 10 minutes, or a subscription, turns them on. |
+| No Canaries option in **Radar area** | There is none: our radar field measures nothing over the Canary Islands, so the widest view is the peninsula with the Balearics. Every other entity works there as anywhere. |
 | Uploads accepted stays at 0 | No measurement is mapped, or every mapped entity is unavailable. |
 
 Debug logging:

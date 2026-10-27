@@ -392,6 +392,14 @@
           "12h": "Utolsó 12 óra",
           "24h": "Utolsó 24 óra"
         }
+      },
+      "radar_extent": {
+        "name": "Radar-terület",
+        "state": {
+          "local": "A település körül",
+          "region": "Régió",
+          "spain": "Félsziget és a Baleárok"
+        }
       }
     }
   },

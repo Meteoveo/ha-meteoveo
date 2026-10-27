@@ -337,3 +337,69 @@ async def test_revoke_uses_a_short_timeout() -> None:
     method, url, kwargs = session.requests[0]
     assert (method, url) == ("DELETE", f"{API_BASE}/v1/integration/key")
     assert kwargs["timeout"].total <= 10
+
+
+# --- The radar loop: window and area ---------------------------------------
+
+
+class BinaryResponse(FakeResponse):
+    """A picture answer; the client reads the body as bytes."""
+
+    def __init__(self, status: int, body: bytes = b"RIFF....WEBP", **kwargs):
+        super().__init__(status, None, **kwargs)
+        self._body = body
+
+    async def read(self):
+        return self._body
+
+
+async def test_the_default_radar_request_is_the_one_released_clients_make() -> None:
+    # Neither window nor extent is sent for the free one-hour local loop, so
+    # the request is byte for byte the one 0.2.1 makes.
+    session = FakeSession(BinaryResponse(200, headers={"ETag": '"radar-1"'}))
+    client = MeteoVeoClient(session, integration_key=INTEGRATION_KEY)
+    body, etag, content_type = await client.async_get_radar("es")
+    assert body == b"RIFF....WEBP"
+    assert etag == '"radar-1"'
+    method, url, kwargs = session.requests[0]
+    assert (method, url) == ("GET", f"{API_BASE}/v1/integration/radar.webp")
+    assert kwargs["params"] == {"lang": "es"}
+
+
+async def test_a_wider_or_longer_radar_request_names_it() -> None:
+    session = FakeSession(BinaryResponse(200))
+    client = MeteoVeoClient(session, integration_key=INTEGRATION_KEY)
+    await client.async_get_radar("en", window_hours=24, extent="spain")
+    assert session.requests[0][2]["params"] == {
+        "lang": "en",
+        "window": "24",
+        "extent": "spain",
+    }
+
+
+async def test_the_local_area_is_never_named_even_with_a_long_window() -> None:
+    session = FakeSession(BinaryResponse(200))
+    client = MeteoVeoClient(session, integration_key=INTEGRATION_KEY)
+    await client.async_get_radar("ca", window_hours=6, extent="local")
+    assert session.requests[0][2]["params"] == {"lang": "ca", "window": "6"}
+
+
+async def test_a_plus_refusal_is_a_reason_not_a_rejected_key() -> None:
+    # The body carries the code at the top level. Read as "key rejected" it
+    # would open a re-authentication prompt for a free account.
+    session = FakeSession(
+        FakeResponse(403, {"error": "plus required", "code": "plus_required"})
+    )
+    client = MeteoVeoClient(session, integration_key=INTEGRATION_KEY)
+    with pytest.raises(ApiError) as caught:
+        await client.async_get_radar("es", window_hours=6, extent="region")
+    assert caught.value.code == "plus_required"
+    assert not isinstance(caught.value, InvalidCredentials)
+
+
+async def test_an_unknown_area_is_reported_as_such() -> None:
+    session = FakeSession(FakeResponse(400, {"error": "bad extent", "code": "bad_extent"}))
+    client = MeteoVeoClient(session, integration_key=INTEGRATION_KEY)
+    with pytest.raises(ApiError) as caught:
+        await client.async_get_radar("es", extent="canarias")
+    assert caught.value.code == "bad_extent"
