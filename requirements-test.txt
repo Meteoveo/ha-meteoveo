@@ -3,3 +3,7 @@
 pytest>=8.0
 pytest-asyncio>=0.24
 pytest-homeassistant-custom-component>=0.13
+# Home Assistant's own camera integration imports this at module level, and
+# the integration forwards a camera platform (ADR-0866 D6). Home Assistant
+# installs it for itself; the test harness does not, so it is named here.
+PyTurboJPEG>=1.7

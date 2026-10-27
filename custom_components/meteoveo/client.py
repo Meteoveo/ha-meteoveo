@@ -119,24 +119,35 @@ class MeteoVeoClient:
         return body, new_etag
 
     async def async_get_radar(
-        self, lang: str, etag: str | None = None
+        self, lang: str, etag: str | None = None, *, window_hours: int = 1
     ) -> tuple[bytes | None, str | None, str]:
         """The radar loop for the configured place (ADR-0833): an animated WEBP.
 
         Returns ``(None, etag, content_type)`` when nothing changed since ``etag``.
         Outside radar coverage the service refuses with a reason code
         (:class:`ApiError`, e.g. ``no_coverage``).
+
+        ``window_hours`` is how far back the loop reaches (ADR-0866 D8). One
+        hour is the default everywhere and is sent **without** the parameter,
+        so the request is byte for byte the one 0.2.1 makes -- a released
+        client must not change because a new option exists. A longer window
+        needs the Plus level; a free key is refused with ``plus_required``
+        rather than quietly given the short loop.
         """
+        params = {"lang": lang}
+        if window_hours > 1:
+            params["window"] = str(window_hours)
         status, body, response_headers = await _call(
             self._session,
             "GET",
             "/v1/integration/radar.webp",
             bearer=self._bearer,
-            params={"lang": lang},
+            params=params,
             extra_headers={"If-None-Match": etag} if etag else None,
             accept_not_modified=True,
             secrets=(self._bearer,),
             binary=True,
+            top_level_code=True,
         )
         content_type = response_headers.get("Content-Type", "image/webp")
         new_etag = response_headers.get("ETag") or etag
@@ -360,13 +371,22 @@ def _require(body: Any, *fields: str) -> dict[str, Any]:
     return body
 
 
-def _error_code(body: Any) -> str | None:
-    """The service's reason: ``{"error": {"code": ...}}`` or ``{"error": "..."}``."""
+def _error_code(body: Any, *, top_level: bool = False) -> str | None:
+    """The service's reason: ``{"error": {"code": ...}}`` or ``{"error": "..."}``.
+
+    ``top_level`` also accepts ``{"error": "...", "code": "..."}``, the shape
+    the radar endpoint answers a Plus refusal with. It is opt-in per call on
+    purpose: for every other endpoint a 403 without a nested code means "this
+    credential is no longer accepted", and reading a stray ``code`` field as
+    a refusal reason there would stop re-authentication from ever starting.
+    """
     if not isinstance(body, dict):
         return None
     error = body.get("error")
     if isinstance(error, dict) and isinstance(error.get("code"), str):
         return error["code"]
+    if top_level and isinstance(body.get("code"), str):
+        return body["code"]
     return None
 
 
@@ -383,6 +403,7 @@ async def _call(
     accept_not_modified: bool = False,
     secrets: tuple[str, ...] = (),
     binary: bool = False,
+    top_level_code: bool = False,
 ) -> tuple[int, Any, Mapping[str, str]]:
     """One request, with failures sorted into the three kinds the flows need.
 
@@ -431,7 +452,7 @@ async def _call(
                     body = await response.json(content_type=None)
                 except _TRANSPORT_ERRORS:
                     body = None
-                code = _error_code(body)
+                code = _error_code(body, top_level=top_level_code)
                 if status == 401 or (status == 403 and code is None):
                     raise InvalidCredentials(f"{method} {path}: rejected ({status})")
                 if code is not None:

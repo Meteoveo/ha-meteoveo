@@ -42,6 +42,10 @@ PLATFORMS: list[Platform] = [
     Platform.WEATHER,
     Platform.EVENT,
     Platform.IMAGE,
+    # Plus only, and created from the service's answer rather than up front
+    # (ADR-0866 D6): the radar playback camera and its window.
+    Platform.CAMERA,
+    Platform.SELECT,
 ]
 
 # Set up through the UI only; there is no YAML configuration.

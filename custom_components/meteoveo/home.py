@@ -266,6 +266,11 @@ def account_level(view: Mapping[str, Any] | None) -> str | None:
     return level if level in ACCOUNT_LEVELS else None
 
 
+def has_plus(view: Mapping[str, Any] | None) -> bool:
+    """Whether the account behind this entry has the Plus level right now."""
+    return account_level(view) == "plus"
+
+
 def lightning_block(view: Mapping[str, Any] | None) -> Mapping[str, Any] | None:
     """The lightning block, or None when the source said nothing."""
     block = (view or {}).get("lightning")
