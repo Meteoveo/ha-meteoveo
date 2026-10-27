@@ -435,7 +435,32 @@ async def test_card_is_served_and_loaded_with_the_version(
     (config,) = hass.http.async_register_static_paths.await_args.args[0]
     assert config.url_path == CARD_URL
     assert config.path == str(card)
-    add_js.assert_called_once_with(hass, f"{CARD_URL}?v={VERSION}")
+    # A verzio ES a fajl lenyomata (ADR-0866 kiegeszites): egy valtozott, de
+    # ugyanolyan verzioszamu kartya is friss cimet kap - kulonben a bongeszo
+    # (es a frontend service workere) a regit szolgalja tovabb.
+    (_, url) = add_js.call_args.args
+    assert url.startswith(f"{CARD_URL}?v={VERSION}-")
+    assert len(url.rsplit("-", 1)[1]) == 8
+
+
+def test_the_card_url_changes_when_the_file_changes() -> None:
+    """A lenyomat dont: ugyanaz a fajl ugyanazt a cimet adja, a valtozott masat."""
+    from custom_components.meteoveo.card import card_cache_tag
+    from custom_components.meteoveo.const import VERSION
+
+    import tempfile
+    from pathlib import Path as _Path
+
+    with tempfile.TemporaryDirectory() as d:
+        f = _Path(d) / "card.js"
+        f.write_text("// elso", encoding="utf-8")
+        first = card_cache_tag(f)
+        assert first.startswith(f"{VERSION}-")
+        assert card_cache_tag(f) == first  # valtozatlan fajl -> valtozatlan cim
+        f.write_text("// masodik", encoding="utf-8")
+        assert card_cache_tag(f) != first  # valtozott fajl -> uj cim
+        # Olvashatatlan fajl: a verzio maga meg mindig jobb a semminel.
+        assert card_cache_tag(_Path(d) / "nincs.js") == VERSION
 
 
 def test_version_constant_matches_the_manifest() -> None:
