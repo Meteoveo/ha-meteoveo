@@ -11,19 +11,31 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
 )
-from homeassistant.const import UV_INDEX, EntityCategory, UnitOfTemperature, UnitOfTime
+from homeassistant.const import (
+    UV_INDEX,
+    EntityCategory,
+    UnitOfLength,
+    UnitOfTemperature,
+    UnitOfTime,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .coordinator import MeteoVeoConfigEntry
-from .entity import MeteoVeoEntity
+from .entity import MeteoVeoEntity, add_when_allowed
+from .flow_logic import is_account_entry
 from .home import (
+    ACCOUNT_LEVELS,
     RAIN_BANDS,
+    account_level,
     current_hour,
     dew_point,
     highest_level,
+    lightning_attributes,
+    lightning_unlocked,
     minutes_to_rain,
+    nearest_lightning_km,
     next_warning_onset,
     parse_time,
     rain_intensity_now,
@@ -54,6 +66,11 @@ async def async_setup_entry(
         MinutesToRainSensor(runtime.home),
         RainIntensitySensor(runtime.home),
     ]
+    # ADR-0866 D4: a station-key entry has no account behind it, so the
+    # service always answers "free" for it. A level sensor would state
+    # something that is not about the user at all, so it is not created.
+    if is_account_entry(entry.data):
+        entities.append(AccountLevelSensor(runtime.home))
     coordinator = runtime.station
     if coordinator is not None:
         entities += [
@@ -63,6 +80,16 @@ async def async_setup_entry(
             GraceRemainingSensor(coordinator),
         ]
     async_add_entities(entities)
+
+    add_when_allowed(
+        hass,
+        entry,
+        async_add_entities,
+        platform="sensor",
+        unique_id=f"{runtime.base_id}_nearest_lightning",
+        allowed=lightning_unlocked,
+        build=lambda: [NearestLightningSensor(runtime.home)],
+    )
 
 
 class RainTimeSensor(MeteoVeoEntity, SensorEntity):
@@ -394,3 +421,68 @@ class GraceRemainingSensor(MeteoVeoEntity, SensorEntity):
             "cadence_ok": reciprocity.get("cadenceOk"),
             "last_reading_hours_ago": reciprocity.get("lastReadingAgoH"),
         }
+
+
+class AccountLevelSensor(MeteoVeoEntity, SensorEntity):
+    """The MeteoVeo level of the account behind this entry: free or plus.
+
+    Diagnostic on purpose: it describes the connection, not the weather, and
+    it is the one thing an automation can key on to know whether the Plus
+    entities will be there. It does **not** say where the level comes from --
+    the service does not distinguish a subscription from a station that
+    reports, and inventing the distinction here would be guesswork.
+    """
+
+    entity_description = SensorEntityDescription(
+        key="account_level",
+        translation_key="account_level",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(ACCOUNT_LEVELS),
+        entity_category=EntityCategory.DIAGNOSTIC,
+    )
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "account_level")
+
+    @property
+    def native_value(self) -> str | None:
+        return account_level(self._view)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        # Not translated: an automation reads this, a person reads the state.
+        return {
+            "lightning_alerts": "available" if lightning_unlocked(self._view) else "locked"
+        }
+
+
+class NearestLightningSensor(MeteoVeoEntity, SensorEntity):
+    """How far away the closest counted strike is.
+
+    Unavailable while the account may not see lightning data -- the entity
+    is only ever created once it may (ADR-0866 D5).
+    """
+
+    entity_description = SensorEntityDescription(
+        key="nearest_lightning",
+        translation_key="nearest_lightning",
+        device_class=SensorDeviceClass.DISTANCE,
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        state_class="measurement",
+        suggested_display_precision=1,
+    )
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "nearest_lightning")
+
+    @property
+    def available(self) -> bool:
+        return super().available and lightning_unlocked(self._view)
+
+    @property
+    def native_value(self) -> float | int | None:
+        return nearest_lightning_km(self._view)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return lightning_attributes(self._view)

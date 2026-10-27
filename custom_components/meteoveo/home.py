@@ -238,3 +238,69 @@ def next_warning_onset(warnings: list[dict[str, Any]] | None, now: datetime) -> 
 def warning_id(warning: Mapping[str, Any]) -> str:
     """Identity of a warning across refreshes: phenomenon, level and onset."""
     return f"{warning.get('phenomenon')}|{warning.get('level')}|{warning.get('onset')}"
+
+
+# --- The account level and the lightning block (ADR-0866) ------------------
+#
+# Both have been in the contract's answer from the start; until 0.3.0 nothing
+# read them. ``level`` is ``free`` or ``plus`` -- the service deliberately
+# does not say whether the level was bought or earned by a reporting station,
+# so neither does Home Assistant. ``lightning`` is ``{"locked": true}`` for a
+# free account (the capability exists, the data does not), ``null`` when the
+# source itself is silent, and the full block on Plus.
+
+ACCOUNT_LEVELS = ("free", "plus")
+
+#: "Nearby" is the product's own inner radius; a strike at 44 km is data, not
+#: an alert.
+LIGHTNING_NEARBY_KM = 30
+
+
+def account_level(view: Mapping[str, Any] | None) -> str | None:
+    """``free``, ``plus``, or None when the answer did not say.
+
+    An answer without the field must never read as ``free``: that would show
+    a paying account as free during a partial outage.
+    """
+    level = (view or {}).get("level")
+    return level if level in ACCOUNT_LEVELS else None
+
+
+def lightning_block(view: Mapping[str, Any] | None) -> Mapping[str, Any] | None:
+    """The lightning block, or None when the source said nothing."""
+    block = (view or {}).get("lightning")
+    return block if isinstance(block, Mapping) else None
+
+
+def lightning_unlocked(view: Mapping[str, Any] | None) -> bool:
+    """Whether the account may see lightning data right now."""
+    block = lightning_block(view)
+    return block is not None and block.get("locked") is False
+
+
+def lightning_nearby(view: Mapping[str, Any] | None) -> bool | None:
+    """Whether a strike was counted inside the nearby radius."""
+    block = lightning_block(view)
+    if block is None:
+        return None
+    count = _num(block.get(f"count{LIGHTNING_NEARBY_KM}km"))
+    return None if count is None else count > 0
+
+
+def nearest_lightning_km(view: Mapping[str, Any] | None) -> float | int | None:
+    """Distance to the closest counted strike, in km."""
+    return _num((lightning_block(view) or {}).get("nearestKm"))
+
+
+def lightning_attributes(view: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Attributes of the lightning entities, in snake case."""
+    block = lightning_block(view) or {}
+    return {
+        "nearest_km": _num(block.get("nearestKm")),
+        "bearing_deg": _num(block.get("bearingDeg")),
+        "count_15km": _num(block.get("count15km")),
+        "count_30km": _num(block.get("count30km")),
+        "count_50km": _num(block.get("count50km")),
+        "last_strike_at": block.get("lastStrikeAt"),
+        "window_minutes": _num(block.get("windowMinutes")),
+    }

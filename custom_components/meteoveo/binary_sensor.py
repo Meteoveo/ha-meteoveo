@@ -15,8 +15,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .coordinator import MeteoVeoConfigEntry
-from .entity import MeteoVeoEntity
-from .home import WARNING_LEVELS, active_levels, next_hour_attributes, warnings_list
+from .entity import MeteoVeoEntity, add_when_allowed
+from .home import (
+    WARNING_LEVELS,
+    active_levels,
+    lightning_attributes,
+    lightning_nearby,
+    lightning_unlocked,
+    next_hour_attributes,
+    warnings_list,
+)
 
 PARALLEL_UPDATES = 0
 
@@ -32,6 +40,16 @@ async def async_setup_entry(
     if runtime.station is not None:
         entities.append(SensorHealthBinarySensor(runtime.station))
     async_add_entities(entities)
+
+    add_when_allowed(
+        hass,
+        entry,
+        async_add_entities,
+        platform="binary_sensor",
+        unique_id=f"{runtime.base_id}_lightning_nearby",
+        allowed=lightning_unlocked,
+        build=lambda: [LightningNearbyBinarySensor(runtime.home)],
+    )
 
 
 class RainSoonBinarySensor(MeteoVeoEntity, BinarySensorEntity):
@@ -135,3 +153,34 @@ class SensorHealthBinarySensor(MeteoVeoEntity, BinarySensorEntity):
     @property
     def _findings(self) -> list[str]:
         return self._view.get("health", {}).get("findings", []) or []
+
+
+class LightningNearbyBinarySensor(MeteoVeoEntity, BinarySensorEntity):
+    """On while a strike has been counted within 30 km of the place.
+
+    The counts at 15, 30 and 50 km, the nearest strike and its bearing are
+    attributes, so an automation can react to "within 15 km" without a
+    second entity. Created only once the account may see the data, and
+    unavailable if that right is later lost (ADR-0866 D5).
+    """
+
+    entity_description = BinarySensorEntityDescription(
+        key="lightning_nearby",
+        translation_key="lightning_nearby",
+        device_class=BinarySensorDeviceClass.SAFETY,
+    )
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "lightning_nearby")
+
+    @property
+    def available(self) -> bool:
+        return super().available and lightning_unlocked(self._view)
+
+    @property
+    def is_on(self) -> bool | None:
+        return lightning_nearby(self._view)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return lightning_attributes(self._view)

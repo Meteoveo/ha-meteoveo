@@ -8,9 +8,12 @@ service resolved the place to -- never after anyone else's station.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable, Iterable, Mapping
 
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -83,3 +86,57 @@ class MeteoVeoEntity(CoordinatorEntity[DataUpdateCoordinator[dict[str, Any]]]):
     @property
     def _view(self) -> dict[str, Any]:
         return self.coordinator.data or {}
+
+
+def known_entity(hass: HomeAssistant, platform: str, unique_id: str) -> bool:
+    """Whether Home Assistant already has this entity in its registry."""
+    return er.async_get(hass).async_get_entity_id(platform, DOMAIN, unique_id) is not None
+
+
+@callback
+def add_when_allowed(
+    hass: HomeAssistant,
+    entry: MeteoVeoConfigEntry,
+    async_add_entities: Callable[[Iterable[Entity]], None],
+    *,
+    platform: str,
+    unique_id: str,
+    allowed: Callable[[Mapping[str, Any] | None], bool],
+    build: Callable[[], list[Entity]],
+) -> None:
+    """Create a level-gated entity, now or as soon as the right shows up.
+
+    Two things have to be true at once (ADR-0866 D5/D6/D10.2):
+
+    * An entity that could never have a value is not created. A free account
+      has no lightning and no long radar window, and an entity that says
+      "unavailable" for ever is noise in every unavailable-entities view.
+    * An entity that *was* created stays. If the level falls back the entity
+      goes unavailable instead of vanishing, so its history and the
+      automations pointing at it survive -- which is why an entity the
+      registry already knows is recreated even while the right is gone.
+
+    Nothing is polled for this: the coordinator is already refreshing, and
+    the listener is dropped the moment the entity exists.
+    """
+    coordinator = entry.runtime_data.home
+    unsubscribe: Callable[[], None] | None = None
+    added = False
+
+    @callback
+    def _maybe_add() -> None:
+        nonlocal added, unsubscribe
+        if added:
+            return
+        if not (allowed(coordinator.data) or known_entity(hass, platform, unique_id)):
+            return
+        added = True
+        if unsubscribe is not None:
+            unsubscribe()
+            unsubscribe = None
+        async_add_entities(build())
+
+    _maybe_add()
+    if not added:
+        unsubscribe = coordinator.async_add_listener(_maybe_add)
+        entry.async_on_unload(lambda: unsubscribe() if unsubscribe else None)
