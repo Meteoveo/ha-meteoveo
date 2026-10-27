@@ -103,6 +103,17 @@ daily_count: 7           # 1–14 days in the list
 In a **sections** view the card takes the full width by default and can be
 narrowed to half.
 
+### The 24-hour radar on a dashboard
+
+With MeteoVeo Plus the integration also has a **Radar playback** camera
+entity. Put it on a dashboard with the **Picture entity** card (entity:
+`camera.meteoveo_<town>_radar_playback`, `camera_view: live`), and change
+how far back it goes with the **Radar window** entity (1 to 24 hours) — a
+plain **Entity** or **Tile** card next to it does. The loop is re-rendered
+when the window changes and whenever a new radar run arrives, so it is not
+instant like a live camera: a few seconds is normal. The MeteoVeo card
+itself keeps showing the one-hour loop; the camera is for a bigger view.
+
 ## Where the data comes from
 
 The card reads only the integration's entities: the weather entity (current

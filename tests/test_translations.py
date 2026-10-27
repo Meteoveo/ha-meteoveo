@@ -97,6 +97,8 @@ def test_every_menu_option_has_a_label(language):
     assert set(data["options"]["step"]["init"]["menu_options"]) == {
         "location",
         "measurements",
+        # ADR-0866 D9: the station door, reachable after setup as well.
+        "add_station",
         "delete_account",
     }
 
@@ -163,3 +165,74 @@ def test_icons_match_translation_keys() -> None:
         for key, icon in keys.items():
             assert key in strings.get(platform, {}), f"{platform}.{key} has an icon but no translation"
             assert icon["default"].startswith("mdi:")
+
+
+# --- ADR-0866: the Plus surface -------------------------------------------
+#
+# The reciprocity offer is only worth anything if it is stated where the
+# choice is made. Until 0.3.0 the word "Plus" appeared in no language file at
+# all, while the service was already granting the level.
+
+#: Entities that only exist on an account with the Plus level, and the one
+#: that reports the level itself.
+PLUS_ENTITY_KEYS = {
+    "sensor": ("account_level", "nearest_lightning"),
+    "binary_sensor": ("lightning_nearby",),
+    "camera": ("radar_playback",),
+    "select": ("radar_window",),
+}
+
+RADAR_WINDOW_OPTIONS = {"1h", "3h", "6h", "12h", "24h"}
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_station_question_says_what_a_station_unlocks(language):
+    # ADR-0866 D1. Both screens of the station door name the level, and say
+    # that it counts outside Home Assistant as well -- that is the whole
+    # offer, and leaving it out is what made the conversion zero.
+    steps = load(language)["config"]["step"]
+    for name in ("has_station", "station_details"):
+        assert "Plus" in steps[name]["description"], f"{language}: {name}"
+    # The promise is conditional on the cadence, so the cadence is named.
+    assert "10" in steps["has_station"]["description"], language
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_options_door_repeats_the_very_same_offer(language):
+    # ADR-0866 D9: the Options entry is the same door, so it says the same
+    # thing -- a second wording would be a second promise to keep in step.
+    data = load(language)
+    assert (
+        data["options"]["step"]["add_station"]["description"]
+        == data["config"]["step"]["has_station"]["description"]
+    )
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_plus_entities_are_named_and_their_states_translated(language):
+    entity = load(language)["entity"]
+    for platform, keys in PLUS_ENTITY_KEYS.items():
+        for key in keys:
+            assert entity[platform][key]["name"].strip(), f"{language}: {platform}.{key}"
+    assert set(entity["sensor"]["account_level"]["state"]) == {"free", "plus"}
+    assert set(entity["select"]["radar_window"]["state"]) == RADAR_WINDOW_OPTIONS
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_no_entity_or_device_name_contains_plus(language):
+    # ADR-0866 D10.6: the level changes, the name would not follow -- and a
+    # name that advertises reads as advertising.
+    entity = load(language)["entity"]
+    for platform, keys in PLUS_ENTITY_KEYS.items():
+        for key in keys:
+            if key == "account_level":
+                continue  # its *state* is "Plus"; its name is not
+            assert "Plus" not in entity[platform][key]["name"], f"{language}: {key}"
+
+
+def test_the_user_interface_lists_no_plus_features_and_sells_nothing():
+    # ADR-0866 D2 and D10.3/D10.4: the feature list is the server's, and
+    # lives in the README. An integration is not a shop window.
+    text = (TRANSLATIONS.parent / "strings.json").read_text(encoding="utf-8").lower()
+    for forbidden in ("upgrade", "fire alert", "saved places", "buy ", "store.meteoveo"):
+        assert forbidden not in text, forbidden

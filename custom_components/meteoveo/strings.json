@@ -72,7 +72,7 @@
       },
       "has_station": {
         "title": "Weather station",
-        "description": "If Home Assistant already reads a weather station, it can share the readings with MeteoVeo. In return you get extras for your station, such as which forecast model works best there. Without a station you get the forecast all the same.\n\n[Setup guide]({docs_url})",
+        "description": "If Home Assistant already reads a weather station, it can share its readings with MeteoVeo. A station that reports at least every 10 minutes gives the account **MeteoVeo Plus** for as long as it reports — in the MeteoVeo app and on the web, not only here — and station extras in Home Assistant, such as which forecast model works best at your place. Without a station you get the forecast all the same; the Plus extras then come with a subscription.\n\n[Setup guide]({docs_url})",
         "data": {
           "has_station": "Do you have a weather station in Home Assistant?"
         },
@@ -82,7 +82,7 @@
       },
       "station_details": {
         "title": "Your station",
-        "description": "Readings are uploaded once a minute, over HTTPS.\n\n[About the measurements]({docs_url})",
+        "description": "Readings are uploaded once a minute, over HTTPS. While the station reports, the account has Plus; if it stays silent for 12 hours, Plus pauses together with the station extras and returns with the first readings.\n\n[About the measurements]({docs_url})",
         "data": {
           "station_name": "Station name",
           "sensor_height_cm": "Sensor height"
@@ -168,6 +168,7 @@
         "menu_options": {
           "location": "Change the place",
           "measurements": "Station measurements",
+          "add_station": "Add a weather station",
           "delete_account": "Delete my MeteoVeo account"
         }
       },
@@ -205,6 +206,30 @@
           "solar_radiation": "Solar irradiance, in W/m²."
         }
       },
+      "add_station": {
+        "title": "Add a weather station",
+        "description": "If Home Assistant already reads a weather station, it can share its readings with MeteoVeo. A station that reports at least every 10 minutes gives the account **MeteoVeo Plus** for as long as it reports — in the MeteoVeo app and on the web, not only here — and station extras in Home Assistant, such as which forecast model works best at your place. Without a station you get the forecast all the same; the Plus extras then come with a subscription.\n\n[Setup guide]({docs_url})",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        },
+        "data_description": {
+          "email": "The account this connection was set up with.",
+          "password": "Your MeteoVeo password."
+        }
+      },
+      "station_details": {
+        "title": "Your station",
+        "description": "Readings are uploaded once a minute, over HTTPS. While the station reports, the account has Plus; if it stays silent for 12 hours, Plus pauses together with the station extras and returns with the first readings.\n\n[About the measurements]({docs_url})",
+        "data": {
+          "station_name": "Station name",
+          "sensor_height_cm": "Sensor height"
+        },
+        "data_description": {
+          "station_name": "How the station appears to you in MeteoVeo.",
+          "sensor_height_cm": "Height of the temperature sensor above the ground, in centimetres (usually 150–200)."
+        }
+      },
       "delete_account": {
         "title": "Delete my MeteoVeo account",
         "description": "This cannot be undone. Your account, profile and photos, and your stations' names and keys, are deleted, and every Home Assistant connection to the account stops working. Readings already sent stay, anonymously.\n\nAn App Store or Google Play subscription is **not** cancelled by this — cancel it in the store.\n\nNo password on your account (Google, Apple or passkey)? Delete it in the MeteoVeo app instead.\n\n[Troubleshooting]({docs_url})",
@@ -233,11 +258,19 @@
     },
     "abort": {
       "account_deleted": "Your MeteoVeo account has been deleted. The integration now removes itself.",
-      "reauth_required": "MeteoVeo no longer accepts this connection's key. Sign in again from the notification, then retry."
+      "reauth_required": "MeteoVeo no longer accepts this connection's key. Sign in again from the notification, then retry.",
+      "too_many_keys": "This account already has 5 home-automation connections, the maximum. Remove MeteoVeo from a Home Assistant or Homey you no longer use, then try again."
     }
   },
   "entity": {
     "sensor": {
+      "account_level": {
+        "name": "MeteoVeo level",
+        "state": {
+          "free": "Free",
+          "plus": "Plus"
+        }
+      },
       "best_model": {
         "name": "Best forecast model",
         "state": {
@@ -300,6 +333,9 @@
           "moderate": "Moderate",
           "heavy": "Heavy"
         }
+      },
+      "nearest_lightning": {
+        "name": "Nearest lightning"
       }
     },
     "binary_sensor": {
@@ -317,6 +353,9 @@
       },
       "warning_red": {
         "name": "Red warning"
+      },
+      "lightning_nearby": {
+        "name": "Lightning nearby"
       }
     },
     "event": {
@@ -336,6 +375,23 @@
     "image": {
       "radar": {
         "name": "Radar"
+      }
+    },
+    "camera": {
+      "radar_playback": {
+        "name": "Radar playback"
+      }
+    },
+    "select": {
+      "radar_window": {
+        "name": "Radar window",
+        "state": {
+          "1h": "Last hour",
+          "3h": "Last 3 hours",
+          "6h": "Last 6 hours",
+          "12h": "Last 12 hours",
+          "24h": "Last 24 hours"
+        }
       }
     }
   },

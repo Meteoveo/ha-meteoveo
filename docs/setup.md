@@ -56,6 +56,11 @@ place to.
   sensor.** See [measurements](measurements.md) for what each field expects.
   Readings are uploaded once a minute over HTTPS.
 
+  While the station reports at least every 10 minutes, the account has
+  MeteoVeo Plus in the app and on the web as well — see
+  [reciprocity](reciprocity.md). Without a station, Plus comes with a subscription;
+  the forecast entities are the same.
+
 ### I have a station ID and key (advanced)
 
 For a station already set up on meteoveo.com with **direct connection**. The
@@ -94,6 +99,9 @@ The integration's **Configure** button offers:
 
 - **Change the place**
 - **Station measurements** (entries with a station)
+- **Add a weather station** (account entries without one) — it signs you in
+  again, because a key that has already been issued cannot be attached to a
+  station afterwards; a new one is issued and the entity IDs stay.
 - **Delete my MeteoVeo account** — irreversible; asks for your email, your
   password, and your email once more. An App Store or Google Play
   subscription is not cancelled by this; cancel it in the store.

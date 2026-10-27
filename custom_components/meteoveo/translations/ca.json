@@ -72,7 +72,7 @@
       },
       "has_station": {
         "title": "Estació meteorològica",
-        "description": "Si Home Assistant ja llegeix una estació meteorològica, pot compartir-ne les dades amb MeteoVeo. A canvi tindràs extres per a la teva estació, com quin model de predicció encerta més allà. Sense estació, tens la previsió igualment.\n\n[Guia d'instal·lació]({docs_url})",
+        "description": "Si Home Assistant ja llegeix una estació meteorològica, pot compartir-ne les dades amb MeteoVeo. Una estació que envia almenys cada 10 minuts dona al compte **MeteoVeo Plus** mentre continuï enviant —a l'app i al web, no només aquí—, a més d'extres per a la teva estació a Home Assistant, com quin model de predicció encerta més allà. Sense estació tens la previsió igualment; els extres de Plus, en aquest cas, van amb la subscripció.\n\n[Guia d'instal·lació]({docs_url})",
         "data": {
           "has_station": "Tens una estació meteorològica a Home Assistant?"
         },
@@ -82,7 +82,7 @@
       },
       "station_details": {
         "title": "La teva estació",
-        "description": "Les dades s'envien un cop per minut, per HTTPS.\n\n[Sobre les mesures]({docs_url})",
+        "description": "Les dades s'envien un cop per minut, per HTTPS. Mentre l'estació envia, el compte té Plus; si deixa d'enviar durant 12 hores, Plus es pausa juntament amb els extres de l'estació i torna amb les primeres dades.\n\n[Sobre les mesures]({docs_url})",
         "data": {
           "station_name": "Nom de l'estació",
           "sensor_height_cm": "Altura del sensor"
@@ -168,6 +168,7 @@
         "menu_options": {
           "location": "Canviar el lloc",
           "measurements": "Mesures de l'estació",
+          "add_station": "Afegir una estació meteorològica",
           "delete_account": "Eliminar el meu compte de MeteoVeo"
         }
       },
@@ -205,6 +206,30 @@
           "solar_radiation": "Irradiància solar, en W/m²."
         }
       },
+      "add_station": {
+        "title": "Afegir una estació meteorològica",
+        "description": "Si Home Assistant ja llegeix una estació meteorològica, pot compartir-ne les dades amb MeteoVeo. Una estació que envia almenys cada 10 minuts dona al compte **MeteoVeo Plus** mentre continuï enviant —a l'app i al web, no només aquí—, a més d'extres per a la teva estació a Home Assistant, com quin model de predicció encerta més allà. Sense estació tens la previsió igualment; els extres de Plus, en aquest cas, van amb la subscripció.\n\n[Guia d'instal·lació]({docs_url})",
+        "data": {
+          "email": "Correu electrònic",
+          "password": "Contrasenya"
+        },
+        "data_description": {
+          "email": "El compte amb què vas configurar aquesta connexió.",
+          "password": "La teva contrasenya de MeteoVeo."
+        }
+      },
+      "station_details": {
+        "title": "La teva estació",
+        "description": "Les dades s'envien un cop per minut, per HTTPS. Mentre l'estació envia, el compte té Plus; si deixa d'enviar durant 12 hores, Plus es pausa juntament amb els extres de l'estació i torna amb les primeres dades.\n\n[Sobre les mesures]({docs_url})",
+        "data": {
+          "station_name": "Nom de l'estació",
+          "sensor_height_cm": "Altura del sensor"
+        },
+        "data_description": {
+          "station_name": "Així veuràs la teva estació a MeteoVeo.",
+          "sensor_height_cm": "Altura del sensor de temperatura sobre el terra, en centímetres (normalment 150–200)."
+        }
+      },
       "delete_account": {
         "title": "Eliminar el meu compte de MeteoVeo",
         "description": "No es pot desfer. S'esborren el teu compte, el perfil, les fotos i els noms i claus de les teves estacions, i totes les connexions de Home Assistant del compte deixen de funcionar. Les dades ja enviades es queden, de manera anònima.\n\nAixò **no** cancel·la una subscripció d'App Store o Google Play: cancel·la-la a la botiga.\n\nEl teu compte no té contrasenya (Google, Apple o clau d'accés)? Elimina'l des de l'app de MeteoVeo.\n\n[Resolució de problemes]({docs_url})",
@@ -233,11 +258,19 @@
     },
     "abort": {
       "account_deleted": "El teu compte de MeteoVeo s'ha eliminat. La integració es treu sola ara.",
-      "reauth_required": "MeteoVeo ja no accepta la clau d'aquesta connexió. Torna a iniciar la sessió des de l'avís i repeteix el canvi."
+      "reauth_required": "MeteoVeo ja no accepta la clau d'aquesta connexió. Torna a iniciar la sessió des de l'avís i repeteix el canvi.",
+      "too_many_keys": "Aquest compte ja té 5 connexions domòtiques, el màxim. Treu MeteoVeo d'algun Home Assistant o Homey que ja no facis servir i torna-ho a provar."
     }
   },
   "entity": {
     "sensor": {
+      "account_level": {
+        "name": "Nivell de MeteoVeo",
+        "state": {
+          "free": "Gratuït",
+          "plus": "Plus"
+        }
+      },
       "best_model": {
         "name": "Millor model de predicció",
         "state": {
@@ -300,6 +333,9 @@
           "moderate": "Moderada",
           "heavy": "Forta"
         }
+      },
+      "nearest_lightning": {
+        "name": "Llamp més proper"
       }
     },
     "binary_sensor": {
@@ -317,6 +353,9 @@
       },
       "warning_red": {
         "name": "Avís vermell"
+      },
+      "lightning_nearby": {
+        "name": "Llamps a prop"
       }
     },
     "event": {
@@ -336,6 +375,23 @@
     "image": {
       "radar": {
         "name": "Radar"
+      }
+    },
+    "camera": {
+      "radar_playback": {
+        "name": "Radar: reproducció"
+      }
+    },
+    "select": {
+      "radar_window": {
+        "name": "Finestra del radar",
+        "state": {
+          "1h": "Última hora",
+          "3h": "Últimes 3 hores",
+          "6h": "Últimes 6 hores",
+          "12h": "Últimes 12 hores",
+          "24h": "Últimes 24 hores"
+        }
       }
     }
   },

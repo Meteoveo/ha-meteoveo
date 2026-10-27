@@ -72,7 +72,7 @@
       },
       "has_station": {
         "title": "Időjárás-állomás",
-        "description": "Ha a Home Assistant már olvas egy időjárás-állomást, megoszthatja a méréseit a MeteoVeóval. Cserébe többletet kapsz az állomásodhoz, például hogy ott melyik előrejelzési modell a legpontosabb. Állomás nélkül is megkapod az előrejelzést.\n\n[Telepítési útmutató]({docs_url})",
+        "description": "Ha a Home Assistant már olvas egy időjárás-állomást, megoszthatja a méréseit a MeteoVeóval. Egy legalább 10 percenként mérő állomás a fióknak **MeteoVeo Plust** ad, ameddig mér — az appban és a weben is, nem csak itt —, és állomás-többletet a Home Assistantben, például hogy ott melyik előrejelzési modell a legpontosabb. Állomás nélkül is megkapod az előrejelzést; a Plus-többlet akkor előfizetéssel jár.\n\n[Telepítési útmutató]({docs_url})",
         "data": {
           "has_station": "Van időjárás-állomásod a Home Assistantben?"
         },
@@ -82,7 +82,7 @@
       },
       "station_details": {
         "title": "Az állomásod",
-        "description": "A méréseket percenként küldjük, HTTPS-en.\n\n[A mérésekről]({docs_url})",
+        "description": "A mérések percenként mennek fel, HTTPS-en. Amíg az állomás mér, a fióknak Plusa van; ha 12 órán át hallgat, a Plus az állomás-többlettel együtt szünetel, és az első mérésekkel visszatér.\n\n[A mérésekről]({docs_url})",
         "data": {
           "station_name": "Az állomás neve",
           "sensor_height_cm": "Szenzor-magasság"
@@ -168,6 +168,7 @@
         "menu_options": {
           "location": "A hely módosítása",
           "measurements": "Az állomás mérései",
+          "add_station": "Időjárás-állomás hozzáadása",
           "delete_account": "A MeteoVeo-fiókom törlése"
         }
       },
@@ -205,6 +206,30 @@
           "solar_radiation": "Napsugárzás, W/m²-ben."
         }
       },
+      "add_station": {
+        "title": "Időjárás-állomás hozzáadása",
+        "description": "Ha a Home Assistant már olvas egy időjárás-állomást, megoszthatja a méréseit a MeteoVeóval. Egy legalább 10 percenként mérő állomás a fióknak **MeteoVeo Plust** ad, ameddig mér — az appban és a weben is, nem csak itt —, és állomás-többletet a Home Assistantben, például hogy ott melyik előrejelzési modell a legpontosabb. Állomás nélkül is megkapod az előrejelzést; a Plus-többlet akkor előfizetéssel jár.\n\n[Telepítési útmutató]({docs_url})",
+        "data": {
+          "email": "E-mail-cím",
+          "password": "Jelszó"
+        },
+        "data_description": {
+          "email": "A fiók, amivel ezt a kapcsolatot beállítottad.",
+          "password": "A MeteoVeo-jelszavad."
+        }
+      },
+      "station_details": {
+        "title": "Az állomásod",
+        "description": "A mérések percenként mennek fel, HTTPS-en. Amíg az állomás mér, a fióknak Plusa van; ha 12 órán át hallgat, a Plus az állomás-többlettel együtt szünetel, és az első mérésekkel visszatér.\n\n[A mérésekről]({docs_url})",
+        "data": {
+          "station_name": "Az állomás neve",
+          "sensor_height_cm": "Szenzor-magasság"
+        },
+        "data_description": {
+          "station_name": "Így látod majd az állomásodat a MeteoVeóban.",
+          "sensor_height_cm": "A hőmérséklet-szenzor magassága a talaj felett, centiméterben (általában 150–200)."
+        }
+      },
       "delete_account": {
         "title": "A MeteoVeo-fiókom törlése",
         "description": "Nem vonható vissza. Törlődik a fiókod, a profilod, a fotóid, az állomásaid neve és kulcsa, és a fiók minden Home Assistant-kapcsolata leáll. A már elküldött mérések névtelenül megmaradnak.\n\nAz App Store- vagy Google Play-előfizetést ez **nem** mondja le — azt az áruházban mondd le.\n\nNincs jelszó a fiókodon (Google, Apple vagy passkey)? Akkor a MeteoVeo appban töröld.\n\n[Hibaelhárítás]({docs_url})",
@@ -233,11 +258,19 @@
     },
     "abort": {
       "account_deleted": "A MeteoVeo-fiókodat töröltük. Az integráció most eltávolítja magát.",
-      "reauth_required": "A MeteoVeo már nem fogadja el ennek a kapcsolatnak a kulcsát. Lépj be újra az értesítésből, aztán próbáld újra."
+      "reauth_required": "A MeteoVeo már nem fogadja el ennek a kapcsolatnak a kulcsát. Lépj be újra az értesítésből, aztán próbáld újra.",
+      "too_many_keys": "Ehhez a fiókhoz már 5 okosotthon-kapcsolat tartozik, ez a maximum. Távolítsd el a MeteoVeót egy már nem használt Home Assistantből vagy Homeyból, és próbáld újra."
     }
   },
   "entity": {
     "sensor": {
+      "account_level": {
+        "name": "MeteoVeo-szint",
+        "state": {
+          "free": "Ingyenes",
+          "plus": "Plus"
+        }
+      },
       "best_model": {
         "name": "Legjobb előrejelzési modell",
         "state": {
@@ -300,6 +333,9 @@
           "moderate": "Mérsékelt",
           "heavy": "Erős"
         }
+      },
+      "nearest_lightning": {
+        "name": "Legközelebbi villám"
       }
     },
     "binary_sensor": {
@@ -317,6 +353,9 @@
       },
       "warning_red": {
         "name": "Piros figyelmeztetés"
+      },
+      "lightning_nearby": {
+        "name": "Villám a közelben"
       }
     },
     "event": {
@@ -336,6 +375,23 @@
     "image": {
       "radar": {
         "name": "Radar"
+      }
+    },
+    "camera": {
+      "radar_playback": {
+        "name": "Radar-visszajátszás"
+      }
+    },
+    "select": {
+      "radar_window": {
+        "name": "Radar-ablak",
+        "state": {
+          "1h": "Utolsó óra",
+          "3h": "Utolsó 3 óra",
+          "6h": "Utolsó 6 óra",
+          "12h": "Utolsó 12 óra",
+          "24h": "Utolsó 24 óra"
+        }
       }
     }
   },

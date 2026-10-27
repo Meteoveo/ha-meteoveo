@@ -117,8 +117,32 @@ upload key is stored as well.
 | `sensor.meteoveo_<town>_feels_like` / `_dew_point` | Apparent temperature of the current hour; dew point from the current temperature and humidity. |
 | `sensor.meteoveo_<town>_uv_index` / `_uv_index_today_max` | UV index of the current hour, and today's maximum. |
 
-A MeteoVeo Plus account sees its Plus level in Home Assistant as well, as
-soon as it is active.
+### Plus — and what a station unlocks
+
+MeteoVeo Plus is the paid level of the MeteoVeo app and website. **A weather
+station that reports through this integration at least every 10 minutes gives
+the account Plus for as long as it reports** — no subscription needed. A
+subscription gives the same level. Either way, Home Assistant shows it in the
+**MeteoVeo level** sensor (`free` / `plus`).
+
+What Plus adds, and where you see it:
+
+| Plus feature | In Home Assistant | In the MeteoVeo app and on the web |
+|---|---|---|
+| Lightning nearby — strikes within 15, 30 and 50 km, the nearest one and its bearing | **Lightning nearby** and **Nearest lightning** entities (they appear when the level is `plus`) | Lightning alerts as notifications |
+| Radar playback up to 24 hours back | **Radar playback** camera, with a **Radar window** of 1, 3, 6, 12 or 24 hours (they appear when the level is `plus`). The one-hour radar loop — the last hour and the next hour's nowcast — stays free for everyone as the **Radar** image. | Radar, satellite and cloud playback up to 24 hours back |
+| The day's summary in a sentence or two | — | Yes |
+| More saved places, with warnings for each | — | Yes |
+| Switching between places on the home screen and the widget | — | Yes |
+| Fire alert — a possible fire near your places, 1–30 km | — | Yes |
+<!-- Add only once FORECAST_MAP_AUDIENCE=premium on the server (ADR-0620 D5/D8):
+| Animated 24-hour forecast map — temperature, rain, clouds and storms hour by hour | — | Yes |
+-->
+
+Everything else on this page — the forecast, the next hour's rain, the
+warnings, the one-hour radar loop, the card and the blueprints — is free and
+does not depend on the level. A station set up with a station key only (the
+advanced option) has no account behind it, so its level is not shown.
 
 **With a station**, additionally:
 
@@ -153,6 +177,10 @@ resource to add. Edit a dashboard → **Add card** → search **MeteoVeo**. It
 shows the conditions now, the next hour's rain, the hourly strip and the
 daily list, in your theme's light or dark colours. Options and YAML:
 [docs/card.md](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/card.md).
+
+With Plus, a **Radar playback** camera entity gives the same loop over 1–24
+hours — see
+[docs/card.md](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/card.md#the-24-hour-radar-on-a-dashboard).
 
 ### Blueprints
 
@@ -211,6 +239,10 @@ automation:
 - **Change the place** — the forecast moves; entity IDs stay.
 - **Station measurements** — which entity feeds which measurement (station
   entries). Clearing every measurement is allowed; uploads simply stop.
+- **Add a weather station** — for an account entry set up without one. Sign
+  in again (a key already issued cannot be attached to a station afterwards,
+  so a new one is issued), name the station, give the sensor height and map
+  the measurements. The place, the entity IDs and the history stay.
 - **Delete my MeteoVeo account** — see below.
 
 ## If MeteoVeo asks you to sign in again

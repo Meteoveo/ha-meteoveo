@@ -57,3 +57,74 @@ def test_readme_links_every_docs_page():
     readme = (REPO / "README.md").read_text(encoding="utf-8")
     for page in ("setup", "measurements", "reciprocity", "troubleshooting"):
         assert f"docs/{page}.md" in readme, page
+
+
+# --- ADR-0866 D2: what Plus adds, and where it is visible ------------------
+#
+# The feature list lives here and nowhere else. The service decides who gets
+# what; this page is the only place that *names* it, so it is also the only
+# place that can go stale -- hence these checks.
+
+
+def readme() -> str:
+    return (REPO / "README.md").read_text(encoding="utf-8")
+
+
+def test_the_readme_has_the_plus_section_in_two_columns():
+    text = readme()
+    assert "### Plus — and what a station unlocks" in text
+    # Both columns of the table exist, so "where do I see it" is answered.
+    assert "In Home Assistant" in text and "In the MeteoVeo app and on the web" in text
+    # The level sensor is how Home Assistant shows it.
+    assert "**MeteoVeo level** sensor" in text
+    # The orphan sentence this section replaces is gone.
+    assert "sees its Plus level in Home Assistant as well" not in text
+
+
+def test_the_readme_says_the_one_hour_loop_stays_free():
+    # ADR-0866 D6: a released feature is not taken away. Someone reading the
+    # table must not conclude that the radar they already have became paid.
+    text = readme()
+    assert "stays free for everyone" in text
+
+
+def test_the_forecast_map_row_stays_commented_out():
+    # ADR-0620 D5/D8: it may only be listed once the server serves it to the
+    # premium audience. Until then the row is there, but not published.
+    text = readme()
+    start = text.index("<!-- Add only once FORECAST_MAP_AUDIENCE=premium")
+    end = text.index("-->", start)
+    assert "Animated 24-hour forecast map" in text[start:end]
+    assert text.count("Animated 24-hour forecast map") == 1
+
+
+def test_the_station_extras_are_not_called_a_plus_feature():
+    # ADR-0866 D2: two different things (reciprocity extras vs the paid
+    # level) that must not blur into one.
+    text = readme()
+    assert "## A station that stops reporting" in text
+
+
+def test_reciprocity_states_that_a_station_grants_plus():
+    text = (REPO / "docs/reciprocity.md").read_text(encoding="utf-8")
+    assert "**MeteoVeo Plus**" in text
+    assert "A subscription is never needed for it" in text
+
+
+def test_the_setup_guide_mentions_plus_at_the_station_question():
+    text = (REPO / "docs/setup.md").read_text(encoding="utf-8")
+    assert "MeteoVeo Plus in the app and on the web" in text
+    assert "[reciprocity](reciprocity.md)" in text
+
+
+def test_the_card_page_explains_the_radar_playback_camera():
+    text = (REPO / "docs/card.md").read_text(encoding="utf-8")
+    assert "### The 24-hour radar on a dashboard" in text
+    assert "camera.meteoveo_<town>_radar_playback" in text
+    assert "camera_view: live" in text
+    # The card itself is unchanged -- it keeps the one-hour loop.
+    assert "keeps showing the one-hour loop" in text
+
+
+def test_the_readme_points_at_the_radar_playback_section():
+    assert "docs/card.md#the-24-hour-radar-on-a-dashboard" in readme()

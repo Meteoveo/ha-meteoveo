@@ -5,6 +5,12 @@ hourly and daily forecast and the warnings work for everyone, with or without
 a station — and for a station that has gone silent. A silent station's owner
 is never worse off than someone who never connected a station.
 
+A station that reports regularly also gives the account **MeteoVeo Plus** —
+the paid level of the app and website — for as long as it reports. It follows
+the same rules as the station extras below: the 10-minute cadence, the 12-hour
+grace window, instant restoration. A subscription is never needed for it, and
+losing it is never a penalty: the forecast in Home Assistant is the same either way.
+
 What depends on your station reporting are the **station-specific extras**:
 products computed from your own station's readings. Today that is the
 best-model verdict (which forecast model performs best at your station).

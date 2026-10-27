@@ -72,7 +72,7 @@
       },
       "has_station": {
         "title": "Estación meteorológica",
-        "description": "Si Home Assistant ya lee una estación meteorológica, puede enviar sus medidas a MeteoVeo. A cambio tendrás extras para tu estación, como saber qué modelo de predicción acierta más en tu zona. Sin estación tienes la previsión igualmente.\n\n[Guía de instalación]({docs_url})",
+        "description": "Si Home Assistant ya lee una estación meteorológica, puede enviar sus medidas a MeteoVeo. Una estación que envía al menos cada 10 minutos da a la cuenta **MeteoVeo Plus** mientras siga enviando —en la app y en la web, no solo aquí—, además de extras para tu estación en Home Assistant, como saber qué modelo de predicción acierta más en tu zona. Sin estación tienes la previsión igualmente; los extras de Plus, en ese caso, van con la suscripción.\n\n[Guía de instalación]({docs_url})",
         "data": {
           "has_station": "¿Tienes una estación meteorológica en Home Assistant?"
         },
@@ -82,7 +82,7 @@
       },
       "station_details": {
         "title": "Tu estación",
-        "description": "Las medidas se envían una vez por minuto, por HTTPS.\n\n[Sobre las medidas]({docs_url})",
+        "description": "Las medidas se envían una vez por minuto, por HTTPS. Mientras la estación envía, la cuenta tiene Plus; si deja de enviar durante 12 horas, Plus se pausa junto con los extras de la estación y vuelve con las primeras medidas.\n\n[Sobre las medidas]({docs_url})",
         "data": {
           "station_name": "Nombre de la estación",
           "sensor_height_cm": "Altura del sensor"
@@ -168,6 +168,7 @@
         "menu_options": {
           "location": "Cambiar el lugar",
           "measurements": "Medidas de la estación",
+          "add_station": "Añadir una estación meteorológica",
           "delete_account": "Borrar mi cuenta de MeteoVeo"
         }
       },
@@ -205,6 +206,30 @@
           "solar_radiation": "Irradiancia solar, en W/m²."
         }
       },
+      "add_station": {
+        "title": "Añadir una estación meteorológica",
+        "description": "Si Home Assistant ya lee una estación meteorológica, puede enviar sus medidas a MeteoVeo. Una estación que envía al menos cada 10 minutos da a la cuenta **MeteoVeo Plus** mientras siga enviando —en la app y en la web, no solo aquí—, además de extras para tu estación en Home Assistant, como saber qué modelo de predicción acierta más en tu zona. Sin estación tienes la previsión igualmente; los extras de Plus, en ese caso, van con la suscripción.\n\n[Guía de instalación]({docs_url})",
+        "data": {
+          "email": "Correo electrónico",
+          "password": "Contraseña"
+        },
+        "data_description": {
+          "email": "La cuenta con la que configuraste esta conexión.",
+          "password": "Tu contraseña de MeteoVeo."
+        }
+      },
+      "station_details": {
+        "title": "Tu estación",
+        "description": "Las medidas se envían una vez por minuto, por HTTPS. Mientras la estación envía, la cuenta tiene Plus; si deja de enviar durante 12 horas, Plus se pausa junto con los extras de la estación y vuelve con las primeras medidas.\n\n[Sobre las medidas]({docs_url})",
+        "data": {
+          "station_name": "Nombre de la estación",
+          "sensor_height_cm": "Altura del sensor"
+        },
+        "data_description": {
+          "station_name": "Así verás tu estación en MeteoVeo.",
+          "sensor_height_cm": "Altura del sensor de temperatura sobre el suelo, en centímetros (normalmente 150–200)."
+        }
+      },
       "delete_account": {
         "title": "Borrar mi cuenta de MeteoVeo",
         "description": "Esto no se puede deshacer. Se borran tu cuenta, tu perfil, tus fotos y el nombre y las claves de tus estaciones, y todas las conexiones de Home Assistant de esta cuenta dejan de funcionar. Las medidas ya enviadas se quedan, de forma anónima.\n\nBorrar la cuenta **no** cancela una suscripción de App Store o Google Play: cancélala en la tienda.\n\n¿Tu cuenta no tiene contraseña (Google, Apple o passkey)? Bórrala desde la app de MeteoVeo.\n\n[Solución de problemas]({docs_url})",
@@ -233,11 +258,19 @@
     },
     "abort": {
       "account_deleted": "Tu cuenta de MeteoVeo se ha borrado. La integración se eliminará ahora de Home Assistant por sí sola.",
-      "reauth_required": "MeteoVeo ya no acepta la clave de esta conexión. Vuelve a iniciar sesión desde la notificación de Home Assistant y repite el cambio."
+      "reauth_required": "MeteoVeo ya no acepta la clave de esta conexión. Vuelve a iniciar sesión desde la notificación de Home Assistant y repite el cambio.",
+      "too_many_keys": "Esta cuenta ya tiene 5 conexiones domóticas, el máximo. Quita MeteoVeo de algún Home Assistant o Homey que ya no uses y vuelve a intentarlo."
     }
   },
   "entity": {
     "sensor": {
+      "account_level": {
+        "name": "Nivel de MeteoVeo",
+        "state": {
+          "free": "Gratis",
+          "plus": "Plus"
+        }
+      },
       "best_model": {
         "name": "Mejor modelo de predicción",
         "state": {
@@ -300,6 +333,9 @@
           "moderate": "Moderada",
           "heavy": "Fuerte"
         }
+      },
+      "nearest_lightning": {
+        "name": "Rayo más cercano"
       }
     },
     "binary_sensor": {
@@ -317,6 +353,9 @@
       },
       "warning_red": {
         "name": "Aviso rojo"
+      },
+      "lightning_nearby": {
+        "name": "Rayos cerca"
       }
     },
     "event": {
@@ -336,6 +375,23 @@
     "image": {
       "radar": {
         "name": "Radar"
+      }
+    },
+    "camera": {
+      "radar_playback": {
+        "name": "Radar: reproducción"
+      }
+    },
+    "select": {
+      "radar_window": {
+        "name": "Ventana del radar",
+        "state": {
+          "1h": "Última hora",
+          "3h": "Últimas 3 horas",
+          "6h": "Últimas 6 horas",
+          "12h": "Últimas 12 horas",
+          "24h": "Últimas 24 horas"
+        }
       }
     }
   },
