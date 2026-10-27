@@ -18,7 +18,7 @@
  * DOM exists.
  */
 
-export const CARD_VERSION = "0.2.0";
+export const CARD_VERSION = "0.3.0";
 const DOMAIN = "meteoveo";
 const STEP_MINUTES = 10;
 const HORIZON_MINUTES = 180;
@@ -26,6 +26,8 @@ const HORIZON_MINUTES = 180;
 const STALE_MINUTES = 120;
 /** From here on the age is shown in the warning colour. */
 const AGEING_MINUTES = 45;
+/** A source notice longer than this takes more than one line on a phone. */
+const ATTRIBUTION_ONE_LINE = 64;
 
 // ---------------------------------------------------------------------------
 // Texts. Spanish is the product language; English is the fallback; Catalan
@@ -56,6 +58,8 @@ const TEXT = {
     noData: "Sin datos de precipitación ahora",
     stale: "Sin datos recientes del radar",
     uncertainLegend: "Punteado: incierto",
+    attributionShort: "Datos: AEMET · MeteoVeo",
+    attributionMore: "Ver todas las fuentes", attributionLess: "Ocultar las fuentes",
     band: { weak: "débil", moderate: "moderada", strong: "fuerte" },
     warning: { yellow: "Aviso amarillo", orange: "Aviso naranja", red: "Aviso rojo" },
     moreWarnings: "+{n} más",
@@ -88,6 +92,12 @@ const TEXT = {
       show_radar: "Radar (última hora y próxima)",
       compact_warnings: "Avisos en modo compacto",
       compact_warnings_options: { severe: "Solo naranja y rojo", all: "Todos los activos", none: "Ninguno" },
+      attribution: "Fuentes de datos",
+      attribution_options: { compact: "Una línea (ampliable)", full: "Completas", off: "Ocultar" },
+      attribution_sources: "Fuentes de los datos",
+      attribution_licence: "Aviso de licencia",
+      attribution_licence_text: "Nombrar las fuentes es una obligación de licencia. El texto completo sigue estando en el atributo «attribution» de la entidad weather, también si lo ocultas en la tarjeta.",
+      attribution_unknown: "Abre la tarjeta una vez para ver aquí el texto completo.",
     },
   },
   en: {
@@ -113,6 +123,8 @@ const TEXT = {
     noData: "No precipitation data right now",
     stale: "No recent radar data",
     uncertainLegend: "Dotted: uncertain",
+    attributionShort: "Data: AEMET · MeteoVeo",
+    attributionMore: "Show all sources", attributionLess: "Hide the sources",
     band: { weak: "light", moderate: "moderate", strong: "heavy" },
     warning: { yellow: "Yellow warning", orange: "Orange warning", red: "Red warning" },
     moreWarnings: "+{n} more",
@@ -145,6 +157,12 @@ const TEXT = {
       show_radar: "Radar (last hour and next)",
       compact_warnings: "Warnings in compact mode",
       compact_warnings_options: { severe: "Orange and red only", all: "All active", none: "None" },
+      attribution: "Data sources",
+      attribution_options: { compact: "One line (tap to expand)", full: "Full", off: "Hidden" },
+      attribution_sources: "The data sources",
+      attribution_licence: "Licence notice",
+      attribution_licence_text: "Naming the sources is a licence obligation. The full text stays in the weather entity's own “attribution” attribute, also when you hide it on the card.",
+      attribution_unknown: "Open the card once to see the full text here.",
     },
   },
   ca: {
@@ -170,6 +188,8 @@ const TEXT = {
     noData: "Sense dades de precipitació ara",
     stale: "Sense dades recents del radar",
     uncertainLegend: "Puntejat: incert",
+    attributionShort: "Dades: AEMET · MeteoVeo",
+    attributionMore: "Veure totes les fonts", attributionLess: "Amagar les fonts",
     band: { weak: "feble", moderate: "moderada", strong: "forta" },
     warning: { yellow: "Avís groc", orange: "Avís taronja", red: "Avís vermell" },
     moreWarnings: "+{n} més",
@@ -202,6 +222,12 @@ const TEXT = {
       show_radar: "Radar (última hora i pròxima)",
       compact_warnings: "Avisos en mode compacte",
       compact_warnings_options: { severe: "Només taronja i vermell", all: "Tots els actius", none: "Cap" },
+      attribution: "Fonts de dades",
+      attribution_options: { compact: "Una línia (ampliable)", full: "Completes", off: "Amagades" },
+      attribution_sources: "Fonts de les dades",
+      attribution_licence: "Avís de llicència",
+      attribution_licence_text: "Anomenar les fonts és una obligació de llicència. El text complet continua a l'atribut «attribution» de l'entitat weather, també si l'amagues a la targeta.",
+      attribution_unknown: "Obre la targeta un cop per veure aquí el text complet.",
     },
   },
   // Hungarian: for the owner's review, not a product language.
@@ -228,6 +254,8 @@ const TEXT = {
     noData: "Most nincs csapadékadat",
     stale: "Nincs friss radaradat",
     uncertainLegend: "Pontozott: bizonytalan",
+    attributionShort: "Adatok: AEMET · MeteoVeo",
+    attributionMore: "Minden forrás", attributionLess: "Források elrejtése",
     band: { weak: "gyenge", moderate: "mérsékelt", strong: "erős" },
     warning: { yellow: "Sárga figyelmeztetés", orange: "Narancs figyelmeztetés", red: "Piros figyelmeztetés" },
     moreWarnings: "+{n} további",
@@ -260,6 +288,12 @@ const TEXT = {
       show_radar: "Radar (az elmúlt és a következő óra)",
       compact_warnings: "Figyelmeztetések kompakt módban",
       compact_warnings_options: { severe: "Csak narancs és piros", all: "Minden aktív", none: "Egyik sem" },
+      attribution: "Adatforrások",
+      attribution_options: { compact: "Egy sor (kinyitható)", full: "Teljes", off: "Elrejtve" },
+      attribution_sources: "Az adatok forrásai",
+      attribution_licence: "Licenc-megjegyzés",
+      attribution_licence_text: "A források megnevezése licenc-kötelezettség. A teljes szöveg a weather entitás „attribution” attribútumában akkor is ott van, ha a kártyán elrejted.",
+      attribution_unknown: "Nyisd meg egyszer a kártyát, és itt megjelenik a teljes szöveg.",
     },
   },
 };
@@ -494,6 +528,42 @@ export function compactWarnings(schedule, mode) {
   );
 }
 
+
+/**
+ * The source line under the card.
+ *
+ * The licences of the data behind MeteoVeo require naming them, and the full
+ * notice (AEMET, ECMWF, CAMS, IGN, BDLJE and the rest) runs to several lines
+ * on a narrow panel. So by default the card shows one line and keeps the
+ * notice one tap away: nothing is dropped, it is folded.
+ *
+ * `mode` is the card's `attribution` option: `compact` (the default) folds
+ * it, `full` is the card as it was before, `off` leaves it off the card
+ * altogether. A notice that already fits on a line, or one that does not
+ * name AEMET (so the short line would not be true of it), is shown as it is.
+ *
+ * Switching it off changes the card, not the data: the full notice stays in
+ * the weather entity's own `attribution` attribute, and the card editor
+ * shows it at the bottom whichever position is chosen.
+ *
+ * Returns `null` when there is nothing to show, otherwise
+ * `{ text, expandable, expanded }`.
+ */
+export function attributionModel(attribution, mode, expanded, lang) {
+  if (mode === "off") return null;
+  const full = String(attribution == null ? "" : attribution).trim();
+  if (!full) return null;
+  const texts = TEXT[lang] || TEXT.en;
+  const foldable =
+    mode !== "full" && full.length > ATTRIBUTION_ONE_LINE && /AEMET/i.test(full);
+  if (!foldable) return { text: full, expandable: false, expanded: true };
+  return {
+    text: expanded ? full : texts.attributionShort,
+    expandable: true,
+    expanded: !!expanded,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Styles. HA theme variables carry the surface and the type; the MeteoVeo
 // accents (the rain blue, amber, terracotta, green) come from the app's palette
@@ -587,6 +657,10 @@ section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--mv-li
   background: linear-gradient(90deg, var(--mv-blue-soft), var(--mv-amber)); }
 .empty { padding: 4px 0; font-size: 14px; color: var(--mv-ink-2); line-height: 1.4; }
 .attr { margin-top: 12px; font-size: 10.5px; color: var(--mv-ink-2); opacity: .75; }
+.attr-toggle { display: block; width: 100%; padding: 0; border: 0; background: none; text-align: left;
+  font-family: inherit; font-size: 10.5px; color: var(--mv-ink-2); cursor: pointer; line-height: 1.4; }
+.attr-toggle ha-icon { --mdc-icon-size: 13px; vertical-align: -2px; }
+.attr-toggle:focus-visible { outline: 2px solid var(--mv-blue); outline-offset: 2px; border-radius: 4px; }
 
   .radar { margin: 4px 0 12px; }
   .radar img { display: block; width: 100%; height: auto; border-radius: 10px; }
@@ -604,6 +678,16 @@ export class MeteoVeoCard extends Base {
     const ours = all.find((e) => e.platform === DOMAIN && e.entity_id.startsWith("weather."));
     const fallback = (entities || []).find((id) => id.startsWith("weather."));
     return { entity: ours ? ours.entity_id : fallback || "" };
+  }
+
+  /**
+   * The full source notice for the editor, which is a static form and has no
+   * `hass` of its own. The last rendered card leaves it here, exactly as the
+   * language does; without one, the editor says where to look instead of
+   * inventing a list.
+   */
+  static fullAttribution() {
+    return MeteoVeoCard._attribution || TEXT[MeteoVeoCard._lang || "en"].editor.attribution_unknown;
   }
 
   static getConfigForm() {
@@ -640,12 +724,31 @@ export class MeteoVeoCard extends Base {
           },
         },
         {
+          name: "attribution",
+          default: "compact",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: ["compact", "full", "off"].map((value) => ({
+                value,
+                label: TEXT[lang()].editor.attribution_options[value],
+              })),
+            },
+          },
+        },
+        {
           type: "grid", name: "",
           schema: [
             { name: "hourly_count", default: 12, selector: { number: { min: 3, max: 48, mode: "box" } } },
             { name: "daily_count", default: 7, selector: { number: { min: 1, max: 14, mode: "box" } } },
           ],
         },
+        // Always at the bottom, whichever position `attribution` is in --
+        // including `off`. Naming the sources is a licence obligation, so
+        // there has to be one place where the full notice cannot be turned
+        // off; this is it. (The other is the entity attribute itself.)
+        { name: "attribution_sources", type: "constant", value: MeteoVeoCard.fullAttribution() },
+        { name: "attribution_licence", type: "constant", value: TEXT[lang()].editor.attribution_licence_text },
       ],
       computeLabel: (schema) => TEXT[lang()].editor[schema.name] || schema.name,
       assertConfig: (config) => {
@@ -666,6 +769,7 @@ export class MeteoVeoCard extends Base {
     this._snapshot = null;
     this._connected = false;
     this._warningsExpanded = false;
+    this._attributionExpanded = false;
   }
 
   setConfig(config) {
@@ -673,10 +777,11 @@ export class MeteoVeoCard extends Base {
     this._config = {
       show_next_hour: true, show_hourly: true, show_daily: true, show_warnings: true,
       show_details: true, show_precipitation: true, show_radar: true, compact: false, compact_warnings: "severe",
-      hourly_count: 12, daily_count: 7, ...config,
+      attribution: "compact", hourly_count: 12, daily_count: 7, ...config,
     };
     this._snapshot = null;
     this._warningsExpanded = false;
+    this._attributionExpanded = false;
     this._resubscribe();
     this._render();
   }
@@ -685,6 +790,9 @@ export class MeteoVeoCard extends Base {
     this._hass = hass;
     this._lang = pickLanguage(hass && hass.locale && hass.locale.language);
     MeteoVeoCard._lang = this._lang;
+    const weather = this._config && hass && hass.states[this._entityIds().weather];
+    const notice = weather && weather.attributes.attribution;
+    if (notice) MeteoVeoCard._attribution = String(notice);
     if (!this._config) return;
     this._resubscribe();
     // Re-render only when something the card shows has changed.
@@ -874,6 +982,15 @@ export class MeteoVeoCard extends Base {
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${body}</ha-card>`;
     const more = this.shadowRoot.querySelector && this.shadowRoot.querySelector(".more");
     if (more) more.addEventListener("click", () => { this._warningsExpanded = !this._warningsExpanded; this._render(); });
+    // Opened by the viewer, it stays open: a refresh every few minutes must
+    // not fold the sources back up under their finger.
+    const sources = this.shadowRoot.querySelector && this.shadowRoot.querySelector(".attr-toggle");
+    if (sources) {
+      sources.addEventListener("click", () => {
+        this._attributionExpanded = !this._attributionExpanded;
+        this._render();
+      });
+    }
   }
 
   _body() {
@@ -903,9 +1020,24 @@ export class MeteoVeoCard extends Base {
       if (c.show_hourly) parts.push(this._hourly(weather, nowMs));
       if (c.show_daily) parts.push(this._daily(weather, nowMs));
     }
-    const attribution = weather.attributes.attribution;
-    if (attribution) parts.push(`<div class="attr">${esc(attribution)}</div>`);
+    // The footer is rendered in compact card mode too, and is the same in
+    // both: one line by default, the whole notice on a tap, or nothing at
+    // all if the viewer switched it off. Switching it off does not take the
+    // naming away -- it stays in the entity attribute and at the bottom of
+    // the card's configuration panel.
+    const attribution = attributionModel(
+      weather.attributes.attribution, c.attribution, this._attributionExpanded, this._lang,
+    );
+    if (attribution) parts.push(this._attribution(attribution, t));
     return `<div class="mv">${parts.join("")}</div>`;
+  }
+
+  _attribution(model, t) {
+    if (!model.expandable) return `<div class="attr">${esc(model.text)}</div>`;
+    const hint = model.expanded ? t.attributionLess : t.attributionMore;
+    const icon = model.expanded ? "mdi:chevron-up" : "mdi:information-outline";
+    return `<button type="button" class="attr attr-toggle" aria-expanded="${model.expanded}"
+      aria-label="${esc(hint)}" title="${esc(hint)}">${esc(model.text)} <ha-icon icon="${icon}"></ha-icon></button>`;
   }
 
   _isDay(weather) {

@@ -55,7 +55,7 @@ def test_manifest_documentation_points_at_this_repo():
 
 def test_readme_links_every_docs_page():
     readme = (REPO / "README.md").read_text(encoding="utf-8")
-    for page in ("setup", "measurements", "reciprocity", "troubleshooting"):
+    for page in ("setup", "measurements", "probability", "reciprocity", "troubleshooting"):
         assert f"docs/{page}.md" in readme, page
 
 
@@ -144,3 +144,34 @@ def test_the_readme_names_the_radar_area_without_promising_the_canaries():
     # Nowhere does the radar row offer the Canaries.
     radar_row = next(line for line in text.splitlines() if "Radar playback" in line and "|" in line)
     assert "Canar" not in radar_row
+
+
+# --- Issue #1: what the daily percentage means -----------------------------
+
+
+def test_the_probability_page_says_what_the_percentage_is() -> None:
+    text = (REPO / "docs/probability.md").read_text(encoding="utf-8")
+    assert len(text) > 200
+    # The threshold the figure is about, and whose figure it is.
+    assert "0.2 mm" in text
+    assert "not the same number" in text and "AEMET" in text
+    # The question the issue actually asked.
+    assert "same percentage" in text
+
+
+def test_the_probability_page_keeps_the_internals_internal() -> None:
+    # The repository is public. How the figure is calibrated, against what,
+    # and how well, is not published -- the page says what the number means.
+    text = (REPO / "docs/probability.md").read_text(encoding="utf-8")
+    for internal in ("Brier", "ADR-", "precipProbBasis", "lead", "%,", "calibrat"):
+        assert internal not in text, internal
+
+
+def test_the_card_page_documents_the_three_source_positions() -> None:
+    text = (REPO / "docs/card.md").read_text(encoding="utf-8")
+    assert "`attribution`" in text
+    for position in ("`compact`", "`full`", "`off`"):
+        assert position in text, position
+    # And why it can be switched off without the naming being lost.
+    assert "licence obligation" in text
+    assert "configuration panel" in text

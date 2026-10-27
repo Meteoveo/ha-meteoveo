@@ -24,6 +24,7 @@ integrations — the `home-assistant/brands` repository no longer accepts them.
 
 - [Setup guide](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/setup.md) — creating an account or signing in, the place, an optional station
 - [Measurements](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/measurements.md) — what each station field expects, units, pitfalls
+- [Rain probability](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/probability.md) — what the daily percentage means, and why it is not AEMET's
 - [Reciprocity](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/reciprocity.md) — what a station that stops reporting loses (and what it never loses)
 - [Troubleshooting](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/troubleshooting.md) — errors and what they mean
 
@@ -105,7 +106,7 @@ upload key is stored as well.
 
 | Entity | Meaning |
 |---|---|
-| `weather.meteoveo_<town>` | Current conditions, hourly forecast (48 h) and daily forecast (7 days). Attribution to the data sources is in the entity's attributes. |
+| `weather.meteoveo_<town>` | Current conditions, hourly forecast (48 h) and daily forecast (7 days). The daily rain probability is MeteoVeo's own figure, not AEMET's — see [probability](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/probability.md). Attribution to the data sources is in the entity's attributes. |
 | `binary_sensor.meteoveo_<town>_rain_in_the_next_hour` | On when rain is expected within 60 minutes. Attributes: `rain_now`, `starts_at`, `ends_at`, `issued_at`, `age_minutes`, and `steps` — ten-minute steps with `band` (`none`, `light`, `moderate`, `heavy`), `source` (`radar` or `model`) and `uncertain`. Unavailable outside nowcast coverage. |
 | `sensor.meteoveo_<town>_rain_start` / `_rain_end` | When the next rain starts / when the current rain stops (timestamps). |
 | `sensor.meteoveo_<town>_weather_warnings` | Number of active official warnings; `highest_level` (`none`, `yellow`, `orange`, `red`) and the `warnings` list as attributes. |

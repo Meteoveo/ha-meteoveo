@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import {
   nextHourModel, nextHourSentence, compassPoint, pickLanguage, conditionIcon,
   uvLevel, precipBand, warningSchedule, validityText, compactWarnings,
+  attributionModel, MeteoVeoCard,
 } from "../../custom_components/meteoveo/frontend/meteoveo-card.js";
 
 const ISSUED = Date.parse("2026-10-23T11:50:00Z");
@@ -237,4 +238,100 @@ test("compact mode keeps the warnings the owner's option asks for", () => {
   assert.deepEqual(compactWarnings(schedule, "severe").map((w) => w.level), ["orange"]);
   assert.deepEqual(compactWarnings(schedule, "all").map((w) => w.level), ["orange", "yellow"]);
   assert.deepEqual(compactWarnings(schedule, "none"), []);
+});
+
+
+// --- The source line (issue #2) --------------------------------------------
+//
+// The full notice runs to six lines on a narrow panel. Folding it is not the
+// same as dropping it: the licences ask for the names, and one tap shows them
+// unchanged.
+
+const FULL =
+  "Datos: © AEMET, © ECMWF, © CAMS (Copernicus), © IGN, © BDLJE, " +
+  "mediciones de estaciones locales, MeteoVeo.";
+
+test("by default the sources are one line, and the line can be opened", () => {
+  const folded = attributionModel(FULL, "compact", false, "es");
+  assert.equal(folded.text, "Datos: AEMET · MeteoVeo");
+  assert.equal(folded.expandable, true);
+  assert.equal(folded.expanded, false);
+  assert.equal(attributionModel(FULL, "compact", false, "en").text, "Data: AEMET · MeteoVeo");
+  assert.equal(attributionModel(FULL, "compact", false, "ca").text, "Dades: AEMET · MeteoVeo");
+  assert.equal(attributionModel(FULL, "compact", false, "hu").text, "Adatok: AEMET · MeteoVeo");
+  // An unknown language falls back to English rather than to a raw key.
+  assert.equal(attributionModel(FULL, "compact", false, "xx").text, "Data: AEMET · MeteoVeo");
+});
+
+test("opened, it is the full notice word for word", () => {
+  const open = attributionModel(FULL, "compact", true, "es");
+  assert.equal(open.text, FULL);
+  assert.equal(open.expandable, true);
+  assert.equal(open.expanded, true);
+});
+
+test("attribution: full is the card as it was -- everything, nothing to open", () => {
+  const model = attributionModel(FULL, "full", false, "es");
+  assert.equal(model.text, FULL);
+  assert.equal(model.expandable, false);
+});
+
+test("attribution: off keeps the footer off the card entirely", () => {
+  // The owner asked for it to be switchable off. It changes the card, not
+  // the data: the notice stays in the entity attribute and in the editor.
+  for (const expanded of [false, true]) {
+    assert.equal(attributionModel(FULL, "off", expanded, "es"), null);
+    assert.equal(attributionModel("Datos: © AEMET, MeteoVeo.", "off", expanded, "hu"), null);
+  }
+});
+
+test("a notice that already fits is left alone", () => {
+  // Folding a single line would hide names for no gain, and the short line
+  // would claim sources the notice does not name.
+  const short = "Datos: © AEMET, MeteoVeo.";
+  const model = attributionModel(short, "compact", false, "es");
+  assert.equal(model.text, short);
+  assert.equal(model.expandable, false);
+});
+
+test("a long notice that does not name AEMET is never summarised as AEMET", () => {
+  const other = "Datos: © ECMWF, © CAMS (Copernicus), © IGN, mediciones de estaciones locales, MeteoVeo.";
+  const model = attributionModel(other, "compact", false, "es");
+  assert.equal(model.text, other);
+  assert.equal(model.expandable, false);
+});
+
+test("nothing to attribute means nothing is rendered", () => {
+  for (const empty of [null, undefined, "", "   "]) {
+    assert.equal(attributionModel(empty, "compact", false, "es"), null);
+  }
+});
+
+
+test("the card editor ends with the full notice, whatever the option says", () => {
+  // This is the one place the full naming cannot be switched off, so the
+  // licence holds even for someone who hid the footer.
+  MeteoVeoCard._lang = "es";
+  MeteoVeoCard._attribution = FULL;
+  const form = MeteoVeoCard.getConfigForm();
+  const tail = form.schema.slice(-2);
+  assert.deepEqual(tail.map((s) => s.type), ["constant", "constant"]);
+  assert.equal(tail[0].value, FULL);
+  assert.equal(form.computeLabel(tail[0]), "Fuentes de los datos");
+  // And a quiet line saying why it is there and where else it lives.
+  assert.match(tail[1].value, /licencia/);
+  assert.match(tail[1].value, /attribution/);
+  // The option itself offers exactly the three positions.
+  const option = form.schema.find((s) => s.name === "attribution");
+  assert.deepEqual(option.selector.select.options.map((o) => o.value), ["compact", "full", "off"]);
+  assert.equal(option.default, "compact");
+});
+
+test("the editor says where to look when no card has rendered yet", () => {
+  // The config form is static and has no `hass`; it must not invent a list.
+  MeteoVeoCard._lang = "en";
+  MeteoVeoCard._attribution = null;
+  const value = MeteoVeoCard.getConfigForm().schema.slice(-2)[0].value;
+  assert.match(value, /Open the card once/);
+  assert.doesNotMatch(value, /AEMET/);
 });

@@ -97,11 +97,21 @@ daily_count: 7           # 1–14 days in the list
 | `show_radar` | `true` | The radar loop — the last hour of radar and the next hour's nowcast around your place (the integration's `image` entity). Not shown in compact mode. |
 | `compact` | `false` | Header and the next-3-hours strip only. |
 | `compact_warnings` | `severe` | In compact mode: `severe` = active orange and red warnings, `all` = every active warning, `none` = no warnings. |
+| `attribution` | `compact` | The grey source line at the bottom: `compact` = one line (`Datos: AEMET · MeteoVeo`) that opens the full notice when you tap it, `full` = the whole notice written out, `off` = no line on the card. |
 | `hourly_count` | `12` | Hours in the strip. |
 | `daily_count` | `7` | Days in the list (the free level provides 7). |
 
 In a **sections** view the card takes the full width by default and can be
 narrowed to half.
+
+### The source line
+
+Naming the data sources is a licence obligation, not decoration, so the full
+notice is never actually gone: whichever position `attribution` is in — `off`
+included — the card's own configuration panel shows it in full at the bottom,
+and Home Assistant keeps it in the weather entity's `attribution` attribute,
+where the convention puts it. What the option changes is how much of it the
+card itself prints.
 
 ### The 24-hour radar on a dashboard
 
