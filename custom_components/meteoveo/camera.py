@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
+from aiohttp import web
 from homeassistant.components.camera import (
     Camera,
     CameraEntityDescription,
@@ -25,7 +26,6 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
-from aiohttp import web
 
 from .client import ApiError, MeteoVeoError
 from .coordinator import HomeCoordinator, MeteoVeoConfigEntry
@@ -129,11 +129,6 @@ class RadarPlaybackCamera(CoordinatorEntity[HomeCoordinator], Camera):
             # Asked for at once rather than at the next slot: the point of
             # the switch is that the picture changes when you flip it.
             self.hass.async_create_task(self._async_load())
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        # A fresh home view may mean a new radar run; the next look fetches it.
-        super()._handle_coordinator_update()
 
     async def async_camera_image(
         self, width: int | None = None, height: int | None = None

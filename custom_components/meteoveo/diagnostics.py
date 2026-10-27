@@ -58,6 +58,14 @@ async def async_get_config_entry_diagnostics(
             "last_update_success": runtime.home.last_update_success,
             "data": async_redact_data(runtime.home.data or {}, TO_REDACT),
         },
+        # ADR-0866: which level the service grants, and how far back the
+        # radar playback is set to reach. Neither is a secret, and both
+        # decide which entities exist at all.
+        "level": (runtime.home.data or {}).get("level"),
+        "radar_window": {
+            "option": runtime.radar_window.option,
+            "refused": runtime.radar_window.refused,
+        },
         "station": (
             None
             if runtime.station is None

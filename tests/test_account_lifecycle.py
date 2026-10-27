@@ -190,7 +190,8 @@ async def test_options_menu_depends_on_the_entry(hass: HomeAssistant) -> None:
     entry = add_entry(hass, ACCOUNT_DATA)
     await load(hass, entry)
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    assert result["menu_options"] == ["location", "delete_account"]
+    # ADR-0866 D9: without a station, the station door is offered here.
+    assert result["menu_options"] == ["location", "add_station", "delete_account"]
 
     with_station = MockConfigEntry(
         domain=DOMAIN, data={**ACCOUNT_DATA, **STATION_DATA}, unique_id="OTHER"

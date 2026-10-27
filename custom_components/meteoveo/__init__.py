@@ -42,11 +42,25 @@ PLATFORMS: list[Platform] = [
     Platform.WEATHER,
     Platform.EVENT,
     Platform.IMAGE,
-    # Plus only, and created from the service's answer rather than up front
-    # (ADR-0866 D6): the radar playback camera and its window.
-    Platform.CAMERA,
-    Platform.SELECT,
 ]
+
+#: Plus only, and created from the service's answer rather than up front
+#: (ADR-0866 D6): the radar playback camera and its window. Forwarded for
+#: every account entry, because an account can reach Plus while Home
+#: Assistant runs and the entities must be able to appear without a restart.
+PLUS_PLATFORMS: list[Platform] = [Platform.CAMERA, Platform.SELECT]
+
+
+def platforms_for(entry: MeteoVeoConfigEntry) -> list[Platform]:
+    """Which platforms this entry needs.
+
+    A 0.1.x station-key entry has no account behind it and so can never
+    reach Plus; setting up the camera and select components for it would
+    load them for an entry that will never have one of their entities.
+    """
+    if is_account_entry(entry.data):
+        return PLATFORMS + PLUS_PLATFORMS
+    return PLATFORMS
 
 # Set up through the UI only; there is no YAML configuration.
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -114,7 +128,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MeteoVeoConfigEntry) -> 
             home=home.data,
         ),
     )
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, platforms_for(entry))
     entry.async_on_unload(entry.add_update_listener(_async_reload_on_change))
 
     if station is not None:
@@ -156,7 +170,7 @@ def _start_uploads(
 
 async def async_unload_entry(hass: HomeAssistant, entry: MeteoVeoConfigEntry) -> bool:
     """Unload a config entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return await hass.config_entries.async_unload_platforms(entry, platforms_for(entry))
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: MeteoVeoConfigEntry) -> None:

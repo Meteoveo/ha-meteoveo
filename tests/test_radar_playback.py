@@ -338,3 +338,35 @@ async def test_the_camera_advertises_no_stream_feature(hass: HomeAssistant) -> N
     # this is a camera in the first place.
     await setup(hass, ACCOUNT_DATA, home=plus_view())
     assert hass.states.get(CAMERA).attributes["supported_features"] == 0
+
+
+async def test_a_station_key_entry_does_not_load_the_camera_platform(
+    hass: HomeAssistant,
+) -> None:
+    # A station key has no account behind it, so it can never reach Plus --
+    # and Home Assistant should not set up the camera and select components
+    # for an entry that will never have one of their entities.
+    from test_reauth_and_options import ENTRY_DATA, VIEW
+    from unittest.mock import AsyncMock as _AsyncMock
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(domain="meteoveo", data=ENTRY_DATA, unique_id="mvexample1")
+    entry.add_to_hass(hass)
+    with patch(
+        "custom_components.meteoveo.client.MeteoVeoClient.async_get_station",
+        new=_AsyncMock(return_value=VIEW),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert "camera" not in hass.config.components
+    assert "select" not in hass.config.components
+    assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_a_free_account_entry_still_loads_them(hass: HomeAssistant) -> None:
+    # It may become Plus while Home Assistant runs, and then the entities
+    # have to be able to appear without a restart.
+    await setup(hass, ACCOUNT_DATA, home=free_view())
+    assert "camera" in hass.config.components
+    assert "select" in hass.config.components

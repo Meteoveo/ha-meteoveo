@@ -37,6 +37,21 @@ stay as they are.
 The place is outside radar nowcast coverage, so there is no next hour to
 report. The forecast itself is unaffected.
 
+## The Plus entities are missing or unavailable
+
+**Lightning nearby**, **Nearest lightning**, **Radar playback** and **Radar
+window** only exist while the account has MeteoVeo Plus — a subscription, or
+a station of yours that reports at least every 10 minutes
+([reciprocity](reciprocity.md)). Check the **MeteoVeo level** sensor: while
+it reads `free`, those entities are not created, and ones that existed
+before go unavailable rather than disappearing. An entry set up with a
+station key only has no account behind it, so it has no level sensor and no
+Plus entities.
+
+**Radar playback** is also unavailable when the place is outside radar
+coverage, and it can take a few seconds to appear after the window is
+changed: the loop is rendered on the server, not streamed from a device.
+
 ## "The station ID or key was not accepted"
 
 - The ID starts with `MV` and is shown on the station's page — it is not

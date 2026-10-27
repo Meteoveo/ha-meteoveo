@@ -158,6 +158,24 @@ def _measurement_schema(current: dict[str, str]) -> vol.Schema:
     return vol.Schema(fields)
 
 
+def _station_details_schema(name: str, sensor_height_cm: int) -> vol.Schema:
+    """Name and sensor height. Used by setup and by the Options door alike."""
+    return vol.Schema(
+        {
+            vol.Required(CONF_STATION_NAME, default=name): selector.TextSelector(),
+            vol.Required(CONF_SENSOR_HEIGHT, default=sensor_height_cm): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=MIN_SENSOR_HEIGHT_CM,
+                    max=MAX_SENSOR_HEIGHT_CM,
+                    step=1,
+                    unit_of_measurement="cm",
+                    mode=selector.NumberSelectorMode.BOX,
+                )
+            ),
+        }
+    )
+
+
 def _location_schema(lat: float, lon: float) -> vol.Schema:
     return vol.Schema(
         {
@@ -490,28 +508,12 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
             self._sensor_height_cm = int(user_input[CONF_SENSOR_HEIGHT])
             return await self.async_step_measurements()
 
-        schema = vol.Schema(
-            {
-                vol.Required(
-                    CONF_STATION_NAME,
-                    default=self._station_name or self.hass.config.location_name or "",
-                ): selector.TextSelector(),
-                vol.Required(
-                    CONF_SENSOR_HEIGHT, default=self._sensor_height_cm
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=MIN_SENSOR_HEIGHT_CM,
-                        max=MAX_SENSOR_HEIGHT_CM,
-                        step=1,
-                        unit_of_measurement="cm",
-                        mode=selector.NumberSelectorMode.BOX,
-                    )
-                ),
-            }
-        )
         return self.async_show_form(
             step_id="station_details",
-            data_schema=schema,
+            data_schema=_station_details_schema(
+                self._station_name or self.hass.config.location_name or "",
+                self._sensor_height_cm,
+            ),
             description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
         )
 
@@ -705,7 +707,16 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class MeteoVeoOptionsFlow(OptionsFlow):
-    """Place, measurement mapping, and deleting the account."""
+    """Place, measurement mapping, adding a station, and deleting the account."""
+
+    def __init__(self) -> None:
+        # Only while the "add a station" flow is open, and never stored: the
+        # session token, what the station is called, and the station the
+        # service made from it (so a retry does not make a second one).
+        self._token: str | None = None
+        self._station_name: str | None = None
+        self._sensor_height_cm = DEFAULT_SENSOR_HEIGHT_CM
+        self._station: dict[str, Any] | None = None
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         data = self.config_entry.data
@@ -714,6 +725,11 @@ class MeteoVeoOptionsFlow(OptionsFlow):
             options.append("location")
         if has_station(data):
             options.append("measurements")
+        elif is_account_entry(data):
+            # ADR-0866 D9: the station door, for someone who said no at
+            # setup or had no station then. With a station there is nothing
+            # to add -- the measurements are what changes.
+            options.append("add_station")
         if is_account_entry(data):
             options.append("delete_account")
         return self.async_show_menu(
@@ -726,15 +742,148 @@ class MeteoVeoOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
+            selection = validate_selection(user_input)
+            if self._token is not None:
+                # The "add a station" flow ends here: the station and the new
+                # key are created only once the mapping is known, so an
+                # abandoned flow leaves nothing behind on the account.
+                return await self._async_attach_station(selection)
             return self.async_create_entry(
-                data={**self.config_entry.options, CONF_MEASUREMENTS: validate_selection(user_input)}
+                data={**self.config_entry.options, CONF_MEASUREMENTS: selection}
             )
 
         current = self.config_entry.options.get(CONF_MEASUREMENTS, {})
+        return self._show_measurements(dict(current), {})
+
+    def _show_measurements(
+        self, current: dict[str, str], errors: dict[str, str]
+    ) -> ConfigFlowResult:
         return self.async_show_form(
             step_id="measurements",
-            data_schema=_measurement_schema(dict(current)),
+            data_schema=_measurement_schema(current),
+            errors=errors,
             description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
+        )
+
+    # --- Adding a station afterwards (ADR-0866 D9) -------------------------
+
+    async def async_step_add_station(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Sign in, then reuse the station steps of the setup flow.
+
+        Signing in is not a formality: the service only ever creates or
+        revokes an integration key, it does not attach a station to one that
+        was already issued -- so a new key is needed, and issuing one is an
+        account-level action. The integration key deliberately cannot do it,
+        which is also why a leaked key could not put a station on an account.
+        """
+        entry = self.config_entry
+        errors: dict[str, str] = {}
+        suggested: dict[str, Any] = {CONF_EMAIL: entry.data.get(CONF_EMAIL, "")}
+
+        if user_input is not None:
+            email = user_input[CONF_EMAIL].strip()
+            suggested = {CONF_EMAIL: email}
+            if not same_email(email, entry.data.get(CONF_EMAIL)):
+                errors[CONF_EMAIL] = "wrong_account"
+            else:
+                try:
+                    self._token = await _account(self.hass).async_login(
+                        email, user_input[CONF_PASSWORD]
+                    )
+                except MeteoVeoError as failure:
+                    errors["base"] = _account_error(failure)
+                else:
+                    return await self.async_step_station_details()
+
+        return self.async_show_form(
+            step_id="add_station",
+            data_schema=self.add_suggested_values_to_schema(STEP_LOGIN_SCHEMA, suggested),
+            errors=errors,
+            description_placeholders={"docs_url": DOCS_SETUP_URL},
+        )
+
+    async def async_step_station_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._station_name = user_input[CONF_STATION_NAME].strip()
+            self._sensor_height_cm = int(user_input[CONF_SENSOR_HEIGHT])
+            return await self.async_step_measurements()
+        return self.async_show_form(
+            step_id="station_details",
+            data_schema=_station_details_schema(
+                self._station_name or self.hass.config.location_name or "",
+                self._sensor_height_cm,
+            ),
+            description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
+        )
+
+    async def _async_attach_station(self, measurements: dict[str, str]) -> ConfigFlowResult:
+        """Create the station, swap the key for one bound to it, reload."""
+        entry = self.config_entry
+        assert self._token is not None
+        account = _account(self.hass)
+        # The place is the one the entry already has: the forecast and the
+        # station belong to the same spot, and asking for a pin again here
+        # would invite two different answers for one home.
+        lat = float(entry.data[CONF_LATITUDE])
+        lon = float(entry.data[CONF_LONGITUDE])
+        try:
+            # Created once: a retry after a failed key request reuses it
+            # rather than leaving a second station on the account.
+            if self._station is None:
+                self._station = await account.async_create_station(
+                    self._token,
+                    name=self._station_name or self.hass.config.location_name or "Home",
+                    lat=lat,
+                    lon=lon,
+                    sensor_height_cm=self._sensor_height_cm,
+                )
+            # The new key first, the old one after: if this fails, the entry
+            # still has a key that works.
+            issued = await account.async_create_integration_key(
+                self._token,
+                lat=lat,
+                lon=lon,
+                label=self.hass.config.location_name,
+                station_ref=self._station["stationId"],
+            )
+        except ApiError as failure:
+            if failure.code == "too_many_keys":
+                return self.async_abort(reason="too_many_keys")
+            return self._show_measurements(measurements, {"base": "unknown"})
+        except InvalidCredentials:
+            # The sign-in ran out while the flow sat open.
+            return self.async_abort(reason="session_expired")
+        except MeteoVeoError as failure:
+            return self._show_measurements(measurements, {"base": _account_error(failure)})
+
+        try:
+            await account.async_delete_integration_key(self._token, entry.data[CONF_KEY_ID])
+        except MeteoVeoError:
+            # An orphaned key shows up as unused on the service side and can
+            # be removed there; failing the whole flow over it would be worse.
+            _LOGGER.debug("the previous integration key could not be revoked")
+        self._token = None
+
+        station = self._station
+        self.hass.config_entries.async_update_entry(
+            entry,
+            data={
+                **entry.data,
+                CONF_INTEGRATION_KEY: issued["key"],
+                CONF_KEY_ID: str(issued["keyId"]),
+                CONF_STATION_ID: station["ingestId"],
+                CONF_STATION_KEY: station["secret"],
+                CONF_STATION_REF: station["stationId"],
+            },
+        )
+        # Writing the options reloads the entry, which starts the uploads and
+        # creates the station entities.
+        return self.async_create_entry(
+            data={**entry.options, CONF_MEASUREMENTS: measurements}
         )
 
     async def async_step_location(

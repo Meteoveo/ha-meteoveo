@@ -197,3 +197,23 @@ async def test_the_entities_come_back_after_a_restart_with_plus(hass: HomeAssist
     assert await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
     assert registry.async_get(NEAREST_LIGHTNING).unique_id == before
+
+
+# --- D10: what the integration deliberately does not do --------------------
+
+
+def test_the_integration_never_nags_about_plus():
+    # ADR-0866 D10.1 and D10.5: the repairs centre is for faults, and a
+    # marketing issue in a HACS integration earns an instant one-star
+    # review. No reminder either -- the reciprocity emails are about someone's
+    # own station going silent, which is what keeps them acceptable.
+    from pathlib import Path
+
+    component = Path(__file__).resolve().parents[1] / "custom_components/meteoveo"
+    source = "\n".join(
+        path.read_text(encoding="utf-8") for path in sorted(component.glob("*.py"))
+    )
+    assert "issue_registry" not in source
+    assert "async_create_issue" not in source
+    # The one notification that exists says an account was deleted.
+    assert source.count("persistent_notification.async_create") == 1
