@@ -265,7 +265,7 @@
   "entity": {
     "sensor": {
       "account_level": {
-        "name": "MeteoVeo-szint",
+        "name": "Szint",
         "state": {
           "free": "Ingyenes",
           "plus": "Plus"

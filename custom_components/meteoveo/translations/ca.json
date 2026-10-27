@@ -265,7 +265,7 @@
   "entity": {
     "sensor": {
       "account_level": {
-        "name": "Nivell de MeteoVeo",
+        "name": "Nivell",
         "state": {
           "free": "Gratuït",
           "plus": "Plus"

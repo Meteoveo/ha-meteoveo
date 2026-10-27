@@ -21,7 +21,7 @@ from homeassistant.helpers import entity_registry as er
 from conftest import HOME_VIEW
 from test_home_entities import ACCOUNT_DATA, STATION_DATA, setup
 
-LEVEL = "sensor.meteoveo_villa_ejemplo_meteoveo_level"
+LEVEL = "sensor.meteoveo_villa_ejemplo_level"
 LIGHTNING_NEARBY = "binary_sensor.meteoveo_villa_ejemplo_lightning_nearby"
 NEAREST_LIGHTNING = "sensor.meteoveo_villa_ejemplo_nearest_lightning"
 
@@ -103,7 +103,7 @@ async def test_a_station_key_entry_gets_no_level_sensor(hass: HomeAssistant) -> 
     # "free". A sensor saying so would be a lie, so it is not created.
     await setup(hass, STATION_DATA, home=free_view(), unique_id="mvexample1")
     assert hass.states.get(LEVEL) is None
-    assert hass.states.get("sensor.garden_meteoveo_level") is None
+    assert hass.states.get("sensor.garden_level") is None
 
 
 # --- D5: the lightning entities are born unlocked --------------------------

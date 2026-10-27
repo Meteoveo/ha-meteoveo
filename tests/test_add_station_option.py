@@ -110,7 +110,9 @@ async def test_adding_a_station_end_to_end(hass: HomeAssistant) -> None:
             await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    # The station was created on the account, at the entry's own place.
+    # The station was created on the account. Home Assistant's own home sits far from
+    # the configured place here (the test default), so the entry's place is used rather
+    # than moving the station to another province (ADR-0866 D9).
     created = service.async_create_station.await_args.kwargs
     assert created["name"] == "Huerta"
     assert created["sensor_height_cm"] == 180
@@ -235,3 +237,70 @@ async def test_the_password_is_never_stored(hass: HomeAssistant) -> None:
     stored = f"{entry.data}{entry.options}"
     assert PASSWORD not in stored
     assert TOKEN not in stored
+
+# ADR-0866 D9: a MERT allomas koordinataja nem lehet a kerekitett hely.
+#
+# A bejegyzes a helyet 0,01 fokra kerekitve tartja (eleg egy elorejelzes-ponthoz), de az
+# allomas merese a radar-mero parositasba es a szomszed-logikaba kerul - ott egy kilometer
+# nem kozmetika. A telepites 4 tizedest tarol a letett pin-bol; az Options-nal az a pin mar
+# nincs meg, ezert a HA SAJAT otthon-koordinatajat hasznaljuk, ha egyezik a hellyel.
+def test_the_station_gets_the_precise_home_position_when_it_matches_the_place() -> None:
+    from custom_components.meteoveo.config_flow import _station_place
+
+    class _Hass:
+        class config:  # noqa: N801 - a HA `hass.config`-ja ilyen alakú
+            latitude = 38.9249
+            longitude = -0.2551
+
+    # A hely (38.92, -0.26) a kerekitett valtozata ugyanennek: a pontos ertek jon.
+    assert _station_place(_Hass(), 38.92, -0.26) == (38.9249, -0.2551)
+
+
+def test_a_distant_home_does_not_move_the_station() -> None:
+    from custom_components.meteoveo.config_flow import _station_place
+
+    class _Hass:
+        class config:  # noqa: N801
+            latitude = 32.87336  # a HA alapertelmezese (San Diego)
+            longitude = -117.22743
+
+    # Tul messze: a bejegyzes helye marad, mert nem tudjuk, hol all az allomas.
+    assert _station_place(_Hass(), 38.92, -0.26) == (38.92, -0.26)
+
+
+def test_a_home_without_coordinates_falls_back_to_the_place() -> None:
+    from custom_components.meteoveo.config_flow import _station_place
+
+    class _Hass:
+        class config:  # noqa: N801
+            latitude = None
+            longitude = None
+
+    assert _station_place(_Hass(), 38.92, -0.26) == (38.92, -0.26)
+
+
+async def test_adding_a_station_uses_the_home_position(hass: HomeAssistant) -> None:
+    """Vegig a folyamaton: a HA otthona a helyen van -> a pontos koordinata megy fel."""
+    await hass.config.async_update(latitude=38.9249, longitude=-0.2551)
+    entry = add_entry(hass, ACCOUNT_DATA)
+    await load(hass, entry)
+
+    result = await open_add_station(hass, entry)
+    with Service(async_create_integration_key=AsyncMock(return_value=dict(NEW_KEY))) as service:
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"email": EMAIL, "password": PASSWORD}
+        )
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"station_name": "Huerta", "sensor_height_cm": 180}
+        )
+        with patch(
+            "custom_components.meteoveo.client.MeteoVeoClient.async_get_station",
+            new=AsyncMock(return_value=copy.deepcopy(STATION_VIEW)),
+        ):
+            await hass.config_entries.options.async_configure(
+                result["flow_id"], {"temperature": "sensor.outside_temperature"}
+            )
+            await hass.async_block_till_done()
+
+    created = service.async_create_station.await_args.kwargs
+    assert (created["lat"], created["lon"]) == (38.9249, -0.2551)

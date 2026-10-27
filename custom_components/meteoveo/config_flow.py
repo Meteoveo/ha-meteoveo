@@ -186,6 +186,22 @@ def _location_schema(lat: float, lon: float) -> vol.Schema:
     )
 
 
+def _station_place(hass: HomeAssistant, place_lat: float, place_lon: float) -> tuple[float, float]:
+    """The station's coordinates: Home Assistant's own home position when it agrees
+    with the configured place (within ~2 km), otherwise that place.
+
+    Rounded to 4 decimals (~11 m), exactly as the setup flow stores it.
+    """
+    home_lat = hass.config.latitude
+    home_lon = hass.config.longitude
+    if home_lat is not None and home_lon is not None:
+        # Fokokban merve: 0,02 fok szelesseg ~2,2 km, es a hosszusagot a szelessegen
+        # nem szukitjuk - egy nagyvonalu kor eleg, a kapu nem pontossagi mertek.
+        if abs(home_lat - place_lat) <= 0.02 and abs(home_lon - place_lon) <= 0.03:
+            return round(float(home_lat), 4), round(float(home_lon), 4)
+    return round(place_lat, 4), round(place_lon, 4)
+
+
 def _key_place(lat: float, lon: float) -> tuple[float, float]:
     """The place as the integration key gets it: ~1 km, like the service stores it.
 
@@ -830,6 +846,20 @@ class MeteoVeoOptionsFlow(OptionsFlow):
         # would invite two different answers for one home.
         lat = float(entry.data[CONF_LATITUDE])
         lon = float(entry.data[CONF_LONGITUDE])
+        # THE STATION'S OWN POSITION, not the entry's place (ADR-0866 D9).
+        #
+        # The entry keeps the place ROUNDED to 0.01 degrees (~1 km) - it only has to
+        # pick a forecast point. A station is a measurement: its coordinates end up in
+        # the radar-gauge pairing and in the neighbour logic, so a kilometre of error
+        # is not a cosmetic matter. The setup flow therefore stores 4 decimals (~11 m)
+        # of the pin the person placed, and that pin is gone by the time this option
+        # runs.
+        #
+        # Home Assistant's own home coordinates are precise and are where the station
+        # almost always stands - but only if they agree with the configured place. The
+        # guard is the rounding itself: within ~2 km we trust the home position, beyond
+        # it we keep the entry's place rather than move someone's station silently.
+        station_lat, station_lon = _station_place(self.hass, lat, lon)
         try:
             # Created once: a retry after a failed key request reuses it
             # rather than leaving a second station on the account.
@@ -837,8 +867,8 @@ class MeteoVeoOptionsFlow(OptionsFlow):
                 self._station = await account.async_create_station(
                     self._token,
                     name=self._station_name or self.hass.config.location_name or "Home",
-                    lat=lat,
-                    lon=lon,
+                    lat=station_lat,
+                    lon=station_lon,
                     sensor_height_cm=self._sensor_height_cm,
                 )
             # The new key first, the old one after: if this fails, the entry

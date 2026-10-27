@@ -65,7 +65,7 @@ MORE = {
     # ADR-0833 R4: the radar loop.
     "image.meteoveo_villa_ejemplo_radar": "radar",
     # ADR-0866 D3: the account's MeteoVeo level (account entries only).
-    "sensor.meteoveo_villa_ejemplo_meteoveo_level": "account_level",
+    "sensor.meteoveo_villa_ejemplo_level": "account_level",
 }
 
 

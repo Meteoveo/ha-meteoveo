@@ -123,7 +123,7 @@ MeteoVeo Plus is the paid level of the MeteoVeo app and website. **A weather
 station that reports through this integration at least every 10 minutes gives
 the account Plus for as long as it reports** — no subscription needed. A
 subscription gives the same level. Either way, Home Assistant shows it in the
-**MeteoVeo level** sensor (`free` / `plus`).
+**Level** sensor (`free` / `plus`).
 
 What Plus adds, and where you see it:
 
@@ -280,7 +280,7 @@ MeteoVeo app instead.
 | *"The station ID or key was not accepted"* | Wrong credentials, or a new key was generated and invalidated this one. |
 | *"Could not reach MeteoVeo"* | The service could not be contacted. Nothing needs changing; try again shortly. |
 | Rain entities are unavailable | The place is outside radar nowcast coverage. The forecast still works. |
-| Lightning or radar-playback entities are missing | The account is on the free level — see the **MeteoVeo level** sensor. A station that reports every 10 minutes, or a subscription, turns them on. |
+| Lightning or radar-playback entities are missing | The account is on the free level — see the **Level** sensor. A station that reports every 10 minutes, or a subscription, turns them on. |
 | Uploads accepted stays at 0 | No measurement is mapped, or every mapped entity is unavailable. |
 
 Debug logging:

@@ -76,7 +76,7 @@ def test_the_readme_has_the_plus_section_in_two_columns():
     # Both columns of the table exist, so "where do I see it" is answered.
     assert "In Home Assistant" in text and "In the MeteoVeo app and on the web" in text
     # The level sensor is how Home Assistant shows it.
-    assert "**MeteoVeo level** sensor" in text
+    assert "**Level** sensor" in text
     # The orphan sentence this section replaces is gone.
     assert "sees its Plus level in Home Assistant as well" not in text
 
