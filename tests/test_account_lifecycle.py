@@ -415,9 +415,9 @@ async def test_card_is_not_registered_when_it_is_not_bundled(
 ) -> None:
     from custom_components.meteoveo.card import async_register_card
 
-    hass.http = MagicMock(async_register_static_paths=AsyncMock())
+    hass.http = MagicMock(register_view=MagicMock())
     assert await async_register_card(hass, tmp_path / "missing.js") is False
-    hass.http.async_register_static_paths.assert_not_awaited()
+    hass.http.register_view.assert_not_called()
 
 
 async def test_card_is_served_and_loaded_with_the_version(
@@ -428,13 +428,13 @@ async def test_card_is_served_and_loaded_with_the_version(
 
     card = tmp_path / "meteoveo-card.js"
     card.write_text("// card", encoding="utf-8")
-    hass.http = MagicMock(async_register_static_paths=AsyncMock())
+    hass.http = MagicMock(register_view=MagicMock())
     with patch("custom_components.meteoveo.card.add_extra_js_url") as add_js:
         assert await async_register_card(hass, card) is True
 
-    (config,) = hass.http.async_register_static_paths.await_args.args[0]
-    assert config.url_path == CARD_URL
-    assert config.path == str(card)
+    (view,) = hass.http.register_view.call_args.args
+    assert view.url == CARD_URL
+    assert view.requires_auth is False
     # A verzio ES a fajl lenyomata (ADR-0866 kiegeszites): egy valtozott, de
     # ugyanolyan verzioszamu kartya is friss cimet kap - kulonben a bongeszo
     # (es a frontend service workere) a regit szolgalja tovabb.
@@ -502,3 +502,28 @@ async def test_deleting_the_account_removes_all_of_its_entries(hass: HomeAssista
         await hass.async_block_till_done()
     remaining = {e.entry_id for e in hass.config_entries.async_entries(DOMAIN)}
     assert remaining == {unrelated.entry_id}
+
+
+async def test_a_changed_card_reaches_the_browser_without_a_restart(
+    hass: HomeAssistant, tmp_path: Path
+) -> None:
+    """A kartya sajat nezeten jon: `no-cache`, tehat a bongeszo MINDIG rakerdez.
+
+    A statikus uton (`cache_headers=True`) a valasz egy evig ervenyes, es a
+    cimet a HA indulasakor dontjuk el - egy HACS-frissites utan a bongeszo a
+    regi cimet kerte, es a sajat gyorsitotarabol valaszolta meg. Igy viszont a
+    lemezen valtozott fajl egy bongeszo-frissitesre megerkezik; HA-ujrainditas
+    csak a Python-oldalhoz kell.
+    """
+    from custom_components.meteoveo.card import MeteoVeoCardView
+
+    card = tmp_path / "meteoveo-card.js"
+    card.write_text("// elso", encoding="utf-8")
+    view = MeteoVeoCardView(card)
+    response = await view.get(MagicMock())
+    assert response.headers["Cache-Control"] == "no-cache"
+    # Modulkent kell betoltodnie: szoveg-tipussal a bongeszo nem futtatja.
+    assert response.headers["Content-Type"].startswith("application/javascript")
+    # A nezet a fajlt szolgalja, nem egy indulaskor beolvasott masolatot.
+    card.write_text("// masodik", encoding="utf-8")
+    assert (await view.get(MagicMock()))._path.read_text(encoding="utf-8") == "// masodik"

@@ -75,6 +75,45 @@ def test_every_language_names_the_sources_the_same_way() -> None:
         assert f'attributionShort: "{short}"' in source
 
 
+def test_the_hourly_row_says_that_it_scrolls() -> None:
+    # The report: the last hour is cut off at the card's edge, which reads as
+    # a rendering fault. The row did scroll -- nothing said so. A fading edge,
+    # a snap and two chevrons say it.
+    source = card_source()
+    assert "scroll-snap-type: x proximity" in source
+    assert "scroll-snap-align: start" in source
+    assert ".can-right .scroll { --fade-r:" in source
+    assert 'class="nav prev"' in source and 'class="nav next"' in source
+
+
+def test_the_scroll_position_survives_a_refresh() -> None:
+    # The card re-renders on every state change; without this the row jumps
+    # back to "now" under the viewer's finger every few minutes.
+    source = card_source()
+    assert "this._hourScroll = previous.scrollLeft" in source
+    assert "_wireHourly()" in source
+
+
+def test_a_full_day_of_hours_is_the_default() -> None:
+    source = card_source()
+    assert "hourly_count: 24" in source
+    assert 'name: "hourly_count", default: 24' in source
+
+
+def test_the_next_hours_block_can_be_conditional() -> None:
+    # The second suggestion: show it only when there is rain to show.
+    source = card_source()
+    assert 'next_hour_when: "always"' in source
+    assert 'this._config.next_hour_when === "rain" && !nextHourHasRain(model)' in source
+    assert '["always", "rain"]' in source
+
+
+def test_every_language_names_the_new_option() -> None:
+    source = card_source()
+    for key in ("next_hour_when:", "next_hour_when_options:", "hoursPrev:", "hoursNext:"):
+        assert source.count(key) >= 4, key
+
+
 def test_the_card_version_matches_the_integration() -> None:
     manifest = json.loads(
         (REPO / "custom_components/meteoveo/manifest.json").read_text(encoding="utf-8")

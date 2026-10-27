@@ -57,6 +57,10 @@ const G = {
   "mdi:alert": `<path fill="currentColor" d="M12 3L1.5 21h21L12 3z"/><path stroke="var(--card-background-color)" stroke-width="2" stroke-linecap="round" d="M12 10v4.5M12 17.6v.2"/>`,
   "mdi:alert-outline": `<path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 4L2.5 20.5h19L12 4z"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 10v4.5M12 17.6v.2"/>`,
   "mdi:weather-sunset-up": `<path fill="currentColor" d="M5 16a7 7 0 0 1 14 0z"/><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 19h20M12 3v4M8.5 4.5l1.2 2M15.5 4.5l-1.2 2"/><path fill="none" d="M9.5 5.5L12 3l2.5 2.5"/></g>`,
+  "mdi:chevron-left": `<path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M14.5 6.5L9 12l5.5 5.5"/>`,
+  "mdi:chevron-right": `<path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M9.5 6.5L15 12l-5.5 5.5"/>`,
+  "mdi:information-outline": `<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 11v5.5M12 7.6v.2"/>`,
+  "mdi:chevron-up": `<path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M6.5 14.5L12 9l5.5 5.5"/>`,
   "mdi:weather-sunset-down": `<path fill="currentColor" d="M5 16a7 7 0 0 1 14 0z"/><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 19h20M12 3v4"/><path fill="none" d="M9.5 4.5L12 7l2.5-2.5"/></g>`,
 };
 class HaIcon extends HTMLElement {
@@ -122,6 +126,10 @@ const none = (n, source = "radar") => Array.from({ length: n }, () => ["none", s
 const SUN = { next_rising: "2026-10-24T06:17:00Z", next_setting: "2026-10-23T17:22:00Z" };
 const CASES = [
   { title: "Día seco · UV 7 en los atributos del weather", name: "Castellonet de la Conquesta", condition: "partlycloudy", temp: 23.1, hum: 44, wind: 9, bearing: 113,
+    now: { attrs: true, feels: 24.6, dew: 10.2, uv: 7, uvMax: 8 },
+    rain: { state: "off", rain_now: false, age_minutes: 2, issued_at: "2026-10-23T11:48:00Z", steps: steps(fillTo(none(7), "none"), "2026-10-23T11:48:00Z") } },
+  { title: "Día seco con next_hour_when: rain · el bloque no aparece", name: "Castellonet de la Conquesta", condition: "partlycloudy", temp: 23.1, hum: 44, wind: 9, bearing: 113,
+    config: { next_hour_when: "rain" },
     now: { attrs: true, feels: 24.6, dew: 10.2, uv: 7, uvMax: 8 },
     rain: { state: "off", rain_now: false, age_minutes: 2, issued_at: "2026-10-23T11:48:00Z", steps: steps(fillTo(none(7), "none"), "2026-10-23T11:48:00Z") } },
   { title: "Lluvia en 20 min · detalles desde los sensores", name: "Gandia", condition: "cloudy", temp: 19.4, hum: 78, wind: 21, bearing: 70,

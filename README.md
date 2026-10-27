@@ -45,6 +45,11 @@ If MeteoVeo does not show up in the HACS search yet, add it as a custom
 repository: HACS → ⋮ → **Custom repositories** → add
 `https://github.com/meteoveo/ha-meteoveo`, category **Integration**.
 
+**Updating.** Home Assistant loads a custom integration's Python code once, at
+start, so a HACS update of the integration itself needs one restart — that is
+Home Assistant, not MeteoVeo. The card is different: it is served revalidated,
+so when an update only changes the card, reloading the browser is enough.
+
 ### Manually
 
 1. Copy `custom_components/meteoveo` into your Home Assistant

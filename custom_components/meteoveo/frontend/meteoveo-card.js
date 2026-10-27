@@ -18,7 +18,7 @@
  * DOM exists.
  */
 
-export const CARD_VERSION = "0.3.0";
+export const CARD_VERSION = "0.3.1";
 const DOMAIN = "meteoveo";
 const STEP_MINUTES = 10;
 const HORIZON_MINUTES = 180;
@@ -39,6 +39,8 @@ const TEXT = {
     nextHours: "Próximas 3 horas",
     hourly: "Por horas",
     daily: "Próximos días",
+    hoursPrev: "Horas anteriores",
+    hoursNext: "Más horas",
     now: "ahora",
     today: "hoy",
     tomorrow: "mañana",
@@ -92,6 +94,8 @@ const TEXT = {
       show_radar: "Radar (última hora y próxima)",
       compact_warnings: "Avisos en modo compacto",
       compact_warnings_options: { severe: "Solo naranja y rojo", all: "Todos los activos", none: "Ninguno" },
+      next_hour_when: "Cuándo mostrar «Próximas 3 horas»",
+      next_hour_when_options: { always: "Siempre", rain: "Solo si se espera lluvia" },
       attribution: "Fuentes de datos",
       attribution_options: { compact: "Una línea (ampliable)", full: "Completas", off: "Ocultar" },
       attribution_sources: "Fuentes de los datos",
@@ -104,6 +108,8 @@ const TEXT = {
     nextHours: "Next 3 hours",
     hourly: "Hourly",
     daily: "Next days",
+    hoursPrev: "Earlier hours",
+    hoursNext: "More hours",
     now: "now",
     today: "today",
     tomorrow: "tomorrow",
@@ -157,6 +163,8 @@ const TEXT = {
       show_radar: "Radar (last hour and next)",
       compact_warnings: "Warnings in compact mode",
       compact_warnings_options: { severe: "Orange and red only", all: "All active", none: "None" },
+      next_hour_when: "When to show “Next 3 hours”",
+      next_hour_when_options: { always: "Always", rain: "Only when rain is expected" },
       attribution: "Data sources",
       attribution_options: { compact: "One line (tap to expand)", full: "Full", off: "Hidden" },
       attribution_sources: "The data sources",
@@ -169,6 +177,8 @@ const TEXT = {
     nextHours: "Pròximes 3 hores",
     hourly: "Per hores",
     daily: "Pròxims dies",
+    hoursPrev: "Hores anteriors",
+    hoursNext: "Més hores",
     now: "ara",
     today: "avui",
     tomorrow: "demà",
@@ -222,6 +232,8 @@ const TEXT = {
       show_radar: "Radar (última hora i pròxima)",
       compact_warnings: "Avisos en mode compacte",
       compact_warnings_options: { severe: "Només taronja i vermell", all: "Tots els actius", none: "Cap" },
+      next_hour_when: "Quan mostrar «Pròximes 3 hores»",
+      next_hour_when_options: { always: "Sempre", rain: "Només si s'espera pluja" },
       attribution: "Fonts de dades",
       attribution_options: { compact: "Una línia (ampliable)", full: "Completes", off: "Amagades" },
       attribution_sources: "Fonts de les dades",
@@ -235,6 +247,8 @@ const TEXT = {
     nextHours: "Következő 3 óra",
     hourly: "Óránként",
     daily: "Következő napok",
+    hoursPrev: "Korábbi órák",
+    hoursNext: "További órák",
     now: "most",
     today: "ma",
     tomorrow: "holnap",
@@ -288,6 +302,8 @@ const TEXT = {
       show_radar: "Radar (az elmúlt és a következő óra)",
       compact_warnings: "Figyelmeztetések kompakt módban",
       compact_warnings_options: { severe: "Csak narancs és piros", all: "Minden aktív", none: "Egyik sem" },
+      next_hour_when: "Mikor látszódjon a „Következő 3 óra”",
+      next_hour_when_options: { always: "Mindig", rain: "Csak ha esőt várunk" },
       attribution: "Adatforrások",
       attribution_options: { compact: "Egy sor (kinyitható)", full: "Teljes", off: "Elrejtve" },
       attribution_sources: "Az adatok forrásai",
@@ -422,6 +438,16 @@ export function nextHourSentence(model, lang, clock) {
     case "stale": return t.stale;
     default: return t.noData;
   }
+}
+
+/**
+ * `next_hour_when: "rain"` -- the block earns its place only when some step
+ * within the 3 h window is wet. A stale or empty reply says nothing about
+ * rain either way, so it stays away too.
+ */
+export function nextHourHasRain(model) {
+  if (!model || model.kind === "stale" || model.kind === "no-data") return false;
+  return model.slots.some((s) => s.band !== null && s.band !== "none");
 }
 
 // ---------------------------------------------------------------------------
@@ -637,9 +663,27 @@ section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--mv-li
 .pbar i.moderate { background: var(--mv-blue); }
 .pbar i.strong { background: var(--mv-blue-deep); }
 .pbar i.none { height: 2px; background: var(--mv-track); }
-.scroll { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
+/* The hourly row scrolls sideways. The scrollbar is hidden, so the fading
+   edge is what says there is more: an hour cut off at the card's edge reads
+   as a rendering fault otherwise. */
+.scroll { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px;
+  scroll-snap-type: x proximity; scroll-padding-left: 16px;
+  --fade-l: 0px; --fade-r: 0px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%); }
 .scroll::-webkit-scrollbar { display: none; }
-.hour { flex: 0 0 52px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; }
+.can-left .scroll { --fade-l: 28px; }
+.can-right .scroll { --fade-r: 28px; }
+.pager { display: none; gap: 2px; align-self: center; margin: -5px -6px -5px 0; }
+.can-left .pager, .can-right .pager { display: inline-flex; }
+.nav { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0;
+  border: 0; border-radius: 50%; background: none; color: var(--mv-ink-2); cursor: pointer; }
+.nav ha-icon { --mdc-icon-size: 18px; }
+.nav:hover { background: var(--mv-track); }
+.nav[disabled] { opacity: .25; cursor: default; background: none; }
+.nav:focus-visible { outline: 2px solid var(--mv-blue); outline-offset: 1px; }
+.hour { flex: 0 0 52px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0;
+  scroll-snap-align: start; }
 .hour .h { font-size: 12px; font-weight: 500; color: var(--mv-ink-2); }
 .hour ha-icon { --mdc-icon-size: 24px; }
 .hour .t { font-size: 15px; font-weight: 600; }
@@ -709,6 +753,19 @@ export class MeteoVeoCard extends Base {
             { name: "show_radar", default: true, selector: { boolean: {} } },
           ],
         },
+        {
+          name: "next_hour_when",
+          default: "always",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: ["always", "rain"].map((value) => ({
+                value,
+                label: TEXT[lang()].editor.next_hour_when_options[value],
+              })),
+            },
+          },
+        },
         { name: "compact", default: false, selector: { boolean: {} } },
         {
           name: "compact_warnings",
@@ -739,7 +796,7 @@ export class MeteoVeoCard extends Base {
         {
           type: "grid", name: "",
           schema: [
-            { name: "hourly_count", default: 12, selector: { number: { min: 3, max: 48, mode: "box" } } },
+            { name: "hourly_count", default: 24, selector: { number: { min: 3, max: 48, mode: "box" } } },
             { name: "daily_count", default: 7, selector: { number: { min: 1, max: 14, mode: "box" } } },
           ],
         },
@@ -770,6 +827,8 @@ export class MeteoVeoCard extends Base {
     this._connected = false;
     this._warningsExpanded = false;
     this._attributionExpanded = false;
+    this._hourScroll = 0;
+    this._resize = null;
   }
 
   setConfig(config) {
@@ -777,7 +836,7 @@ export class MeteoVeoCard extends Base {
     this._config = {
       show_next_hour: true, show_hourly: true, show_daily: true, show_warnings: true,
       show_details: true, show_precipitation: true, show_radar: true, compact: false, compact_warnings: "severe",
-      attribution: "compact", hourly_count: 12, daily_count: 7, ...config,
+      attribution: "compact", next_hour_when: "always", hourly_count: 24, daily_count: 7, ...config,
     };
     this._snapshot = null;
     this._warningsExpanded = false;
@@ -818,6 +877,7 @@ export class MeteoVeoCard extends Base {
   disconnectedCallback() {
     this._connected = false;
     this._unsubscribe();
+    this._stopWatchingWidth();
   }
 
   getCardSize() {
@@ -977,6 +1037,11 @@ export class MeteoVeoCard extends Base {
     } catch (e) {
       body = `<div class="mv"><div class="empty">MeteoVeo: ${esc(e && e.message)}</div></div>`;
     }
+    // A refresh every few minutes must not scroll the hourly row back to
+    // "now" under the viewer's finger.
+    const previous = this.shadowRoot.querySelector && this.shadowRoot.querySelector(".scroll");
+    if (previous) this._hourScroll = previous.scrollLeft;
+    this._stopWatchingWidth();
     const dark = !!(this._hass && this._hass.themes && this._hass.themes.darkMode);
     if (dark) this.setAttribute("data-dark", ""); else this.removeAttribute("data-dark");
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${body}</ha-card>`;
@@ -990,6 +1055,57 @@ export class MeteoVeoCard extends Base {
         this._attributionExpanded = !this._attributionExpanded;
         this._render();
       });
+    }
+    this._wireHourly();
+  }
+
+  _stopWatchingWidth() {
+    if (this._resize) this._resize.disconnect();
+    this._resize = null;
+  }
+
+  /**
+   * The hourly row: the edges fade while there is more to see, the two
+   * chevrons move it for a mouse that cannot scroll sideways, and the
+   * viewer's position is kept across a refresh.
+   */
+  _wireHourly() {
+    const root = this.shadowRoot;
+    const section = root.querySelector && root.querySelector("section.hourly");
+    const row = section && section.querySelector(".scroll");
+    if (!row) return;
+    const prev = section.querySelector(".nav.prev");
+    const next = section.querySelector(".nav.next");
+    const want = this._hourScroll;
+    const update = () => {
+      // Before the card is laid out the width is 0 and nothing is scrollable yet.
+      const max = row.scrollWidth - row.clientWidth;
+      const left = row.scrollLeft > 2;
+      const right = max > 2 && row.scrollLeft < max - 2;
+      section.classList.toggle("can-left", left);
+      section.classList.toggle("can-right", right);
+      if (prev) prev.disabled = !left;
+      if (next) next.disabled = !right;
+      if (row.clientWidth > 0) this._hourScroll = row.scrollLeft;
+    };
+    const restore = () => {
+      if (want && row.scrollLeft !== want) row.scrollLeft = want;
+      update();
+    };
+    row.addEventListener("scroll", update, { passive: true });
+    const page = (dir) => {
+      const by = dir * Math.max(104, row.clientWidth - 54);
+      if (row.scrollBy) row.scrollBy({ left: by, behavior: "smooth" });
+      else row.scrollLeft += by;
+    };
+    if (prev) prev.addEventListener("click", () => page(-1));
+    if (next) next.addEventListener("click", () => page(1));
+    restore();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(restore);
+    // The dashboard column can be resized without the card re-rendering.
+    if (typeof ResizeObserver === "function") {
+      this._resize = new ResizeObserver(update);
+      this._resize.observe(row);
     }
   }
 
@@ -1116,6 +1232,8 @@ export class MeteoVeoCard extends Base {
     if (!rain || rain.state === "unavailable" || rain.state === "unknown") return "";
     const model = nextHourModel(rain.attributes, nowMs);
     if (!model) return "";
+    // `next_hour_when: "rain"` -- a dry window does not earn a block of its own.
+    if (this._config.next_hour_when === "rain" && !nextHourHasRain(model)) return "";
     const sentence = nextHourSentence(model, this._lang, (ms) => this._clock(ms));
     const soft = /^(maybe|dry-uncertain|stale|no-data)/.test(model.kind) || model.kind === "maybe-now";
     const ageOld = model.ageMinutes >= AGEING_MINUTES;
@@ -1207,7 +1325,12 @@ export class MeteoVeoCard extends Base {
         <span class="p">${Number.isFinite(p) && p >= 10 ? `${this._num(p, 0)} %` : ""}</span>
       </div>`;
     });
-    return `<section><div class="label-row"><span class="label">${esc(t.hourly)}</span></div><div class="scroll">${cols.join("")}</div></section>`;
+    return `<section class="hourly">
+      <div class="label-row"><span class="label">${esc(t.hourly)}</span><span class="pager">
+        <button type="button" class="nav prev" aria-label="${esc(t.hoursPrev)}" title="${esc(t.hoursPrev)}"><ha-icon icon="mdi:chevron-left"></ha-icon></button>
+        <button type="button" class="nav next" aria-label="${esc(t.hoursNext)}" title="${esc(t.hoursNext)}"><ha-icon icon="mdi:chevron-right"></ha-icon></button>
+      </span></div>
+      <div class="scroll">${cols.join("")}</div></section>`;
   }
 
   _daily(weather, nowMs) {

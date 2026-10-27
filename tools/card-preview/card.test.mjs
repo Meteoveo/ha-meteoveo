@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import {
   nextHourModel, nextHourSentence, compassPoint, pickLanguage, conditionIcon,
   uvLevel, precipBand, warningSchedule, validityText, compactWarnings,
-  attributionModel, MeteoVeoCard,
+  attributionModel, nextHourHasRain, MeteoVeoCard,
 } from "../../custom_components/meteoveo/frontend/meteoveo-card.js";
 
 const ISSUED = Date.parse("2026-10-23T11:50:00Z");
@@ -334,4 +334,40 @@ test("the editor says where to look when no card has rendered yet", () => {
   const value = MeteoVeoCard.getConfigForm().schema.slice(-2)[0].value;
   assert.match(value, /Open the card once/);
   assert.doesNotMatch(value, /AEMET/);
+});
+
+
+// --- "Next 3 hours" only when there is rain (a reader's suggestion) --------
+
+test("rain-only: a dry window has nothing to say, a wet one has", () => {
+  const dry = nextHourModel(attrs(fill([])), NOW);
+  assert.equal(nextHourHasRain(dry), false);
+  // Rain at the very end of the three hours still counts -- that is the point
+  // of the block.
+  const late = nextHourModel(attrs(fill([], "none").map((b, i) => (i === 17 ? "weak" : b))), NOW);
+  assert.equal(nextHourHasRain(late), true);
+  assert.equal(nextHourHasRain(nextHourModel(attrs(fill(["weak"])), NOW)), true);
+});
+
+test("rain-only: an old or empty reply says nothing either way, so it stays away", () => {
+  const stale = nextHourModel(attrs(fill(["weak"]), { age_minutes: 200, issued_at: new Date(NOW - 200 * 60000).toISOString() }), NOW);
+  assert.equal(stale.kind, "stale");
+  assert.equal(nextHourHasRain(stale), false);
+  assert.equal(nextHourHasRain(null), false);
+});
+
+test("rain-only: an uncertain wet step is still rain", () => {
+  // "Podría llover en ~20 min" is exactly the sentence someone who asked for
+  // the quiet card still wants to see.
+  const maybe = nextHourModel(attrs(fill(["none", "none", "weak", "weak"]), {}, { uncertain: [2, 3] }), NOW);
+  assert.equal(maybe.kind, "maybe");
+  assert.equal(nextHourHasRain(maybe), true);
+});
+
+test("the editor offers the two positions of the next-hours block", () => {
+  MeteoVeoCard._lang = "es";
+  const option = MeteoVeoCard.getConfigForm().schema.find((s) => s.name === "next_hour_when");
+  assert.deepEqual(option.selector.select.options.map((o) => o.value), ["always", "rain"]);
+  assert.equal(option.default, "always");
+  assert.equal(option.selector.select.options[1].label, "Solo si se espera lluvia");
 });

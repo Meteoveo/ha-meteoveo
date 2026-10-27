@@ -20,7 +20,7 @@ API_BASE: Final = "https://www.meteoveo.com/api"
 
 # The integration's own version, sent in the User-Agent so the service can tell
 # released clients apart. A test keeps it equal to manifest.json.
-VERSION: Final = "0.3.0"
+VERSION: Final = "0.3.1"
 USER_AGENT: Final = f"ha-meteoveo/{VERSION}"
 
 # The MeteoVeo account page on the web. An account can be created, and later

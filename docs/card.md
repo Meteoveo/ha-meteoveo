@@ -73,13 +73,14 @@ entity: weather.meteoveo_castellonet_de_la_conquesta   # required, a MeteoVeo we
 rain_entity: binary_sensor.meteoveo_castellonet_de_la_conquesta_rain_in_the_next_hour   # optional override
 warnings_entity: sensor.meteoveo_castellonet_de_la_conquesta_weather_warnings       # optional override
 show_next_hour: true     # the 3-hour rain strip
+next_hour_when: always   # or `rain`: keep the block for windows that have rain in them
 show_warnings: true      # the AEMET banners
 show_hourly: true
 show_daily: true
 show_details: true       # feels like, UV, sunrise/sunset, dew point
 show_precipitation: true # mm bars in the hourly strip
 compact: false           # header + next 3 hours only
-hourly_count: 12         # 3–48 hours in the strip
+hourly_count: 24         # 3–48 hours in the strip; the row scrolls sideways
 daily_count: 7           # 1–14 days in the list
 ```
 
@@ -89,6 +90,7 @@ daily_count: 7           # 1–14 days in the list
 | `rain_entity` | found by device | The entry's `binary_sensor` "rain soon" sensor, if you want to point at a different one. |
 | `warnings_entity` | found by device | The entry's warnings `sensor`. |
 | `show_next_hour` | `true` | Show the next-3-hours rain strip. |
+| `next_hour_when` | `always` | `always` = the block is there whatever the next three hours hold, `rain` = only when some ten-minute step in the window is wet (a "maybe" counts). A dry window then leaves no trace on the card, the way the mm bars already behave. |
 | `show_warnings` | `true` | Show the AEMET warning banners when a warning is active or upcoming. |
 | `show_hourly` | `true` | Show the hourly strip. |
 | `show_daily` | `true` | Show the daily list. |
@@ -98,11 +100,28 @@ daily_count: 7           # 1–14 days in the list
 | `compact` | `false` | Header and the next-3-hours strip only. |
 | `compact_warnings` | `severe` | In compact mode: `severe` = active orange and red warnings, `all` = every active warning, `none` = no warnings. |
 | `attribution` | `compact` | The grey source line at the bottom: `compact` = one line (`Datos: AEMET · MeteoVeo`) that opens the full notice when you tap it, `full` = the whole notice written out, `off` = no line on the card. |
-| `hourly_count` | `12` | Hours in the strip. |
+| `hourly_count` | `24` | Hours in the strip. MeteoVeo sends 48; the row scrolls sideways, so a high number costs height nowhere. |
 | `daily_count` | `7` | Days in the list (the free level provides 7). |
 
 In a **sections** view the card takes the full width by default and can be
 narrowed to half.
+
+### The hourly row
+
+The row holds more hours than the card is wide, so it scrolls sideways:
+swipe on a touchscreen, scroll sideways on a trackpad, or use the two
+chevrons next to the "Hourly" label — they appear only while there is
+something to scroll to. The fading edge marks the direction there is more
+in, and where you leave the row is where it stays: a refresh every few
+minutes does not pull it back to "now".
+
+### Updates
+
+The card is served with `Cache-Control: no-cache` from the integration's own
+URL, so your browser keeps a copy but asks each time whether it is still the
+current one. An update that only touches the card therefore arrives on a
+browser reload, with no Home Assistant restart — and a restart cannot show you
+a stale card either, because the address carries the file's fingerprint.
 
 ### The source line
 
