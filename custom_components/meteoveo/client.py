@@ -222,6 +222,39 @@ class MeteoVeoClient:
         except _TRANSPORT_ERRORS as failure:
             raise self._unreachable("station view", failure) from None
 
+    async def async_set_visibility(self, public_display: bool) -> bool:
+        """Switch the station's public visibility on or off (MeteoVeo ADR-0872).
+
+        This goes out with the STATION token, not the integration key: the
+        integration never holds an account token (ADR-0827), and the station
+        credential is exactly the right scope -- it can only reach the station
+        it belongs to.
+
+        Switching it off removes the station from the public map and from the
+        nearby-station lists. The readings keep working for the area forecast,
+        and the Plus that comes with sharing a station stays.
+        """
+        url = f"{API_BASE}/v1/station/visibility"
+        try:
+            async with self._session.put(
+                url,
+                headers=api_headers(self._credentials),
+                json={"publicDisplay": bool(public_display)},
+            ) as response:
+                if response.status in _AUTH_STATUSES:
+                    raise InvalidCredentials("station id or key was rejected")
+                if response.status >= 400:
+                    detail = self._safe(await response.text())
+                    raise ServiceUnavailable(
+                        f"visibility not saved ({response.status}): {detail}"
+                    )
+                payload = await response.json()
+        except _TRANSPORT_ERRORS as failure:
+            raise self._unreachable("visibility", failure) from None
+        # The SAVED state is what we return: a form that shows anything else
+        # would be claiming something the service never stored.
+        return bool(payload.get("publicDisplay", public_display))
+
     async def async_upload(self, fields: Mapping[str, float], *, now_iso: str) -> bool:
         """Upload one set of readings. Returns False when there was nothing to send.
 

@@ -56,6 +56,7 @@ from .const import (
     CONF_STATION_REF,
     DEFAULT_SENSOR_HEIGHT_CM,
     DOCS_MEASUREMENTS_URL,
+    DOCS_RECIPROCITY_URL,
     DOCS_SETUP_URL,
     DOCS_TROUBLESHOOTING_URL,
     DOMAIN,
@@ -93,6 +94,8 @@ CONF_HAS_STATION = "has_station"
 CONF_STATION_NAME = "station_name"
 CONF_SENSOR_HEIGHT = "sensor_height_cm"
 CONF_CONFIRM = "confirm"
+# MeteoVeo ADR-0872: latszik-e az allomas a nyilvanos terkepen es a kozeli-listakon.
+CONF_PUBLIC_DISPLAY = "public_display"
 
 _EMAIL = selector.TextSelector(
     selector.TextSelectorConfig(type=selector.TextSelectorType.EMAIL, autocomplete="username")
@@ -741,6 +744,9 @@ class MeteoVeoOptionsFlow(OptionsFlow):
             options.append("location")
         if has_station(data):
             options.append("measurements")
+            # ADR-0872: the public-visibility switch belongs with the station,
+            # so it is only offered when there is one.
+            options.append("visibility")
         elif is_account_entry(data):
             # ADR-0866 D9: the station door, for someone who said no at
             # setup or had no station then. With a station there is nothing
@@ -752,6 +758,61 @@ class MeteoVeoOptionsFlow(OptionsFlow):
             step_id="init",
             menu_options=options,
             description_placeholders={"docs_url": DOCS_SETUP_URL},
+        )
+
+    async def async_step_visibility(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Public visibility of the station (MeteoVeo ADR-0872).
+
+        The current state comes from the service rather than from the entry:
+        the same switch exists on the website, and a stale copy here would
+        quietly undo a change made there.
+        """
+        entry = self.config_entry
+        errors: dict[str, str] = {}
+        client = MeteoVeoClient(
+            async_get_clientsession(self.hass),
+            credentials=Credentials(
+                station_id=str(entry.data[CONF_STATION_ID]),
+                station_key=str(entry.data[CONF_STATION_KEY]),
+            ),
+        )
+
+        if user_input is not None:
+            try:
+                await client.async_set_visibility(bool(user_input[CONF_PUBLIC_DISPLAY]))
+            except InvalidCredentials:
+                entry.async_start_reauth(self.hass)
+                return self.async_abort(reason="reauth_required")
+            except MeteoVeoError:
+                errors["base"] = "cannot_connect"
+            else:
+                return self.async_create_entry(data=dict(entry.options))
+
+        current = True
+        if not errors:
+            try:
+                station = await client.async_get_station()
+            except InvalidCredentials:
+                entry.async_start_reauth(self.hass)
+                return self.async_abort(reason="reauth_required")
+            except MeteoVeoError:
+                errors["base"] = "cannot_connect"
+            else:
+                current = station.get("publicDisplay", True) is not False
+        else:
+            current = bool(user_input[CONF_PUBLIC_DISPLAY]) if user_input else True
+
+        return self.async_show_form(
+            step_id="visibility",
+            data_schema=vol.Schema(
+                {vol.Required(CONF_PUBLIC_DISPLAY, default=current): selector.BooleanSelector()}
+            ),
+            errors=errors,
+            # The reciprocity page is the one that says switching this off does
+            # NOT take Plus away -- which is the question people ask here.
+            description_placeholders={"docs_url": DOCS_RECIPROCITY_URL},
         )
 
     async def async_step_measurements(

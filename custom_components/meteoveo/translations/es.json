@@ -168,6 +168,7 @@
         "menu_options": {
           "location": "Cambiar el lugar",
           "measurements": "Medidas de la estación",
+          "visibility": "Visibilidad pública",
           "add_station": "Añadir una estación meteorológica",
           "delete_account": "Borrar mi cuenta de MeteoVeo"
         }
@@ -204,6 +205,16 @@
           "wind_direction": "Dirección del viento en grados, 0–360.",
           "daily_rain": "Lluvia acumulada desde medianoche, no la intensidad.",
           "solar_radiation": "Irradiancia solar, en W/m²."
+        }
+      },
+      "visibility": {
+        "title": "Mi estación en el mapa público",
+        "description": "Con esto activado, tu estación aparece en el mapa de la comunidad MeteoVeo y en las listas de estaciones cercanas, con el nombre que le has puesto y tu nombre de perfil. En el mapa el punto se coloca en el centro de tu municipio, nunca en el lugar real de la estación.\n\nDesactivado, no se muestra nada de tu estación en público. Seguimos usando sus medidas para mejorar la previsión de tu zona, y tu Plus por compartir estación se mantiene.\n\n[Qué te da compartir]({docs_url})",
+        "data": {
+          "public_display": "Mostrar mi estación en el mapa público"
+        },
+        "data_description": {
+          "public_display": "Desactivarlo no te quita el Plus, y seguimos usando las medidas para la previsión de la zona."
         }
       },
       "add_station": {

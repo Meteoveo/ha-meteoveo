@@ -199,7 +199,7 @@ async def test_options_menu_depends_on_the_entry(hass: HomeAssistant) -> None:
     with_station.add_to_hass(hass)
     await load(hass, with_station)
     result = await hass.config_entries.options.async_init(with_station.entry_id)
-    assert result["menu_options"] == ["location", "measurements", "delete_account"]
+    assert result["menu_options"] == ["location", "measurements", "visibility", "delete_account"]
 
 
 async def test_changing_the_place(hass: HomeAssistant) -> None:

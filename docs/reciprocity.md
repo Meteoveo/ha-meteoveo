@@ -58,3 +58,24 @@ A storm that knocks out your power is also when the weather matters most.
 That is one reason the forecast itself never pauses: only the extras that
 need your station's own readings wait for it to come back, and they return
 the moment it does.
+
+## Being on the public map is a separate choice
+
+Sharing readings and being *shown* publicly are two different things. By
+default a connected station appears on the MeteoVeo community map and in the
+nearby-station lists, with the name you gave it and your profile name. On the
+map it is drawn at the centre of your municipality, never at the station's
+real location, and you can move the point whenever you like.
+
+You can switch the public listing off entirely: **Options → Public
+visibility** in Home Assistant, or on the website under your station's
+"Compartir y reenvío" tab. Switching it off:
+
+- removes your station from the public map and from the nearby-station lists;
+- **does not** take Plus away — the reciprocity above is for reporting, not
+  for being listed;
+- **does not** stop the readings being used: they keep feeding the forecast
+  for your area, the radar–gauge calibration and the station extras.
+
+The public station page (`meteoveo.com/estacion/…`) is a third, separate
+switch, off until you turn it on, and reachable only with the link you share.

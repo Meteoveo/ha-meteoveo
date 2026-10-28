@@ -99,6 +99,8 @@ def test_every_menu_option_has_a_label(language):
         "measurements",
         # ADR-0866 D9: the station door, reachable after setup as well.
         "add_station",
+        # MeteoVeo ADR-0872: the public-visibility switch for the station.
+        "visibility",
         "delete_account",
     }
 

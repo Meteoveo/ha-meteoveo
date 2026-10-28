@@ -168,6 +168,7 @@
         "menu_options": {
           "location": "Canviar el lloc",
           "measurements": "Mesures de l'estació",
+          "visibility": "Visibilitat pública",
           "add_station": "Afegir una estació meteorològica",
           "delete_account": "Eliminar el meu compte de MeteoVeo"
         }
@@ -204,6 +205,16 @@
           "wind_direction": "Direcció del vent en graus, 0–360.",
           "daily_rain": "Pluja acumulada des de mitjanit — no la intensitat.",
           "solar_radiation": "Irradiància solar, en W/m²."
+        }
+      },
+      "visibility": {
+        "title": "La meua estació al mapa públic",
+        "description": "Amb això activat, la teua estació apareix al mapa de la comunitat MeteoVeo i a les llistes d'estacions pròximes, amb el nom que li has posat i el teu nom de perfil. Al mapa el punt es col·loca al centre del teu municipi, mai al lloc real de l'estació.\n\nDesactivat, no es mostra res de la teua estació en públic. Continuem usant les seues mesures per a millorar la previsió de la teua zona, i el teu Plus per compartir estació es manté.\n\n[Què et dóna compartir]({docs_url})",
+        "data": {
+          "public_display": "Mostrar la meua estació al mapa públic"
+        },
+        "data_description": {
+          "public_display": "Desactivar-ho no et lleva el Plus, i continuem usant les mesures per a la previsió de la zona."
         }
       },
       "add_station": {

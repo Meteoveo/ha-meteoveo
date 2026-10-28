@@ -80,7 +80,7 @@ async def test_options_flow_stores_the_selection(hass: HomeAssistant) -> None:
         result = await hass.config_entries.options.async_init(entry.entry_id)
         assert result["step_id"] == "init"
         # A station-key entry has only the measurement mapping to change.
-        assert result["menu_options"] == ["measurements"]
+        assert result["menu_options"] == ["measurements", "visibility"]
         result = await hass.config_entries.options.async_configure(
             result["flow_id"], {"next_step_id": "measurements"}
         )

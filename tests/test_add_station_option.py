@@ -57,7 +57,7 @@ async def test_the_option_is_offered_only_where_it_makes_sense(hass: HomeAssista
     with_station.add_to_hass(hass)
     await load(hass, with_station)
     result = await hass.config_entries.options.async_init(with_station.entry_id)
-    assert result["menu_options"] == ["location", "measurements", "delete_account"]
+    assert result["menu_options"] == ["location", "measurements", "visibility", "delete_account"]
 
 
 async def test_a_station_key_entry_is_not_offered_it(hass: HomeAssistant) -> None:
@@ -70,7 +70,8 @@ async def test_a_station_key_entry_is_not_offered_it(hass: HomeAssistant) -> Non
     entry.add_to_hass(hass)
     await load(hass, entry)
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    assert result["menu_options"] == ["measurements"]
+    # ADR-0872: a station-key entry can still hide its station from the public map.
+    assert result["menu_options"] == ["measurements", "visibility"]
 
 
 async def test_adding_a_station_end_to_end(hass: HomeAssistant) -> None:

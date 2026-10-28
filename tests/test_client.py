@@ -57,6 +57,9 @@ class FakeSession:
     def get(self, url: str, **kwargs):
         return self.request("GET", url, **kwargs)
 
+    def put(self, url: str, **kwargs):
+        return self.request("PUT", url, **kwargs)
+
 
 class UnreachableResponse(FakeResponse):
     """A request that fails before the service answers.
@@ -245,3 +248,45 @@ class TestUpload:
         )
         _, url, _ = session.requests[0]
         assert url.startswith("https://")
+
+
+class TestVisibility:
+    """MeteoVeo ADR-0872: the public-visibility switch."""
+
+    @pytest.mark.asyncio
+    async def test_writes_with_the_station_token_and_returns_what_was_saved(self):
+        session = FakeSession(FakeResponse(200, {"publicDisplay": False, "changedAt": None}))
+        client = MeteoVeoClient(session, CREDS)
+
+        assert await client.async_set_visibility(False) is False
+
+        method, url, kwargs = session.requests[0]
+        assert method == "PUT"
+        assert url.endswith("/v1/station/visibility")
+        assert kwargs["json"] == {"publicDisplay": False}
+        # The credential travels in the header, never in the query string.
+        assert kwargs["headers"]["Authorization"].endswith(CREDS.station_key)
+        assert "?" not in url
+
+    @pytest.mark.asyncio
+    async def test_the_service_answer_wins_over_what_we_asked_for(self):
+        # A form must never show a state the service did not store.
+        session = FakeSession(FakeResponse(200, {"publicDisplay": True}))
+        client = MeteoVeoClient(session, CREDS)
+
+        assert await client.async_set_visibility(False) is True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status", [401, 403])
+    async def test_rejected_credentials_raise_invalid_credentials(self, status):
+        client = MeteoVeoClient(FakeSession(FakeResponse(status)), CREDS)
+        with pytest.raises(InvalidCredentials):
+            await client.async_set_visibility(True)
+
+    @pytest.mark.asyncio
+    async def test_a_failure_never_carries_the_key(self):
+        session = FakeSession(FakeResponse(500, text=f"nope key={CREDS.station_key}"))
+        client = MeteoVeoClient(session, CREDS)
+        with pytest.raises(ServiceUnavailable) as failure:
+            await client.async_set_visibility(True)
+        assert CREDS.station_key not in str(failure.value)

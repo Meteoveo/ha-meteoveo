@@ -168,6 +168,7 @@
         "menu_options": {
           "location": "Change the place",
           "measurements": "Station measurements",
+          "visibility": "Public visibility",
           "add_station": "Add a weather station",
           "delete_account": "Delete my MeteoVeo account"
         }
@@ -204,6 +205,16 @@
           "wind_direction": "Wind direction in degrees, 0–360.",
           "daily_rain": "Rain accumulated since midnight — not the rain rate.",
           "solar_radiation": "Solar irradiance, in W/m²."
+        }
+      },
+      "visibility": {
+        "title": "My station on the public map",
+        "description": "With this on, your station appears on the MeteoVeo community map and in the nearby-station lists, with the name you gave it and your profile name. On the map the point is placed at the centre of your municipality, never at the station's real location.\n\nWith it off, nothing of your station is shown publicly. We keep using its readings to improve the forecast for your area, and the Plus that comes with sharing a station stays.\n\n[What sharing gives you]({docs_url})",
+        "data": {
+          "public_display": "Show my station on the public map"
+        },
+        "data_description": {
+          "public_display": "Switching this off does not take away your Plus, and we keep using the readings for the area forecast."
         }
       },
       "add_station": {

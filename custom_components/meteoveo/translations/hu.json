@@ -168,6 +168,7 @@
         "menu_options": {
           "location": "A hely módosítása",
           "measurements": "Az állomás mérései",
+          "visibility": "Nyilvános megjelenítés",
           "add_station": "Időjárás-állomás hozzáadása",
           "delete_account": "A MeteoVeo-fiókom törlése"
         }
@@ -204,6 +205,16 @@
           "wind_direction": "Szélirány fokban, 0–360.",
           "daily_rain": "Éjféltől gyűlt csapadék — nem az intenzitás.",
           "solar_radiation": "Napsugárzás, W/m²-ben."
+        }
+      },
+      "visibility": {
+        "title": "Az állomásom a nyilvános térképen",
+        "description": "Bekapcsolva az állomásod megjelenik a MeteoVeo közösségi térképén és a közeli állomások listáin, az általad adott névvel és a profilnevével. A térképen a pont a településed központjába kerül, soha nem az állomás valódi helyére.\n\nKikapcsolva semmi nem látszik nyilvánosan az állomásodból. A méréseit továbbra is használjuk a környék előrejelzéséhez, és az állomás-megosztásért járó Plus is megmarad.\n\n[Mit ad a megosztás]({docs_url})",
+        "data": {
+          "public_display": "Jelenjen meg az állomásom a nyilvános térképen"
+        },
+        "data_description": {
+          "public_display": "A kikapcsolás nem veszi el a Plust, és a méréseket továbbra is használjuk a környék előrejelzéséhez."
         }
       },
       "add_station": {
