@@ -97,6 +97,8 @@ CONF_SENSOR_HEIGHT = "sensor_height_cm"
 CONF_CONFIRM = "confirm"
 # MeteoVeo ADR-0872: latszik-e az allomas a nyilvanos terkepen es a kozeli-listakon.
 CONF_PUBLIC_DISPLAY = "public_display"
+# MeteoVeo ADR-0866 D12: melyik MEGLEVO allomast kotjuk be.
+CONF_STATION_CHOICE = "station"
 
 _EMAIL = selector.TextSelector(
     selector.TextSelectorConfig(type=selector.TextSelectorType.EMAIL, autocomplete="username")
@@ -177,6 +179,46 @@ def _measurement_schema(
                 )
             )
     return vol.Schema(fields)
+
+
+def _station_choice_schema(stations: list[dict[str, Any]]) -> vol.Schema:
+    """Pick one of the account's own stations (MeteoVeo ADR-0866 D12).
+
+    The labels are the station's own name and town, so they need no
+    translation; the step's prose does, and that lives in `strings.json`.
+    """
+    options = [
+        selector.SelectOptionDict(
+            value=str(station["id"]),
+            label=" — ".join(
+                part for part in (station.get("name"), station.get("town")) if part
+            )
+            or str(station["id"]),
+        )
+        for station in stations
+    ]
+    return vol.Schema(
+        {
+            vol.Required(CONF_STATION_CHOICE, default=options[0]["value"]): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=options, mode=selector.SelectSelectorMode.LIST
+                )
+            )
+        }
+    )
+
+
+async def _own_stations(account: AccountClient, token: str) -> list[dict[str, Any]]:
+    """The account's stations, or an empty list if we could not ask.
+
+    A failed listing must not block setting up a station: without it the flow
+    simply offers what it always offered -- creating a new one.
+    """
+    try:
+        return await account.async_list_stations(token)
+    except MeteoVeoError:
+        _LOGGER.debug("the account's stations could not be listed")
+        return []
 
 
 def _station_details_schema(name: str, sensor_height_cm: int) -> vol.Schema:
@@ -275,6 +317,9 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
         self._measurements: dict[str, str] = {}
         self._pressure_kind = PRESSURE_ABSOLUTE
         self._station: dict[str, Any] | None = None
+        # ADR-0866 D12: a fiok meglevo allomasai, es amelyiket bekotjuk.
+        self._stations: list[dict[str, Any]] = []
+        self._adopt_station_id: int | None = None
 
     # --- Entry point ------------------------------------------------------
 
@@ -524,7 +569,7 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._want_station = bool(user_input[CONF_HAS_STATION])
             if self._want_station:
-                return await self.async_step_station_details()
+                return await self.async_step_station_pick()
             return await self._async_finish_account(self._show_has_station)
         return self._show_has_station({})
 
@@ -542,6 +587,41 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders={"docs_url": DOCS_SETUP_URL},
         )
 
+    async def async_step_station_pick(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Use a station the account already has, or make a new one (D12).
+
+        Someone who registered their station on the web or in the app used to
+        have no way in here: the only door CREATED a station, so they either
+        ended up with a duplicate or with no station on the entry at all. The
+        menu is only shown when there is something to choose from -- with no
+        stations the flow goes straight on, as it always did.
+        """
+        assert self._token is not None
+        self._stations = await _own_stations(_account(self.hass), self._token)
+        if not self._stations:
+            return await self.async_step_station_details()
+        return self.async_show_menu(
+            step_id="station_pick",
+            menu_options=["station_existing", "station_details"],
+        )
+
+    async def async_step_station_existing(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Which existing station -- and what adopting it costs (D13)."""
+        if user_input is not None:
+            self._adopt_station_id = int(user_input[CONF_STATION_CHOICE])
+            # Name and sensor height already exist on the station: asking for
+            # them again could only produce a second, disagreeing answer.
+            return await self.async_step_measurements()
+        return self.async_show_form(
+            step_id="station_existing",
+            data_schema=_station_choice_schema(self._stations),
+            description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
+        )
+
     async def async_step_station_details(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -549,6 +629,9 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
             self._station_name = user_input[CONF_STATION_NAME].strip()
             self._sensor_height_cm = int(user_input[CONF_SENSOR_HEIGHT])
             return await self.async_step_measurements()
+        # A menu-bol ide lepve UJ allomast akar: egy korabbi valasztas ne
+        # maradjon be.
+        self._adopt_station_id = None
 
         return self.async_show_form(
             step_id="station_details",
@@ -568,12 +651,17 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
             # Created once: if the key request fails and the person retries,
             # the station made on the first attempt is reused, not duplicated.
             if self._want_station and self._station is None:
-                self._station = await account.async_create_station(
-                    self._token,
-                    name=self._station_name or self.hass.config.location_name or "Home",
-                    lat=round(self._lat, 4),
-                    lon=round(self._lon, 4),
-                    sensor_height_cm=self._sensor_height_cm,
+                self._station = (
+                    # ADR-0866 D13: a bekotes UJ bekuldesi kulcsot ad (forgatas).
+                    await account.async_adopt_station(self._token, self._adopt_station_id)
+                    if self._adopt_station_id is not None
+                    else await account.async_create_station(
+                        self._token,
+                        name=self._station_name or self.hass.config.location_name or "Home",
+                        lat=round(self._lat, 4),
+                        lon=round(self._lon, 4),
+                        sensor_height_cm=self._sensor_height_cm,
+                    )
                 )
             station = self._station if self._want_station else None
             issued = await account.async_create_integration_key(
@@ -760,6 +848,9 @@ class MeteoVeoOptionsFlow(OptionsFlow):
         self._station_name: str | None = None
         self._sensor_height_cm = DEFAULT_SENSOR_HEIGHT_CM
         self._station: dict[str, Any] | None = None
+        # ADR-0866 D12: a fiok meglevo allomasai, es amelyiket bekotjuk.
+        self._stations: list[dict[str, Any]] = []
+        self._adopt_station_id: int | None = None
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         data = self.config_entry.data
@@ -908,13 +999,38 @@ class MeteoVeoOptionsFlow(OptionsFlow):
                 except MeteoVeoError as failure:
                     errors["base"] = _account_error(failure)
                 else:
-                    return await self.async_step_station_details()
+                    return await self.async_step_station_pick()
 
         return self.async_show_form(
             step_id="add_station",
             data_schema=self.add_suggested_values_to_schema(STEP_LOGIN_SCHEMA, suggested),
             errors=errors,
             description_placeholders={"docs_url": DOCS_SETUP_URL},
+        )
+
+    async def async_step_station_pick(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ugyanaz a valasztas, mint a varazsloban (ADR-0866 D12)."""
+        assert self._token is not None
+        self._stations = await _own_stations(_account(self.hass), self._token)
+        if not self._stations:
+            return await self.async_step_station_details()
+        return self.async_show_menu(
+            step_id="station_pick",
+            menu_options=["station_existing", "station_details"],
+        )
+
+    async def async_step_station_existing(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._adopt_station_id = int(user_input[CONF_STATION_CHOICE])
+            return await self.async_step_measurements()
+        return self.async_show_form(
+            step_id="station_existing",
+            data_schema=_station_choice_schema(self._stations),
+            description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
         )
 
     async def async_step_station_details(
@@ -924,6 +1040,7 @@ class MeteoVeoOptionsFlow(OptionsFlow):
             self._station_name = user_input[CONF_STATION_NAME].strip()
             self._sensor_height_cm = int(user_input[CONF_SENSOR_HEIGHT])
             return await self.async_step_measurements()
+        self._adopt_station_id = None
         return self.async_show_form(
             step_id="station_details",
             data_schema=_station_details_schema(
@@ -963,12 +1080,17 @@ class MeteoVeoOptionsFlow(OptionsFlow):
             # Created once: a retry after a failed key request reuses it
             # rather than leaving a second station on the account.
             if self._station is None:
-                self._station = await account.async_create_station(
-                    self._token,
-                    name=self._station_name or self.hass.config.location_name or "Home",
-                    lat=station_lat,
-                    lon=station_lon,
-                    sensor_height_cm=self._sensor_height_cm,
+                self._station = (
+                    # ADR-0866 D13: a bekotes UJ bekuldesi kulcsot ad (forgatas).
+                    await account.async_adopt_station(self._token, self._adopt_station_id)
+                    if self._adopt_station_id is not None
+                    else await account.async_create_station(
+                        self._token,
+                        name=self._station_name or self.hass.config.location_name or "Home",
+                        lat=station_lat,
+                        lon=station_lon,
+                        sensor_height_cm=self._sensor_height_cm,
+                    )
                 )
             # The new key first, the old one after: if this fails, the entry
             # still has a key that works.

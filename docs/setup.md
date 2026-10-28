@@ -49,7 +49,17 @@ place to.
 ### Then: do you have a weather station?
 
 - **No** — setup finishes. You get the forecast entities.
-- **Yes** — give the station a name (only you see it) and the height of its
+- **Yes** — if your MeteoVeo account already has a station, the next screen
+  offers it: **use a station I already have**, or **create a new one**. Picking
+  an existing one skips the name and height (the station already has them) and
+  goes straight to the measurements.
+
+  ⚠️ **Using an existing station issues it a new upload key**, so Home
+  Assistant becomes its uploader. If a console or another program uploads for
+  that station today, it stops — and the previous key cannot be shown again.
+  Create a new station instead if you want both.
+
+  For a new station: give it a name (only you see it) and the height of its
   temperature sensor above the ground (in cm; usually 150–200), then map
   your measurements: for each one, pick the Home Assistant entity that
   reports it. **Leave a measurement empty if your station does not have that
@@ -91,7 +101,11 @@ With a station, additionally:
 | Sensor problem | On when the service flags one of your readings as implausible. |
 
 The bundled **MeteoVeo card** appears in the dashboard's card picker; there
-is nothing to install separately.
+is nothing to install separately. **Reload the browser once first**
+(Ctrl+Shift+R, or *Settings → Companion app → Reset frontend cache* in the
+app): the card is registered into the page at load time, so a tab that was
+already open — including after a Home Assistant restart — does not have it
+yet, and the picker will not list it.
 
 ## Changing things later
 

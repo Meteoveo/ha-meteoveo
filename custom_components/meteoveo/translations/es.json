@@ -92,6 +92,24 @@
           "sensor_height_cm": "Altura del sensor de temperatura sobre el suelo, en centímetros (normalmente 150–200)."
         }
       },
+      "station_pick": {
+        "title": "Ya tienes una estación en MeteoVeo",
+        "description": "Usa una de tus estaciones para este Home Assistant, o crea una nueva.\n\n**Usar una estación que ya tienes le genera una clave de subida nueva**, así que Home Assistant pasa a ser quien envía sus datos. Si hoy sube esa estación desde una consola u otro programa, dejará de hacerlo — y la clave anterior no se puede volver a mostrar.\n\n[Sobre las medidas]({docs_url})",
+        "menu_options": {
+          "station_existing": "Usar una estación que ya tengo",
+          "station_details": "Crear una estación nueva"
+        }
+      },
+      "station_existing": {
+        "title": "¿Qué estación?",
+        "description": "Home Assistant pasará a enviar los datos de la estación que elijas, con una clave de subida nueva.\n\n[Sobre las medidas]({docs_url})",
+        "data": {
+          "station": "Estación"
+        },
+        "data_description": {
+          "station": "La estación cuyos datos enviará este Home Assistant. Su nombre y la altura del sensor se quedan como están."
+        }
+      },
       "measurements": {
         "title": "Qué entidad alimenta cada medida",
         "description": "Deja vacía una medida si tu estación no la mide. Una entidad por medida.\n\n[Sobre las medidas]({docs_url})",
@@ -243,6 +261,24 @@
         "data_description": {
           "station_name": "Así verás tu estación en MeteoVeo.",
           "sensor_height_cm": "Altura del sensor de temperatura sobre el suelo, en centímetros (normalmente 150–200)."
+        }
+      },
+      "station_pick": {
+        "title": "Ya tienes una estación en MeteoVeo",
+        "description": "Usa una de tus estaciones para este Home Assistant, o crea una nueva.\n\n**Usar una estación que ya tienes le genera una clave de subida nueva**, así que Home Assistant pasa a ser quien envía sus datos. Si hoy sube esa estación desde una consola u otro programa, dejará de hacerlo — y la clave anterior no se puede volver a mostrar.\n\n[Sobre las medidas]({docs_url})",
+        "menu_options": {
+          "station_existing": "Usar una estación que ya tengo",
+          "station_details": "Crear una estación nueva"
+        }
+      },
+      "station_existing": {
+        "title": "¿Qué estación?",
+        "description": "Home Assistant pasará a enviar los datos de la estación que elijas, con una clave de subida nueva.\n\n[Sobre las medidas]({docs_url})",
+        "data": {
+          "station": "Estación"
+        },
+        "data_description": {
+          "station": "La estación cuyos datos enviará este Home Assistant. Su nombre y la altura del sensor se quedan como están."
         }
       },
       "delete_account": {

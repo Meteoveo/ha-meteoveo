@@ -184,6 +184,13 @@ shows the conditions now, the next hour's rain, the hourly strip and the
 daily list, in your theme's light or dark colours. Options and YAML:
 [docs/card.md](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/card.md).
 
+**Reload the browser once after installing.** The card is registered into the
+page when the page loads, so a tab that was already open does not have it yet
+— and a Home Assistant restart does not reload that tab either. Press
+Ctrl+Shift+R (Cmd+Shift+R on a Mac); in the companion app, **Settings →
+Companion app → Reset frontend cache**. Until then the card is missing from
+the picker, which looks like a failed install but is not one.
+
 With Plus, a **Radar playback** camera entity gives the same loop over 1–24
 hours — see
 [docs/card.md](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/card.md#the-24-hour-radar-on-a-dashboard).

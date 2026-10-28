@@ -348,6 +348,60 @@ class AccountClient:
         )
         return _require(body, "stationId", "ingestId", "secret")
 
+    async def async_list_stations(self, token: str) -> list[dict[str, Any]]:
+        """The account's own stations (MeteoVeo ADR-0866 D12).
+
+        Only what the picker needs is kept, and a row without a usable id is
+        dropped rather than shown: an option that cannot be acted on is worse
+        than one fewer option.
+        """
+        _, body, _ = await _call(
+            self._session,
+            "GET",
+            "/v1/me/stations",
+            bearer=token,
+            secrets=(token,),
+        )
+        rows = body.get("stations") if isinstance(body, dict) else None
+        stations: list[dict[str, Any]] = []
+        for row in rows or []:
+            if not isinstance(row, dict):
+                continue
+            try:
+                station_id = int(row["id"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            stations.append(
+                {
+                    "id": station_id,
+                    "name": str(row.get("name") or "").strip(),
+                    "town": str(row.get("town") or "").strip(),
+                }
+            )
+        return stations
+
+    async def async_adopt_station(self, token: str, station_ref: int) -> dict[str, Any]:
+        """A fresh upload key for an EXISTING station (ADR-0866 D13).
+
+        This is a ROTATION: the station's previous key dies at once, so whoever
+        uploaded with it stops. That is why the flow says out loud that Home
+        Assistant becomes the station's uploader -- and why the id is required
+        here, unlike in a plain renewal where it does not change.
+        """
+        _, body, _ = await _call(
+            self._session,
+            "POST",
+            f"/v1/me/stations/{int(station_ref)}/ingest-key",
+            bearer=token,
+            secrets=(token,),
+        )
+        issued = _require(body, "ingestId", "secret")
+        return {
+            "stationId": int(station_ref),
+            "ingestId": issued["ingestId"],
+            "secret": issued["secret"],
+        }
+
     async def async_renew_ingest_key(self, token: str, station_ref: int) -> dict[str, Any]:
         """Issue a new upload key for a station: ``{ingestId?, secret}``."""
         _, body, _ = await _call(

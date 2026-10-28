@@ -55,6 +55,8 @@ class Service:
             "async_signup": AsyncMock(return_value=None),
             "async_verify": AsyncMock(return_value=None),
             "async_login": AsyncMock(return_value=TOKEN),
+            "async_list_stations": AsyncMock(return_value=[]),
+            "async_adopt_station": AsyncMock(return_value=dict(STATION)),
             "async_create_station": AsyncMock(return_value=dict(STATION)),
             "async_create_integration_key": AsyncMock(return_value=dict(ISSUED)),
             "async_delete_integration_key": AsyncMock(return_value=None),
@@ -344,3 +346,90 @@ async def test_every_account_form_carries_its_placeholders(hass: HomeAssistant) 
     assert placeholders["terms_url"] == TERMS_URL
     assert placeholders["privacy_url"] == PRIVACY_URL
     assert "docs_url" in placeholders
+
+
+# --- A fiok meglevo allomasa a varazsloban (ADR-0866 D12/D13) --------------
+#
+# Aki a weben vagy az appban regisztralta az allomasat, annak eddig nem volt
+# utja: az EGYETLEN ajto UJ allomast hozott letre, tehat vagy duplikalt, vagy
+# allomas nelkul maradt a bejegyzes. 2026-10-28-an 17 HA-kulcsbol 0 volt
+# allomashoz kotve.
+
+STATIONS = [
+    {"id": 304010, "name": "Almisera", "town": "Almiserà"},
+    {"id": 16276469, "name": "Netatmo", "town": ""},
+]
+
+
+async def test_the_wizard_offers_an_existing_station(hass: HomeAssistant) -> None:
+    with Service(async_list_stations=AsyncMock(return_value=list(STATIONS))) as service:
+        result = await sign_up(hass)
+        result = await configure(hass, result, {"code": "123456"})
+        result = await configure(hass, result, HOME)
+        result = await configure(hass, result, {"has_station": True})
+
+        # Nem a nev/magassag urlap jon, hanem a valasztas.
+        assert result["step_id"] == "station_pick"
+        assert result["menu_options"] == ["station_existing", "station_details"]
+
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"next_step_id": "station_existing"}
+        )
+        assert result["step_id"] == "station_existing"
+        result = await configure(hass, result, {"station": "304010"})
+        # A nevet es a magassagot NEM kerdezi ujra: az allomason mar megvan.
+        assert result["step_id"] == "measurements"
+        result = await configure(hass, result, {"temperature": "sensor.outside"})
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    # Bekotes, NEM letrehozas.
+    service.async_adopt_station.assert_awaited_once_with(TOKEN, 304010)
+    service.async_create_station.assert_not_awaited()
+    # A kulcs az allomashoz kotve szuletik.
+    assert service.async_create_integration_key.await_args.kwargs["station_ref"] == 123
+
+
+async def test_without_stations_the_wizard_is_unchanged(hass: HomeAssistant) -> None:
+    """Akinek nincs allomasa, egyetlen plusz kerdest sem kap."""
+    with Service() as service:
+        result = await sign_up(hass)
+        result = await configure(hass, result, {"code": "123456"})
+        result = await configure(hass, result, HOME)
+        result = await configure(hass, result, {"has_station": True})
+
+        assert result["step_id"] == "station_details"
+    service.async_adopt_station.assert_not_awaited()
+
+
+async def test_a_failed_listing_does_not_block_the_wizard(hass: HomeAssistant) -> None:
+    """A lista hibaja ne allitsa meg az allomas-bekotest: megy a regi ut."""
+    from custom_components.meteoveo.client import ServiceUnavailable
+
+    with Service(async_list_stations=AsyncMock(side_effect=ServiceUnavailable("nope"))):
+        result = await sign_up(hass)
+        result = await configure(hass, result, {"code": "123456"})
+        result = await configure(hass, result, HOME)
+        result = await configure(hass, result, {"has_station": True})
+
+        assert result["step_id"] == "station_details"
+
+
+async def test_choosing_a_new_station_after_the_menu_still_creates_one(
+    hass: HomeAssistant,
+) -> None:
+    with Service(async_list_stations=AsyncMock(return_value=list(STATIONS))) as service:
+        result = await sign_up(hass)
+        result = await configure(hass, result, {"code": "123456"})
+        result = await configure(hass, result, HOME)
+        result = await configure(hass, result, {"has_station": True})
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"next_step_id": "station_details"}
+        )
+        assert result["step_id"] == "station_details"
+        result = await configure(hass, result, {"station_name": "Casa", "sensor_height_cm": 180})
+        result = await configure(hass, result, {})
+        await hass.async_block_till_done()
+
+    service.async_create_station.assert_awaited_once()
+    service.async_adopt_station.assert_not_awaited()

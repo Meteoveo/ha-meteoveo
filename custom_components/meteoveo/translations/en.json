@@ -92,6 +92,24 @@
           "sensor_height_cm": "Height of the temperature sensor above the ground, in centimetres (usually 150–200)."
         }
       },
+      "station_pick": {
+        "title": "You already have a station in MeteoVeo",
+        "description": "Use one of your existing stations for this Home Assistant, or create a new one.\n\n**Using an existing station issues it a new upload key**, which means Home Assistant becomes its uploader. If a console or another program is uploading for that station today, it will stop — and the old key cannot be shown again.\n\n[About the measurements]({docs_url})",
+        "menu_options": {
+          "station_existing": "Use a station I already have",
+          "station_details": "Create a new station"
+        }
+      },
+      "station_existing": {
+        "title": "Which station?",
+        "description": "Home Assistant will take over uploading for the station you pick, with a new upload key.\n\n[About the measurements]({docs_url})",
+        "data": {
+          "station": "Station"
+        },
+        "data_description": {
+          "station": "The station this Home Assistant will upload for. Its name and sensor height stay as they are."
+        }
+      },
       "measurements": {
         "title": "Which entity feeds which measurement",
         "description": "Leave a measurement empty if your station does not report it. One entity per measurement.\n\n[About the measurements]({docs_url})",
@@ -243,6 +261,24 @@
         "data_description": {
           "station_name": "How the station appears to you in MeteoVeo.",
           "sensor_height_cm": "Height of the temperature sensor above the ground, in centimetres (usually 150–200)."
+        }
+      },
+      "station_pick": {
+        "title": "You already have a station in MeteoVeo",
+        "description": "Use one of your existing stations for this Home Assistant, or create a new one.\n\n**Using an existing station issues it a new upload key**, which means Home Assistant becomes its uploader. If a console or another program is uploading for that station today, it will stop — and the old key cannot be shown again.\n\n[About the measurements]({docs_url})",
+        "menu_options": {
+          "station_existing": "Use a station I already have",
+          "station_details": "Create a new station"
+        }
+      },
+      "station_existing": {
+        "title": "Which station?",
+        "description": "Home Assistant will take over uploading for the station you pick, with a new upload key.\n\n[About the measurements]({docs_url})",
+        "data": {
+          "station": "Station"
+        },
+        "data_description": {
+          "station": "The station this Home Assistant will upload for. Its name and sensor height stay as they are."
         }
       },
       "delete_account": {

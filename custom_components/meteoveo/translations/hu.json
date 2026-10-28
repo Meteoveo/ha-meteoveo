@@ -92,6 +92,24 @@
           "sensor_height_cm": "A hőmérséklet-szenzor magassága a talaj felett, centiméterben (általában 150–200)."
         }
       },
+      "station_pick": {
+        "title": "Már van állomásod a MeteoVeóban",
+        "description": "Használd az egyik meglévő állomásodat ehhez a Home Assistanthoz, vagy hozz létre újat.\n\n**A meglévő állomás bekötése új beküldési kulcsot ad neki**, vagyis a Home Assistant lesz a feltöltője. Ha ma egy konzol vagy más program küld fel arról az állomásról, az leáll — és a régi kulcsot nem tudjuk újra megmutatni.\n\n[A mérésekről]({docs_url})",
+        "menu_options": {
+          "station_existing": "Meglévő állomásom használata",
+          "station_details": "Új állomás létrehozása"
+        }
+      },
+      "station_existing": {
+        "title": "Melyik állomás?",
+        "description": "A kiválasztott állomás feltöltését a Home Assistant veszi át, új beküldési kulccsal.\n\n[A mérésekről]({docs_url})",
+        "data": {
+          "station": "Állomás"
+        },
+        "data_description": {
+          "station": "Az az állomás, amelynek az adatait ez a Home Assistant küldi fel. A neve és a szenzor-magassága változatlan marad."
+        }
+      },
       "measurements": {
         "title": "Melyik entitás adja melyik mérést",
         "description": "Hagyd üresen azt a mérést, amit az állomásod nem mér. Mérésenként egy entitás.\n\n[A mérésekről]({docs_url})",
@@ -243,6 +261,24 @@
         "data_description": {
           "station_name": "Így látod majd az állomásodat a MeteoVeóban.",
           "sensor_height_cm": "A hőmérséklet-szenzor magassága a talaj felett, centiméterben (általában 150–200)."
+        }
+      },
+      "station_pick": {
+        "title": "Már van állomásod a MeteoVeóban",
+        "description": "Használd az egyik meglévő állomásodat ehhez a Home Assistanthoz, vagy hozz létre újat.\n\n**A meglévő állomás bekötése új beküldési kulcsot ad neki**, vagyis a Home Assistant lesz a feltöltője. Ha ma egy konzol vagy más program küld fel arról az állomásról, az leáll — és a régi kulcsot nem tudjuk újra megmutatni.\n\n[A mérésekről]({docs_url})",
+        "menu_options": {
+          "station_existing": "Meglévő állomásom használata",
+          "station_details": "Új állomás létrehozása"
+        }
+      },
+      "station_existing": {
+        "title": "Melyik állomás?",
+        "description": "A kiválasztott állomás feltöltését a Home Assistant veszi át, új beküldési kulccsal.\n\n[A mérésekről]({docs_url})",
+        "data": {
+          "station": "Állomás"
+        },
+        "data_description": {
+          "station": "Az az állomás, amelynek az adatait ez a Home Assistant küldi fel. A neve és a szenzor-magassága változatlan marad."
         }
       },
       "delete_account": {

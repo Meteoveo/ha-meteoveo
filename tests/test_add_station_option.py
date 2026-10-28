@@ -305,3 +305,47 @@ async def test_adding_a_station_uses_the_home_position(hass: HomeAssistant) -> N
 
     created = service.async_create_station.await_args.kwargs
     assert (created["lat"], created["lon"]) == (38.9249, -0.2551)
+
+
+# --- A meglevo allomas bekotese az Options-ajtoban (ADR-0866 D12/D13) ------
+
+
+async def test_the_option_door_adopts_an_existing_station(hass: HomeAssistant) -> None:
+    """Ugyanaz a valasztas, mint a varazsloban - es bekot, nem letrehoz."""
+    from test_account_flow import STATIONS
+
+    entry = add_entry(hass, ACCOUNT_DATA)
+    await load(hass, entry)
+
+    result = await open_add_station(hass, entry)
+    with Service(
+        async_list_stations=AsyncMock(return_value=list(STATIONS)),
+        async_create_integration_key=AsyncMock(return_value=dict(NEW_KEY)),
+    ) as service:
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"email": EMAIL, "password": PASSWORD}
+        )
+        assert result["step_id"] == "station_pick"
+
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"next_step_id": "station_existing"}
+        )
+        assert result["step_id"] == "station_existing"
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"station": "16276469"}
+        )
+        assert result["step_id"] == "measurements"
+
+        with patch(
+            "custom_components.meteoveo.client.MeteoVeoClient.async_get_station",
+            new=AsyncMock(return_value=copy.deepcopy(STATION_VIEW)),
+        ):
+            await hass.config_entries.options.async_configure(
+                result["flow_id"], {"temperature": "sensor.outside_temperature"}
+            )
+            await hass.async_block_till_done()
+
+    service.async_adopt_station.assert_awaited_once_with(TOKEN, 16276469)
+    service.async_create_station.assert_not_awaited()
+    # A bejegyzes a bekotott allomas friss bekuldesi parjat kapja.
+    assert entry.data[CONF_STATION_ID] == STATION["ingestId"]

@@ -403,3 +403,47 @@ async def test_an_unknown_area_is_reported_as_such() -> None:
     with pytest.raises(ApiError) as caught:
         await client.async_get_radar("es", extent="canarias")
     assert caught.value.code == "bad_extent"
+
+
+# --- A fiok allomasai es a bekotes (ADR-0866 D12/D13) -----------------------
+
+
+async def test_list_stations_keeps_only_usable_rows() -> None:
+    """Azonosito nelkuli sor nem valaszthato - inkabb ne is latszodjon."""
+    session = FakeSession(
+        FakeResponse(
+            200,
+            {
+                "stations": [
+                    {"id": 304010, "name": "Almisera", "town": "Almiserà"},
+                    {"id": None, "name": "fel-kesz"},
+                    "nem is objektum",
+                    {"id": 16276469, "name": "", "town": None},
+                ]
+            },
+        )
+    )
+    stations = await AccountClient(session).async_list_stations("token")
+
+    assert [s["id"] for s in stations] == [304010, 16276469]
+    assert stations[0]["town"] == "Almiserà"
+    assert (stations[1]["name"], stations[1]["town"]) == ("", "")
+    method, url, _ = session.requests[0]
+    assert (method, url.endswith("/v1/me/stations")) == ("GET", True)
+
+
+async def test_adopt_station_returns_the_ingest_pair() -> None:
+    session = FakeSession(FakeResponse(200, {"ingestId": "MVEXAMPLE9", "secret": "friss"}))
+    adopted = await AccountClient(session).async_adopt_station("token", 304010)
+
+    assert adopted == {"stationId": 304010, "ingestId": "MVEXAMPLE9", "secret": "friss"}
+    method, url, _ = session.requests[0]
+    assert method == "POST"
+    assert url.endswith("/v1/me/stations/304010/ingest-key")
+
+
+async def test_adopt_station_without_an_ingest_id_is_not_usable() -> None:
+    """Azonosito nelkul a bejegyzes nem tudna feltolteni: inkabb hiba."""
+    session = FakeSession(FakeResponse(200, {"secret": "friss"}))
+    with pytest.raises(ServiceUnavailable):
+        await AccountClient(session).async_adopt_station("token", 304010)

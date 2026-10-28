@@ -92,6 +92,24 @@
           "sensor_height_cm": "Altura del sensor de temperatura sobre el terra, en centímetres (normalment 150–200)."
         }
       },
+      "station_pick": {
+        "title": "Ja tens una estació a MeteoVeo",
+        "description": "Fes servir una de les teves estacions per a aquest Home Assistant, o crea'n una de nova.\n\n**Fer servir una estació que ja tens li genera una clau de pujada nova**, així que Home Assistant passa a ser qui envia les seves dades. Si avui puja aquesta estació des d'una consola o un altre programa, deixarà de fer-ho — i la clau anterior no es pot tornar a mostrar.\n\n[Sobre les mesures]({docs_url})",
+        "menu_options": {
+          "station_existing": "Fer servir una estació que ja tinc",
+          "station_details": "Crear una estació nova"
+        }
+      },
+      "station_existing": {
+        "title": "Quina estació?",
+        "description": "Home Assistant passarà a enviar les dades de l'estació que triïs, amb una clau de pujada nova.\n\n[Sobre les mesures]({docs_url})",
+        "data": {
+          "station": "Estació"
+        },
+        "data_description": {
+          "station": "L'estació les dades de la qual enviarà aquest Home Assistant. El seu nom i l'altura del sensor es queden com estan."
+        }
+      },
       "measurements": {
         "title": "Quina entitat alimenta cada mesura",
         "description": "Deixa buida una mesura si la teva estació no la mesura. Una entitat per mesura.\n\n[Sobre les mesures]({docs_url})",
@@ -243,6 +261,24 @@
         "data_description": {
           "station_name": "Així veuràs la teva estació a MeteoVeo.",
           "sensor_height_cm": "Altura del sensor de temperatura sobre el terra, en centímetres (normalment 150–200)."
+        }
+      },
+      "station_pick": {
+        "title": "Ja tens una estació a MeteoVeo",
+        "description": "Fes servir una de les teves estacions per a aquest Home Assistant, o crea'n una de nova.\n\n**Fer servir una estació que ja tens li genera una clau de pujada nova**, així que Home Assistant passa a ser qui envia les seves dades. Si avui puja aquesta estació des d'una consola o un altre programa, deixarà de fer-ho — i la clau anterior no es pot tornar a mostrar.\n\n[Sobre les mesures]({docs_url})",
+        "menu_options": {
+          "station_existing": "Fer servir una estació que ja tinc",
+          "station_details": "Crear una estació nova"
+        }
+      },
+      "station_existing": {
+        "title": "Quina estació?",
+        "description": "Home Assistant passarà a enviar les dades de l'estació que triïs, amb una clau de pujada nova.\n\n[Sobre les mesures]({docs_url})",
+        "data": {
+          "station": "Estació"
+        },
+        "data_description": {
+          "station": "L'estació les dades de la qual enviarà aquest Home Assistant. El seu nom i l'altura del sensor es queden com estan."
         }
       },
       "delete_account": {
