@@ -13,10 +13,12 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.meteoveo.client import InvalidCredentials
 from custom_components.meteoveo.const import (
     CONF_MEASUREMENTS,
+    CONF_PRESSURE_KIND,
     CONF_STATION_ID,
     CONF_STATION_KEY,
     DOMAIN,
 )
+from custom_components.meteoveo.wu_payload import PRESSURE_ABSOLUTE, PRESSURE_SEA_LEVEL
 
 ENTRY_DATA = {CONF_STATION_ID: "MVEXAMPLE1", CONF_STATION_KEY: "old-key"}
 VIEW = {"station": {"name": "Garden"}, "health": {"findings": []},
@@ -113,3 +115,53 @@ async def test_options_flow_accepts_an_empty_selection(hass: HomeAssistant) -> N
         await hass.async_block_till_done()
 
     assert entry.options[CONF_MEASUREMENTS] == {}
+
+
+async def test_options_flow_stores_how_the_barometer_reports(hass: HomeAssistant) -> None:
+    """MeteoVeo ADR-0844: the answer is stored beside the mapping, not in it."""
+    entry = make_entry(hass)
+    with patch(
+        "custom_components.meteoveo.client.MeteoVeoClient.async_get_station",
+        new=AsyncMock(return_value=VIEW),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"next_step_id": "measurements"}
+        )
+        # The question is asked in the same step as the pressure entity.
+        assert CONF_PRESSURE_KIND in result["data_schema"].schema
+
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {"pressure": "sensor.barometer", CONF_PRESSURE_KIND: PRESSURE_SEA_LEVEL},
+        )
+        await hass.async_block_till_done()
+
+    assert entry.options[CONF_MEASUREMENTS] == {"pressure": "sensor.barometer"}
+    assert entry.options[CONF_PRESSURE_KIND] == PRESSURE_SEA_LEVEL
+
+
+async def test_a_mapping_saved_before_the_option_existed_means_absolute(
+    hass: HomeAssistant,
+) -> None:
+    # Nobody's pressure changes meaning on upgrade: an entry without the
+    # option keeps sending what it always sent.
+    entry = make_entry(hass, options={CONF_MEASUREMENTS: {"pressure": "sensor.b"}})
+    with patch(
+        "custom_components.meteoveo.client.MeteoVeoClient.async_get_station",
+        new=AsyncMock(return_value=VIEW),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {"next_step_id": "measurements"}
+        )
+        marker = next(
+            key for key in result["data_schema"].schema if key == CONF_PRESSURE_KIND
+        )
+        assert marker.default() == PRESSURE_ABSOLUTE

@@ -13,7 +13,8 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Mapping
 
-from .wu_payload import MEASUREMENTS_BY_KEY
+from .const import CONF_PRESSURE_KIND
+from .wu_payload import MEASUREMENTS_BY_KEY, PRESSURE_ABSOLUTE, PRESSURE_KINDS
 
 #: Sentinel offered in the config flow for "this station has no such sensor".
 #: A plain empty value would be indistinguishable from an unanswered question.
@@ -46,6 +47,25 @@ def validate_selection(selection: Mapping[str, Any]) -> dict[str, str]:
             raise ValueError(f"{key}: exactly one entity is allowed per measurement")
         cleaned[key] = value
     return cleaned
+
+
+def split_pressure_kind(answers: Mapping[str, Any]) -> tuple[dict[str, Any], str]:
+    """Separate the barometer question from the entity mapping.
+
+    The measurements form asks one thing that is not an entity: whether the
+    station's pressure is already reduced to sea level (MeteoVeo ADR-0844).
+    Taking it out here is what lets ``validate_selection`` stay strict about
+    keys it does not know.
+
+    An unanswered question means absolute, which is what every station sent
+    before the option existed. An unknown answer raises: guessing would
+    silently decide which way the reading gets corrected.
+    """
+    mapping = {key: value for key, value in answers.items() if key != CONF_PRESSURE_KIND}
+    kind = answers.get(CONF_PRESSURE_KIND) or PRESSURE_ABSOLUTE
+    if kind not in PRESSURE_KINDS:
+        raise ValueError(f"unknown pressure kind: {kind}")
+    return mapping, kind
 
 
 def selected_entity_ids(selection: Mapping[str, Any]) -> list[str]:

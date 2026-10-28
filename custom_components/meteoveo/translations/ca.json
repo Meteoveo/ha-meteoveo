@@ -99,6 +99,7 @@
           "temperature": "Temperatura",
           "humidity": "Humitat",
           "pressure": "Pressió",
+          "pressure_kind": "Tipus de pressió",
           "wind_speed": "Velocitat del vent",
           "wind_gust": "Ratxa de vent",
           "wind_direction": "Direcció del vent",
@@ -108,7 +109,8 @@
         "data_description": {
           "temperature": "Temperatura exterior. Valen tant °C com °F.",
           "humidity": "Humitat relativa exterior, en %.",
-          "pressure": "Pressió absoluta (a nivell de l'estació) en hPa, mbar o inHg. El servei la redueix al nivell del mar tot sol — no triïs un valor ja reduït.",
+          "pressure": "La pressió de la teva estació en hPa, mbar o inHg. Al camp de sota indiques quina de les dues és.",
+          "pressure_kind": "L'absoluta és la que mesura el baròmetre a l'estació; la relativa és aquesta mateixa lectura ja reduïda al nivell del mar, que és el que mostren per defecte la majoria de les consoles. MeteoVeo fa la reducció pel seu compte, així que una resposta equivocada desvia la pressió uns 0,12 hPa per cada metre d'altitud.",
           "wind_speed": "Velocitat sostinguda del vent, en qualsevol unitat habitual.",
           "wind_gust": "Ratxa màxima de vent, en qualsevol unitat habitual.",
           "wind_direction": "Direcció del vent en graus, 0–360.",
@@ -190,6 +192,7 @@
           "temperature": "Temperatura",
           "humidity": "Humitat",
           "pressure": "Pressió",
+          "pressure_kind": "Tipus de pressió",
           "wind_speed": "Velocitat del vent",
           "wind_gust": "Ratxa de vent",
           "wind_direction": "Direcció del vent",
@@ -199,7 +202,8 @@
         "data_description": {
           "temperature": "Temperatura exterior. Valen tant °C com °F.",
           "humidity": "Humitat relativa exterior, en %.",
-          "pressure": "Pressió absoluta (a nivell de l'estació) en hPa, mbar o inHg. El servei la redueix al nivell del mar tot sol — no triïs un valor ja reduït.",
+          "pressure": "La pressió de la teva estació en hPa, mbar o inHg. Al camp de sota indiques quina de les dues és.",
+          "pressure_kind": "L'absoluta és la que mesura el baròmetre a l'estació; la relativa és aquesta mateixa lectura ja reduïda al nivell del mar, que és el que mostren per defecte la majoria de les consoles. MeteoVeo fa la reducció pel seu compte, així que una resposta equivocada desvia la pressió uns 0,12 hPa per cada metre d'altitud.",
           "wind_speed": "Velocitat sostinguda del vent, en qualsevol unitat habitual.",
           "wind_gust": "Ratxa màxima de vent, en qualsevol unitat habitual.",
           "wind_direction": "Direcció del vent en graus, 0–360.",
@@ -271,6 +275,14 @@
       "account_deleted": "El teu compte de MeteoVeo s'ha eliminat. La integració es treu sola ara.",
       "reauth_required": "MeteoVeo ja no accepta la clau d'aquesta connexió. Torna a iniciar la sessió des de l'avís i repeteix el canvi.",
       "too_many_keys": "Aquest compte ja té 5 connexions domòtiques, el màxim. Treu MeteoVeo d'algun Home Assistant o Homey que ja no facis servir i torna-ho a provar."
+    }
+  },
+  "selector": {
+    "pressure_kind": {
+      "options": {
+        "absolute": "Absoluta — la mesurada a l'estació",
+        "sea_level": "Relativa — ja reduïda al nivell del mar"
+      }
     }
   },
   "entity": {

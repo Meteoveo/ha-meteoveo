@@ -19,6 +19,7 @@ from .client import InvalidCredentials, MeteoVeoClient
 from .const import (
     CONF_INTEGRATION_KEY,
     CONF_MEASUREMENTS,
+    CONF_PRESSURE_KIND,
     CONF_STATION_ID,
     CONF_STATION_KEY,
     DEFAULT_UPLOAD_INTERVAL_S,
@@ -33,6 +34,7 @@ from .coordinator import (
 from .entity import base_id_for, device_info_for
 from .flow_logic import api_language, has_station, is_account_entry
 from .uploader import upload_once
+from .wu_payload import PRESSURE_ABSOLUTE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -152,6 +154,9 @@ def _start_uploads(
                 hass.states,
                 selection,
                 now_iso=dt_util.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                # Absolute when unanswered: that is what every station sent
+                # before the option existed (MeteoVeo ADR-0844).
+                pressure_kind=entry.options.get(CONF_PRESSURE_KIND, PRESSURE_ABSOLUTE),
             )
         except InvalidCredentials:
             # This timer is not the coordinator: an exception left to escape

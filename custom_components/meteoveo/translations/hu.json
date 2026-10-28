@@ -99,6 +99,7 @@
           "temperature": "Hőmérséklet",
           "humidity": "Páratartalom",
           "pressure": "Nyomás",
+          "pressure_kind": "A nyomás típusa",
           "wind_speed": "Szélsebesség",
           "wind_gust": "Széllökés",
           "wind_direction": "Szélirány",
@@ -108,7 +109,8 @@
         "data_description": {
           "temperature": "Külső hőmérséklet. °C és °F egyaránt jó.",
           "humidity": "Külső relatív páratartalom, %-ban.",
-          "pressure": "Abszolút (állomás-szinti) légnyomás hPa, mbar vagy inHg egységben. A tengerszintre átszámítást a szolgáltatás végzi — ne már átszámított értéket válassz.",
+          "pressure": "Az állomás légnyomása hPa, mbar vagy inHg egységben. Az alatta lévő mezőben add meg, melyik a kettő közül.",
+          "pressure_kind": "Az abszolút az, amit a barométer az állomáson mér; a relatív ugyanaz az érték tengerszintre átszámítva — a konzolok többsége alapból ezt mutatja. Az átszámítást a MeteoVeo maga végzi, ezért a rossz válasz magasságonként kb. 0,12 hPa-val tolja el a nyomást.",
           "wind_speed": "Tartós szélsebesség, bármely szokásos egységben.",
           "wind_gust": "Legerősebb széllökés, bármely szokásos egységben.",
           "wind_direction": "Szélirány fokban, 0–360.",
@@ -190,6 +192,7 @@
           "temperature": "Hőmérséklet",
           "humidity": "Páratartalom",
           "pressure": "Nyomás",
+          "pressure_kind": "A nyomás típusa",
           "wind_speed": "Szélsebesség",
           "wind_gust": "Széllökés",
           "wind_direction": "Szélirány",
@@ -199,7 +202,8 @@
         "data_description": {
           "temperature": "Külső hőmérséklet. °C és °F egyaránt jó.",
           "humidity": "Külső relatív páratartalom, %-ban.",
-          "pressure": "Abszolút (állomás-szinti) légnyomás hPa, mbar vagy inHg egységben. A tengerszintre átszámítást a szolgáltatás végzi — ne már átszámított értéket válassz.",
+          "pressure": "Az állomás légnyomása hPa, mbar vagy inHg egységben. Az alatta lévő mezőben add meg, melyik a kettő közül.",
+          "pressure_kind": "Az abszolút az, amit a barométer az állomáson mér; a relatív ugyanaz az érték tengerszintre átszámítva — a konzolok többsége alapból ezt mutatja. Az átszámítást a MeteoVeo maga végzi, ezért a rossz válasz magasságonként kb. 0,12 hPa-val tolja el a nyomást.",
           "wind_speed": "Tartós szélsebesség, bármely szokásos egységben.",
           "wind_gust": "Legerősebb széllökés, bármely szokásos egységben.",
           "wind_direction": "Szélirány fokban, 0–360.",
@@ -271,6 +275,14 @@
       "account_deleted": "A MeteoVeo-fiókodat töröltük. Az integráció most eltávolítja magát.",
       "reauth_required": "A MeteoVeo már nem fogadja el ennek a kapcsolatnak a kulcsát. Lépj be újra az értesítésből, aztán próbáld újra.",
       "too_many_keys": "Ehhez a fiókhoz már 5 okosotthon-kapcsolat tartozik, ez a maximum. Távolítsd el a MeteoVeót egy már nem használt Home Assistantből vagy Homeyból, és próbáld újra."
+    }
+  },
+  "selector": {
+    "pressure_kind": {
+      "options": {
+        "absolute": "Abszolút — az állomáson mért",
+        "sea_level": "Relatív — tengerszintre átszámított"
+      }
     }
   },
   "entity": {

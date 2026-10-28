@@ -12,10 +12,12 @@ from homeassistant.data_entry_flow import FlowResultType
 from custom_components.meteoveo.client import InvalidCredentials, ServiceUnavailable
 from custom_components.meteoveo.const import (
     CONF_MEASUREMENTS,
+    CONF_PRESSURE_KIND,
     CONF_STATION_ID,
     CONF_STATION_KEY,
     DOMAIN,
 )
+from custom_components.meteoveo.wu_payload import PRESSURE_ABSOLUTE
 
 CREDENTIALS = {CONF_STATION_ID: "MVEXAMPLE1", CONF_STATION_KEY: "key-value"}
 
@@ -52,7 +54,10 @@ async def test_full_setup_creates_an_entry(hass: HomeAssistant, mock_station_vie
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Garden"
     assert result["data"] == CREDENTIALS
-    assert result["options"] == {CONF_MEASUREMENTS: {}}
+    assert result["options"] == {
+        CONF_MEASUREMENTS: {},
+        CONF_PRESSURE_KIND: PRESSURE_ABSOLUTE,
+    }
 
 
 async def test_credentials_are_checked_before_the_entry_is_created(

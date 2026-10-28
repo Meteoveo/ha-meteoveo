@@ -20,7 +20,7 @@ API_BASE: Final = "https://www.meteoveo.com/api"
 
 # The integration's own version, sent in the User-Agent so the service can tell
 # released clients apart. A test keeps it equal to manifest.json.
-VERSION: Final = "0.3.2"
+VERSION: Final = "0.3.3"
 USER_AGENT: Final = f"ha-meteoveo/{VERSION}"
 
 # The MeteoVeo account page on the web. An account can be created, and later
@@ -61,6 +61,11 @@ DOCS_TROUBLESHOOTING_URL: Final = f"{_DOCS_BASE}/troubleshooting.md"
 CONF_STATION_ID: Final = "station_id"
 CONF_STATION_KEY: Final = "station_key"
 CONF_MEASUREMENTS: Final = "measurements"
+# Whether the mapped pressure entity gives the absolute (station-level) value
+# or one already reduced to sea level (MeteoVeo ADR-0844). Stored beside the
+# mapping, not inside it: it answers a question about a reading, not about
+# which entity feeds it.
+CONF_PRESSURE_KIND: Final = "pressure_kind"
 
 # Account-based entries (0.2.0+). The account's session token is used only
 # while a flow runs and is never stored; what is stored is a restricted

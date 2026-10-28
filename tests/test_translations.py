@@ -47,7 +47,10 @@ def test_every_language_has_exactly_the_same_keys():
 def test_every_measurement_has_a_label(language):
     data = load(language)
     labels = data["config"]["step"]["measurements"]["data"]
-    assert {m.key for m in MEASUREMENTS} == set(labels)
+    # One field in the form is not a measurement: how the barometer reports
+    # (MeteoVeo ADR-0844). Named explicitly, so a measurement added without a
+    # label is still caught.
+    assert set(labels) == {m.key for m in MEASUREMENTS} | {"pressure_kind"}
     for key, text in labels.items():
         assert text.strip(), f"{language}: {key} has no label"
 
@@ -250,3 +253,13 @@ def test_the_widest_radar_area_does_not_promise_the_canaries(language):
     label = load(language)["entity"]["select"]["radar_extent"]["state"]["spain"]
     for promise in ("Canar", "Canàr", "Kanári"):
         assert promise not in label, language
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_both_pressure_kinds_are_named(language):
+    # The dropdown shows these two labels. An untranslated option would read
+    # as "sea_level", which says nothing to the person choosing.
+    options = load(language)["selector"]["pressure_kind"]["options"]
+    assert set(options) == {"absolute", "sea_level"}
+    for key, text in options.items():
+        assert text.strip(), f"{language}: {key} has no label"

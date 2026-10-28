@@ -9,12 +9,18 @@ from __future__ import annotations
 
 import pytest
 
+from custom_components.meteoveo.const import CONF_PRESSURE_KIND
 from custom_components.meteoveo.selection import (
     NOT_AVAILABLE,
     selected_entity_ids,
+    split_pressure_kind,
     validate_selection,
 )
-from custom_components.meteoveo.wu_payload import MEASUREMENTS
+from custom_components.meteoveo.wu_payload import (
+    MEASUREMENTS,
+    PRESSURE_ABSOLUTE,
+    PRESSURE_SEA_LEVEL,
+)
 
 
 def test_every_measurement_may_be_left_unmapped():
@@ -61,3 +67,31 @@ def test_selected_entity_ids_lists_what_to_watch():
 
 def test_nothing_selected_means_nothing_to_watch():
     assert selected_entity_ids({m.key: NOT_AVAILABLE for m in MEASUREMENTS}) == []
+
+
+# The measurements form asks one question that is not an entity: how the
+# barometer reports (MeteoVeo ADR-0844). It is kept out of the mapping, so
+# the stored selection only ever holds measurement keys.
+
+
+def test_the_pressure_kind_is_separated_from_the_entity_mapping():
+    answers = {"temperature": "sensor.t", CONF_PRESSURE_KIND: PRESSURE_SEA_LEVEL}
+    mapping, kind = split_pressure_kind(answers)
+    assert mapping == {"temperature": "sensor.t"}
+    assert kind == PRESSURE_SEA_LEVEL
+    # What is left must pass the mapping validation, which refuses anything
+    # that is not a measurement.
+    assert validate_selection(mapping) == {"temperature": "sensor.t"}
+
+
+def test_an_unanswered_pressure_kind_means_absolute():
+    assert split_pressure_kind({"humidity": "sensor.h"}) == (
+        {"humidity": "sensor.h"},
+        PRESSURE_ABSOLUTE,
+    )
+
+
+def test_an_unknown_pressure_kind_is_refused():
+    # Guessing here would silently decide which way a reading is corrected.
+    with pytest.raises(ValueError):
+        split_pressure_kind({CONF_PRESSURE_KIND: "qnh"})

@@ -24,11 +24,13 @@ from custom_components.meteoveo.const import (
     CONF_INTEGRATION_KEY,
     CONF_KEY_ID,
     CONF_MEASUREMENTS,
+    CONF_PRESSURE_KIND,
     CONF_STATION_ID,
     CONF_STATION_KEY,
     CONF_STATION_REF,
     DOMAIN,
 )
+from custom_components.meteoveo.wu_payload import PRESSURE_ABSOLUTE
 
 EMAIL = "ana@example.com"
 PASSWORD = "correct-horse-battery"
@@ -251,7 +253,10 @@ async def test_existing_account_with_a_station(hass: HomeAssistant) -> None:
     assert result["data"][CONF_STATION_ID] == "MVEXAMPLE1"
     assert result["data"][CONF_STATION_KEY] == "station-secret"
     assert result["data"][CONF_STATION_REF] == 123
-    assert result["options"] == {CONF_MEASUREMENTS: {"temperature": "sensor.outside"}}
+    assert result["options"] == {
+        CONF_MEASUREMENTS: {"temperature": "sensor.outside"},
+        CONF_PRESSURE_KIND: PRESSURE_ABSOLUTE,
+    }
     station_kwargs = service.async_create_station.await_args.kwargs
     assert station_kwargs["name"] == "Jardín"
     assert station_kwargs["sensor_height_cm"] == 180

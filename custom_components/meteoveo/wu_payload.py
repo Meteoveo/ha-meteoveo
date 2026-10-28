@@ -25,6 +25,23 @@ _HPA_PER_INHG = 33.863886666667
 _MPH_PER_MS = 2.236936
 _MPH_PER_KMH = 0.621371
 
+# --- How the barometer reports (MeteoVeo ADR-0844) -------------------------
+#
+# The service stores STATION-LEVEL pressure and every consumer reduces it to
+# sea level with the station's elevation. A console that already did the
+# reduction ("relative" pressure) must therefore not send its value as
+# absolute: it would be reduced a second time, about 0.12 hPa per metre --
+# 6 hPa at 50 m, which is a different weather situation. The upload protocol
+# carries a separate field for the reduced value, and the server raises it
+# back with the station's elevation, so nothing is lost either way.
+
+#: The pressure measured at the station (QFE).
+PRESSURE_ABSOLUTE = "absolute"
+#: The same reading already reduced to sea level (QFF; "relative" on most
+#: consoles), which is what they tend to show by default.
+PRESSURE_SEA_LEVEL = "sea_level"
+PRESSURE_KINDS: tuple[str, ...] = (PRESSURE_ABSOLUTE, PRESSURE_SEA_LEVEL)
+
 
 def _celsius_to_fahrenheit(value: float) -> float:
     return value * 9.0 / 5.0 + 32.0
@@ -48,6 +65,10 @@ class Measurement:
     #: as such locally instead of surfacing as an opaque server rejection.
     minimum: float | None = None
     maximum: float | None = None
+    #: Field to use when the value arrives already reduced to sea level.
+    #: Only pressure has one -- for every other measurement the question
+    #: does not arise.
+    sea_level_api_field: str | None = None
     #: Home Assistant device class, used to filter the entity picker.
     device_class: str | None = None
     #: Decimal places to send. Deliberately not uniform: two decimals would
@@ -83,11 +104,14 @@ MEASUREMENTS: tuple[Measurement, ...] = (
         device_class="humidity",
     ),
     Measurement(
-        # Station-level (absolute) pressure, not reduced to sea level. The
-        # server performs the reduction using terrain elevation, which is why
-        # an accurate station position matters.
+        # Pressure as measured at the station, by default. The server performs
+        # the sea-level reduction using terrain elevation, which is why an
+        # accurate station position matters. A console that only reports the
+        # already reduced value says so in the config flow, and then the
+        # reading travels in `baromin` instead.
         key="pressure",
         api_field="absbaromin",
+        sea_level_api_field="baromin",
         ha_unit="hPa",
         converters={
             "hPa": lambda v: v / _HPA_PER_INHG,
@@ -189,12 +213,20 @@ def _usable_number(value: Any) -> float | None:
     return number
 
 
-def build_wu_params(readings: Mapping[str, tuple[Any, str]]) -> dict[str, float]:
+def build_wu_params(
+    readings: Mapping[str, tuple[Any, str]],
+    *,
+    pressure_kind: str = PRESSURE_ABSOLUTE,
+) -> dict[str, float]:
     """Build upload fields from selected entity states.
 
     ``readings`` maps a measurement key to ``(raw state, unit)``. Only usable
     values appear in the result; an empty result means there is nothing worth
     uploading, and the caller should skip the request entirely.
+
+    ``pressure_kind`` says which field the pressure belongs in. Anything
+    other than :data:`PRESSURE_SEA_LEVEL` means absolute -- an unreadable
+    stored option must not silently change what a value means.
     """
     params: dict[str, float] = {}
     for key, (raw, unit) in readings.items():
@@ -218,5 +250,8 @@ def build_wu_params(readings: Mapping[str, tuple[Any, str]]) -> dict[str, float]
         if measurement.maximum is not None and converted > measurement.maximum:
             continue
 
-        params[measurement.api_field] = round(converted, measurement.decimals)
+        field = measurement.api_field
+        if pressure_kind == PRESSURE_SEA_LEVEL and measurement.sea_level_api_field:
+            field = measurement.sea_level_api_field
+        params[field] = round(converted, measurement.decimals)
     return params

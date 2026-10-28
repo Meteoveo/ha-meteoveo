@@ -99,6 +99,7 @@
           "temperature": "Temperature",
           "humidity": "Humidity",
           "pressure": "Pressure",
+          "pressure_kind": "Pressure type",
           "wind_speed": "Wind speed",
           "wind_gust": "Wind gust",
           "wind_direction": "Wind direction",
@@ -108,7 +109,8 @@
         "data_description": {
           "temperature": "Outdoor temperature. °C and °F both work.",
           "humidity": "Outdoor relative humidity, in %.",
-          "pressure": "Station-level (absolute) pressure in hPa, mbar or inHg. The service reduces it to sea level itself — do not pick an already reduced value.",
+          "pressure": "Your station's pressure in hPa, mbar or inHg. The field below says which of the two it is.",
+          "pressure_kind": "Absolute is what the barometer measures at the station; relative is that same reading already reduced to sea level, which is what most consoles show by default. MeteoVeo does the reduction itself, so the wrong answer here shifts the pressure by about 0.12 hPa for every metre of altitude.",
           "wind_speed": "Sustained wind speed, in any common unit.",
           "wind_gust": "Peak wind gust, in any common unit.",
           "wind_direction": "Wind direction in degrees, 0–360.",
@@ -190,6 +192,7 @@
           "temperature": "Temperature",
           "humidity": "Humidity",
           "pressure": "Pressure",
+          "pressure_kind": "Pressure type",
           "wind_speed": "Wind speed",
           "wind_gust": "Wind gust",
           "wind_direction": "Wind direction",
@@ -199,7 +202,8 @@
         "data_description": {
           "temperature": "Outdoor temperature. °C and °F both work.",
           "humidity": "Outdoor relative humidity, in %.",
-          "pressure": "Station-level (absolute) pressure in hPa, mbar or inHg. The service reduces it to sea level itself — do not pick an already reduced value.",
+          "pressure": "Your station's pressure in hPa, mbar or inHg. The field below says which of the two it is.",
+          "pressure_kind": "Absolute is what the barometer measures at the station; relative is that same reading already reduced to sea level, which is what most consoles show by default. MeteoVeo does the reduction itself, so the wrong answer here shifts the pressure by about 0.12 hPa for every metre of altitude.",
           "wind_speed": "Sustained wind speed, in any common unit.",
           "wind_gust": "Peak wind gust, in any common unit.",
           "wind_direction": "Wind direction in degrees, 0–360.",
@@ -271,6 +275,14 @@
       "account_deleted": "Your MeteoVeo account has been deleted. The integration now removes itself.",
       "reauth_required": "MeteoVeo no longer accepts this connection's key. Sign in again from the notification, then retry.",
       "too_many_keys": "This account already has 5 home-automation connections, the maximum. Remove MeteoVeo from a Home Assistant or Homey you no longer use, then try again."
+    }
+  },
+  "selector": {
+    "pressure_kind": {
+      "options": {
+        "absolute": "Absolute — measured at the station",
+        "sea_level": "Relative — already reduced to sea level"
+      }
     }
   },
   "entity": {

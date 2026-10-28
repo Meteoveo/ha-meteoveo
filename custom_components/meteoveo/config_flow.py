@@ -51,6 +51,7 @@ from .const import (
     CONF_INTEGRATION_KEY,
     CONF_KEY_ID,
     CONF_MEASUREMENTS,
+    CONF_PRESSURE_KIND,
     CONF_STATION_ID,
     CONF_STATION_KEY,
     CONF_STATION_REF,
@@ -79,8 +80,8 @@ from .flow_logic import (
     same_email,
     unique_id_for,
 )
-from .selection import validate_selection
-from .wu_payload import MEASUREMENTS
+from .selection import split_pressure_kind, validate_selection
+from .wu_payload import MEASUREMENTS, PRESSURE_ABSOLUTE, PRESSURE_KINDS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -126,12 +127,19 @@ STEP_LOGIN_SCHEMA = vol.Schema(
 )
 
 
-def _measurement_schema(current: dict[str, str]) -> vol.Schema:
+def _measurement_schema(
+    current: dict[str, str], pressure_kind: str = PRESSURE_ABSOLUTE
+) -> vol.Schema:
     """One optional entity picker per measurement.
 
     Every field defaults to "not available": a station without a solar sensor
     must be able to finish setup, and demanding a value for everything is how
     an integration becomes impossible to configure.
+
+    One field is not an entity: how the barometer reports (MeteoVeo ADR-0844).
+    It sits directly under the pressure picker, because that is the only place
+    where the question makes sense -- asked anywhere else it would be missed,
+    and the answer changes what the number means.
     """
     fields: dict[Any, Any] = {}
     for measurement in MEASUREMENTS:
@@ -158,6 +166,16 @@ def _measurement_schema(current: dict[str, str]) -> vol.Schema:
                 ),
             )
         )
+        if measurement.sea_level_api_field:
+            fields[vol.Required(CONF_PRESSURE_KIND, default=pressure_kind)] = (
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=list(PRESSURE_KINDS),
+                        translation_key=CONF_PRESSURE_KIND,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            )
     return vol.Schema(fields)
 
 
@@ -255,6 +273,7 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
         self._station_name: str | None = None
         self._sensor_height_cm = DEFAULT_SENSOR_HEIGHT_CM
         self._measurements: dict[str, str] = {}
+        self._pressure_kind = PRESSURE_ABSOLUTE
         self._station: dict[str, Any] | None = None
 
     # --- Entry point ------------------------------------------------------
@@ -309,7 +328,8 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
-            measurements = validate_selection(user_input)
+            answers, self._pressure_kind = split_pressure_kind(user_input)
+            measurements = validate_selection(answers)
             if self._token is not None:
                 self._measurements = measurements
                 return await self._async_finish_account(self._show_measurements)
@@ -320,7 +340,10 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_STATION_ID: self._credentials.station_id,
                     CONF_STATION_KEY: self._credentials.station_key,
                 },
-                options={CONF_MEASUREMENTS: measurements},
+                options={
+                    CONF_MEASUREMENTS: measurements,
+                    CONF_PRESSURE_KIND: self._pressure_kind,
+                },
             )
         return self._show_measurements({})
 
@@ -328,7 +351,7 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="measurements",
             data_schema=self.add_suggested_values_to_schema(
-                _measurement_schema({}), self._measurements
+                _measurement_schema({}, self._pressure_kind), self._measurements
             ),
             errors=errors,
             description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
@@ -593,6 +616,7 @@ class MeteoVeoConfigFlow(ConfigFlow, domain=DOMAIN):
             data[CONF_STATION_KEY] = station["secret"]
             data[CONF_STATION_REF] = station["stationId"]
             options[CONF_MEASUREMENTS] = self._measurements
+            options[CONF_PRESSURE_KIND] = self._pressure_kind
         return self.async_create_entry(
             title=place_title(place, self.hass.config.location_name or "MeteoVeo"),
             data=data,
@@ -819,25 +843,37 @@ class MeteoVeoOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
-            selection = validate_selection(user_input)
+            answers, pressure_kind = split_pressure_kind(user_input)
+            selection = validate_selection(answers)
             if self._token is not None:
                 # The "add a station" flow ends here: the station and the new
                 # key are created only once the mapping is known, so an
                 # abandoned flow leaves nothing behind on the account.
-                return await self._async_attach_station(selection)
+                return await self._async_attach_station(selection, pressure_kind)
             return self.async_create_entry(
-                data={**self.config_entry.options, CONF_MEASUREMENTS: selection}
+                data={
+                    **self.config_entry.options,
+                    CONF_MEASUREMENTS: selection,
+                    CONF_PRESSURE_KIND: pressure_kind,
+                }
             )
 
         current = self.config_entry.options.get(CONF_MEASUREMENTS, {})
         return self._show_measurements(dict(current), {})
 
     def _show_measurements(
-        self, current: dict[str, str], errors: dict[str, str]
+        self,
+        current: dict[str, str],
+        errors: dict[str, str],
+        pressure_kind: str | None = None,
     ) -> ConfigFlowResult:
         return self.async_show_form(
             step_id="measurements",
-            data_schema=_measurement_schema(current),
+            data_schema=_measurement_schema(
+                current,
+                pressure_kind
+                or self.config_entry.options.get(CONF_PRESSURE_KIND, PRESSURE_ABSOLUTE),
+            ),
             errors=errors,
             description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
         )
@@ -897,7 +933,9 @@ class MeteoVeoOptionsFlow(OptionsFlow):
             description_placeholders={"docs_url": DOCS_MEASUREMENTS_URL},
         )
 
-    async def _async_attach_station(self, measurements: dict[str, str]) -> ConfigFlowResult:
+    async def _async_attach_station(
+        self, measurements: dict[str, str], pressure_kind: str = PRESSURE_ABSOLUTE
+    ) -> ConfigFlowResult:
         """Create the station, swap the key for one bound to it, reload."""
         entry = self.config_entry
         assert self._token is not None
@@ -944,12 +982,14 @@ class MeteoVeoOptionsFlow(OptionsFlow):
         except ApiError as failure:
             if failure.code == "too_many_keys":
                 return self.async_abort(reason="too_many_keys")
-            return self._show_measurements(measurements, {"base": "unknown"})
+            return self._show_measurements(measurements, {"base": "unknown"}, pressure_kind)
         except InvalidCredentials:
             # The sign-in ran out while the flow sat open.
             return self.async_abort(reason="session_expired")
         except MeteoVeoError as failure:
-            return self._show_measurements(measurements, {"base": _account_error(failure)})
+            return self._show_measurements(
+                measurements, {"base": _account_error(failure)}, pressure_kind
+            )
 
         try:
             await account.async_delete_integration_key(self._token, entry.data[CONF_KEY_ID])
@@ -974,7 +1014,11 @@ class MeteoVeoOptionsFlow(OptionsFlow):
         # Writing the options reloads the entry, which starts the uploads and
         # creates the station entities.
         return self.async_create_entry(
-            data={**entry.options, CONF_MEASUREMENTS: measurements}
+            data={
+                **entry.options,
+                CONF_MEASUREMENTS: measurements,
+                CONF_PRESSURE_KIND: pressure_kind,
+            }
         )
 
     async def async_step_location(

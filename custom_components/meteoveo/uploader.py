@@ -6,7 +6,7 @@ import logging
 from typing import Any, Mapping, Protocol
 
 from .client import InvalidCredentials, MeteoVeoClient, ServiceUnavailable
-from .wu_payload import build_wu_params
+from .wu_payload import PRESSURE_ABSOLUTE, build_wu_params
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,10 +43,11 @@ async def upload_once(
     selection: Mapping[str, str],
     *,
     now_iso: str,
+    pressure_kind: str = PRESSURE_ABSOLUTE,
 ) -> bool:
     """Read, convert and send. Returns True when something was sent."""
     readings = collect_readings(states, selection)
-    fields = build_wu_params(readings)
+    fields = build_wu_params(readings, pressure_kind=pressure_kind)
     if not fields:
         return False
 

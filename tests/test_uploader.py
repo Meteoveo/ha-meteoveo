@@ -268,3 +268,67 @@ async def test_an_unreachable_service_during_upload_is_not_an_error(hass, caplog
 
     assert attempts, "the upload was never attempted, so the test proves nothing"
     assert [r for r in caplog.records if r.levelno >= logging.ERROR] == []
+
+
+async def test_the_timer_sends_a_reduced_reading_in_its_own_field(hass) -> None:
+    """MeteoVeo ADR-0844, end to end: the stored answer reaches the request.
+
+    A console that already reduces to sea level must not have its value land
+    in the absolute field -- the server would reduce it a second time, about
+    0.12 hPa per metre.
+    """
+    from datetime import timedelta
+    from unittest.mock import AsyncMock, patch
+
+    from homeassistant.util import dt as dt_util
+    from pytest_homeassistant_custom_component.common import (
+        MockConfigEntry,
+        async_fire_time_changed,
+    )
+
+    from custom_components.meteoveo.const import (
+        CONF_MEASUREMENTS,
+        CONF_PRESSURE_KIND,
+        CONF_STATION_ID,
+        CONF_STATION_KEY,
+        DOMAIN,
+    )
+    from custom_components.meteoveo.wu_payload import PRESSURE_SEA_LEVEL
+
+    hass.states.async_set("sensor.barometer", "1013.25", {"unit_of_measurement": "hPa"})
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_STATION_ID: "MVEXAMPLE1", CONF_STATION_KEY: "key"},
+        unique_id="mvexample1",
+        options={
+            CONF_MEASUREMENTS: {"pressure": "sensor.barometer"},
+            CONF_PRESSURE_KIND: PRESSURE_SEA_LEVEL,
+        },
+    )
+    entry.add_to_hass(hass)
+
+    view = {"station": {"name": "Garden"}, "health": {"findings": []},
+            "model": {"status": "collecting", "samples": 0, "samplesNeeded": 10,
+                      "daysRemaining": 10},
+            "upload": {"lastSeenAt": None, "acceptedCount": 0, "lastError": None}}
+
+    with (
+        patch(
+            "custom_components.meteoveo.client.MeteoVeoClient.async_get_station",
+            new=AsyncMock(return_value=view),
+        ),
+        patch(
+            "custom_components.meteoveo.client.MeteoVeoClient.async_upload",
+            new=AsyncMock(return_value=True),
+        ) as upload,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=61))
+        await hass.async_block_till_done()
+
+    fields = upload.await_args.args[0]
+    assert "absbaromin" not in fields
+    assert fields["baromin"] == 29.9213

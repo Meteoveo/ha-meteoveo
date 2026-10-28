@@ -82,8 +82,9 @@ fails them (for example a temperature spike from a failing sensor) is
 flagged rather than displayed. The **Sensor problem** binary sensor turns on
 when this happens; its attributes say which measurement was flagged.
 Common causes are covered in [measurements](measurements.md) — indoor
-sensors mapped as outdoor, rain rate mapped as daily rain, absolute
-pressure at altitude.
+sensors mapped as outdoor, rain rate mapped as daily rain, or a pressure
+entity whose **Pressure type** does not match what it reports (worth
+checking at altitude, where the two differ most).
 
 ## "Station extras remaining" is counting down
 

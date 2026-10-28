@@ -11,7 +11,11 @@ import math
 
 import pytest
 
-from custom_components.meteoveo.wu_payload import MEASUREMENTS, build_wu_params
+from custom_components.meteoveo.wu_payload import (
+    MEASUREMENTS,
+    PRESSURE_SEA_LEVEL,
+    build_wu_params,
+)
 
 
 def test_catalogue_is_complete():
@@ -138,3 +142,45 @@ def test_rounding_is_per_measurement():
 
 def test_not_a_number_never_reaches_the_request():
     assert build_wu_params({"pressure": (math.nan, "hPa")}) == {}
+
+
+class TestPressureKind:
+    """Absolute, or already reduced to sea level (MeteoVeo ADR-0844).
+
+    The service stores STATION-LEVEL pressure, and every consumer reduces it
+    with the station's elevation. A console that reports the already reduced
+    ("relative") value must therefore not travel in the absolute field: it
+    would be reduced a second time, about 0.12 hPa per metre -- 6 hPa at 50 m,
+    which is a whole weather situation. The upload protocol carries a separate
+    field for the reduced value, and the server raises it back using the
+    station's elevation, so the round trip returns what the barometer said.
+    """
+
+    def test_absolute_is_the_default(self):
+        params = build_wu_params({"pressure": (1013.25, "hPa")})
+        assert "absbaromin" in params
+        assert "baromin" not in params
+
+    def test_a_reduced_reading_travels_in_its_own_field(self):
+        params = build_wu_params(
+            {"pressure": (1013.25, "hPa")}, pressure_kind=PRESSURE_SEA_LEVEL
+        )
+        assert "absbaromin" not in params
+        assert params["baromin"] == pytest.approx(29.9213, abs=1e-4)
+
+    def test_only_the_field_name_changes(self):
+        readings = {"pressure": (997.4, "hPa"), "temperature": (12.0, "°C")}
+        absolute = build_wu_params(readings)
+        reduced = build_wu_params(readings, pressure_kind=PRESSURE_SEA_LEVEL)
+        assert reduced["baromin"] == absolute["absbaromin"]
+        assert reduced["tempf"] == absolute["tempf"]
+
+    def test_an_unrecognised_kind_is_treated_as_absolute(self):
+        # A hand-edited option, or one written by a newer version: the safe
+        # reading is the one the integration has always sent.
+        params = build_wu_params({"pressure": (1013.25, "hPa")}, pressure_kind="qff")
+        assert "absbaromin" in params
+        assert "baromin" not in params
+
+    def test_pressure_is_the_only_measurement_with_a_second_field(self):
+        assert {m.key for m in MEASUREMENTS if m.sea_level_api_field} == {"pressure"}

@@ -99,6 +99,7 @@
           "temperature": "Temperatura",
           "humidity": "Humedad",
           "pressure": "Presión",
+          "pressure_kind": "Tipo de presión",
           "wind_speed": "Velocidad del viento",
           "wind_gust": "Racha de viento",
           "wind_direction": "Dirección del viento",
@@ -108,7 +109,8 @@
         "data_description": {
           "temperature": "Temperatura exterior, en °C o en °F.",
           "humidity": "Humedad relativa exterior, en %.",
-          "pressure": "Presión absoluta (la de la estación, sin corregir) en hPa, mbar o inHg. MeteoVeo la reduce al nivel del mar; no elijas un valor ya reducido (presión relativa).",
+          "pressure": "La presión de tu estación en hPa, mbar o inHg. En el campo de abajo indicas cuál de las dos es.",
+          "pressure_kind": "La absoluta es la que mide el barómetro en la estación; la relativa es esa misma lectura ya reducida al nivel del mar, que es lo que muestran por defecto la mayoría de las consolas. MeteoVeo hace la reducción por su cuenta, así que una respuesta equivocada desvía la presión unos 0,12 hPa por cada metro de altitud.",
           "wind_speed": "Velocidad media del viento, en cualquier unidad habitual.",
           "wind_gust": "Racha máxima de viento, en cualquier unidad habitual.",
           "wind_direction": "Dirección del viento en grados, 0–360.",
@@ -190,6 +192,7 @@
           "temperature": "Temperatura",
           "humidity": "Humedad",
           "pressure": "Presión",
+          "pressure_kind": "Tipo de presión",
           "wind_speed": "Velocidad del viento",
           "wind_gust": "Racha de viento",
           "wind_direction": "Dirección del viento",
@@ -199,7 +202,8 @@
         "data_description": {
           "temperature": "Temperatura exterior, en °C o en °F.",
           "humidity": "Humedad relativa exterior, en %.",
-          "pressure": "Presión absoluta (la de la estación, sin corregir) en hPa, mbar o inHg. MeteoVeo la reduce al nivel del mar; no elijas un valor ya reducido (presión relativa).",
+          "pressure": "La presión de tu estación en hPa, mbar o inHg. En el campo de abajo indicas cuál de las dos es.",
+          "pressure_kind": "La absoluta es la que mide el barómetro en la estación; la relativa es esa misma lectura ya reducida al nivel del mar, que es lo que muestran por defecto la mayoría de las consolas. MeteoVeo hace la reducción por su cuenta, así que una respuesta equivocada desvía la presión unos 0,12 hPa por cada metro de altitud.",
           "wind_speed": "Velocidad media del viento, en cualquier unidad habitual.",
           "wind_gust": "Racha máxima de viento, en cualquier unidad habitual.",
           "wind_direction": "Dirección del viento en grados, 0–360.",
@@ -271,6 +275,14 @@
       "account_deleted": "Tu cuenta de MeteoVeo se ha borrado. La integración se eliminará ahora de Home Assistant por sí sola.",
       "reauth_required": "MeteoVeo ya no acepta la clave de esta conexión. Vuelve a iniciar sesión desde la notificación de Home Assistant y repite el cambio.",
       "too_many_keys": "Esta cuenta ya tiene 5 conexiones domóticas, el máximo. Quita MeteoVeo de algún Home Assistant o Homey que ya no uses y vuelve a intentarlo."
+    }
+  },
+  "selector": {
+    "pressure_kind": {
+      "options": {
+        "absolute": "Absoluta — la medida en la estación",
+        "sea_level": "Relativa — ya reducida al nivel del mar"
+      }
     }
   },
   "entity": {
