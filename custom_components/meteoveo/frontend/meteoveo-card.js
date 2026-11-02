@@ -18,7 +18,7 @@
  * DOM exists.
  */
 
-export const CARD_VERSION = "0.3.4";
+export const CARD_VERSION = "0.3.6";
 const DOMAIN = "meteoveo";
 const STEP_MINUTES = 10;
 const HORIZON_MINUTES = 180;
