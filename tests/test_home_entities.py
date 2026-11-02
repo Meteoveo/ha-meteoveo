@@ -62,6 +62,11 @@ MORE = {
     "binary_sensor.meteoveo_villa_ejemplo_orange_warning": "warning_orange",
     "binary_sensor.meteoveo_villa_ejemplo_red_warning": "warning_red",
     "event.meteoveo_villa_ejemplo_new_warning": "warning",
+    # ADR-0935: the phenomenon axis. The event declares every AEMET code; the
+    # binary sensor appears only for a phenomenon this place was warned for --
+    # the example view carries a rain warning, so only that one.
+    "event.meteoveo_villa_ejemplo_new_warning_by_phenomenon": "warning_phenomenon",
+    "binary_sensor.meteoveo_villa_ejemplo_rain_warning": "warning_phenomenon_pr",
     # ADR-0833 R4: the radar loop.
     "image.meteoveo_villa_ejemplo_radar": "radar",
     # ADR-0866 D3: the account's MeteoVeo level (account entries only).
@@ -209,6 +214,8 @@ async def test_warnings(hass: HomeAssistant) -> None:
             "level": "yellow",
             "phenomenon": "PR",
             "phenomenon_name": "Lluvias",
+            # ADR-0935 D6: AEMET's own probability band, which we used to drop.
+            "probability": "40%-70%",
             "headline": "Aviso amarillo por lluvias",
             "onset": "2026-10-23T15:00:00Z",
             "expires": "2026-10-23T23:59:00Z",

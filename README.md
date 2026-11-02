@@ -114,10 +114,12 @@ upload key is stored as well.
 | `weather.meteoveo_<town>` | Current conditions, hourly forecast (48 h) and daily forecast (7 days). The daily rain probability is MeteoVeo's own figure, not AEMET's — see [probability](https://github.com/Meteoveo/ha-meteoveo/blob/main/docs/probability.md). Attribution to the data sources is in the entity's attributes. |
 | `binary_sensor.meteoveo_<town>_rain_in_the_next_hour` | On when rain is expected within 60 minutes. Attributes: `rain_now`, `starts_at`, `ends_at`, `issued_at`, `age_minutes`, and `steps` — ten-minute steps with `band` (`none`, `light`, `moderate`, `heavy`), `source` (`radar` or `model`) and `uncertain`. Unavailable outside nowcast coverage. |
 | `sensor.meteoveo_<town>_rain_start` / `_rain_end` | When the next rain starts / when the current rain stops (timestamps). |
-| `sensor.meteoveo_<town>_weather_warnings` | Number of active official warnings; `highest_level` (`none`, `yellow`, `orange`, `red`) and the `warnings` list as attributes. |
+| `sensor.meteoveo_<town>_weather_warnings` | Number of active official warnings; `highest_level` (`none`, `yellow`, `orange`, `red`) and the `warnings` list as attributes — each warning with its AEMET level, phenomenon, probability band, headline and validity. If the service says nothing about warnings at all, this is `unknown` rather than `0`: not knowing is not the same as there being none. |
 | `binary_sensor.meteoveo_<town>_yellow_warning` / `_orange_warning` / `_red_warning` | On while an official warning of that level is in force (started, not expired). |
 | `sensor.meteoveo_<town>_next_warning` | When the next warning that has not started yet begins. |
-| `event.meteoveo_<town>_new_warning` | Fires once for every new warning; the event type is the level, the headline and validity are attributes. Warnings already known at start-up do not fire again. |
+| `event.meteoveo_<town>_new_warning` | Fires once for every new warning; the event type is the level, and the level, phenomenon, probability, headline and validity are attributes. Warnings already known at start-up do not fire again. |
+| `event.meteoveo_<town>_new_warning_by_phenomenon` | The same new warnings, with the **phenomenon** as the event type — so the trigger picker offers *Rain*, *Thunderstorms*, *Wind*, *Snow*, *Heat*, *Cold*, *Coastal events*, *Fog*, *Snowmelt*, *Avalanches* and *Dust* by name. A code we do not know fires as *Other*, with the raw code in the `phenomenon` attribute. |
+| `binary_sensor.meteoveo_<town>_rain_warning` / `_thunderstorm_warning` / `_wind_warning` / … | On while an official warning for that **phenomenon** is in force, at any level. One appears the first time your place gets a warning for that phenomenon, and stays afterwards — so you get the two or three that actually happen where you live, not eleven that never turn on. Attributes: `phenomenon` (the AEMET code), `phenomenon_name`, `highest_level` and the `warnings` themselves. |
 | `sensor.meteoveo_<town>_minutes_until_rain` | Minutes until it rains — `0` while raining, unknown when none is expected. A number, so a *numeric state* trigger works without templates. |
 | `sensor.meteoveo_<town>_rain_intensity_now` | `none`, `light`, `moderate` or `heavy`, from the nowcast step covering now. |
 | `sensor.meteoveo_<town>_feels_like` / `_dew_point` | Apparent temperature of the current hour; dew point from the current temperature and humidity. |
@@ -197,7 +199,7 @@ hours — see
 
 ### Blueprints
 
-Five ready-made automations, imported with one click:
+Six ready-made automations, imported with one click:
 
 | Blueprint | What it does | Import |
 |---|---|---|
@@ -206,6 +208,7 @@ Five ready-made automations, imported with one click:
 | **Frost tomorrow** | Every evening checks tomorrow's minimum in the forecast and runs your actions at or below your threshold (default 2 °C); the minimum is available as `{{ low }}`. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Ffrost_tomorrow.yaml) |
 | **Voice assistant answers** | Ask Assist — with Home Assistant's own local assistant — *"¿Va a llover hoy?"*, *"¿Cuándo va a llover?"*, *"¿Hay avisos?"*, *"¿Qué tiempo hará mañana?"* (also in English and Catalan) and get the answer from MeteoVeo: rain now or coming and until when, the next rainy day, warnings with their validity, tomorrow's forecast. Pick only your MeteoVeo weather entity. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Fvoice_assistant.yaml) |
 | **AEMET weather warning** | Runs your actions when an official warning reaches yellow, orange or red at your place; the warning text is available as `{{ headline }}`. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Faemet_warning.yaml) |
+| **A weather warning appeared** | Runs your actions the moment AEMET issues a new official warning for your place, filtered by level *and* by phenomenon (wind only, rain only, thunderstorms only — several at once, or all of them). Fires on every new warning, so the second orange warning of the day runs too; AEMET's own `{{ level }}`, `{{ phenomenon_name }}`, `{{ headline }}`, `{{ probability }}`, `{{ onset }}` and `{{ expires }}` are available to your actions. | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FMeteoveo%2Fha-meteoveo%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmeteoveo%2Fwarning_appeared.yaml) |
 
 ## Why a station owner would use this
 

@@ -144,7 +144,13 @@ class WarningsSensor(MeteoVeoEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        warnings = warnings_list(self._view) or []
+        # A missing warnings block is not a statement (ADR-0935 D7). Saying
+        # "highest_level: none" while the service said nothing at all reads as
+        # "no danger" -- the one thing we must never make up. An empty list is
+        # different: that is AEMET saying there are none.
+        warnings = warnings_list(self._view)
+        if warnings is None:
+            return {"highest_level": None, "warnings": None}
         return {"highest_level": highest_level(warnings), "warnings": warnings}
 
 

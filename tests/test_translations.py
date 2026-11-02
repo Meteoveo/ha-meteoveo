@@ -263,3 +263,46 @@ def test_both_pressure_kinds_are_named(language):
     assert set(options) == {"absolute", "sea_level"}
     for key, text in options.items():
         assert text.strip(), f"{language}: {key} has no label"
+
+
+# --- ADR-0935: the warning phenomena ---------------------------------------
+#
+# Eleven AEMET Meteoalerta codes, named in four languages. The Spanish and
+# Catalan wordings are AEMET's own (the service's PHENOMENON table), not
+# translations of the English.
+
+PHENOMENON_CODES = ("PR", "TO", "VI", "NE", "CA", "BF", "CO", "NI", "DP", "AL", "PO")
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_every_phenomenon_has_a_sensor_name(language):
+    # A lazily created entity takes its name from here, not from the data, so
+    # a missing key would show a raw translation key as a friendly name --
+    # and the entity_id derived from it would be the key as well.
+    entity = load(language)["entity"]["binary_sensor"]
+    for code in PHENOMENON_CODES:
+        name = entity[f"warning_phenomenon_{code.lower()}"]["name"]
+        assert name.strip(), f"{language}: {code}"
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_phenomenon_event_names_every_code_and_the_container(language):
+    event = load(language)["entity"]["event"]["warning_phenomenon"]
+    assert event["name"].strip()
+    states = event["state_attributes"]["event_type"]["state"]
+    assert set(states) == {c.lower() for c in PHENOMENON_CODES} | {"other"}
+    for key, text in states.items():
+        assert text.strip(), f"{language}: {key}"
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_spanish_wording_is_aemets_own(language):
+    # AEMET writes "Aviso por lluvias" / "Avís per pluges"; we do not
+    # reinterpret the official warning, down to the wording (ADR-0935 D3).
+    if language not in ("es", "ca"):
+        return
+    entity = load(language)["entity"]["binary_sensor"]
+    particle = "por" if language == "es" else "per"
+    for code in PHENOMENON_CODES:
+        name = entity[f"warning_phenomenon_{code.lower()}"]["name"]
+        assert f" {particle} " in name, f"{language}: {code} -> {name}"

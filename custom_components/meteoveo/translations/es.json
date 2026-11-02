@@ -415,6 +415,39 @@
       },
       "lightning_nearby": {
         "name": "Rayos cerca"
+      },
+      "warning_phenomenon_pr": {
+        "name": "Aviso por lluvias"
+      },
+      "warning_phenomenon_to": {
+        "name": "Aviso por tormentas"
+      },
+      "warning_phenomenon_vi": {
+        "name": "Aviso por viento"
+      },
+      "warning_phenomenon_ne": {
+        "name": "Aviso por nevadas"
+      },
+      "warning_phenomenon_ca": {
+        "name": "Aviso por calor"
+      },
+      "warning_phenomenon_bf": {
+        "name": "Aviso por frío"
+      },
+      "warning_phenomenon_co": {
+        "name": "Aviso por fenómenos costeros"
+      },
+      "warning_phenomenon_ni": {
+        "name": "Aviso por nieblas"
+      },
+      "warning_phenomenon_dp": {
+        "name": "Aviso por deshielo"
+      },
+      "warning_phenomenon_al": {
+        "name": "Aviso por aludes"
+      },
+      "warning_phenomenon_po": {
+        "name": "Aviso por polvo en suspensión"
       }
     },
     "event": {
@@ -426,6 +459,27 @@
               "yellow": "Amarillo",
               "orange": "Naranja",
               "red": "Rojo"
+            }
+          }
+        }
+      },
+      "warning_phenomenon": {
+        "name": "Nuevo aviso por fenómeno",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "pr": "Lluvias",
+              "to": "Tormentas",
+              "vi": "Viento",
+              "ne": "Nevadas",
+              "ca": "Calor",
+              "bf": "Frío",
+              "co": "Fenómenos costeros",
+              "ni": "Nieblas",
+              "dp": "Deshielo",
+              "al": "Aludes",
+              "po": "Polvo en suspensión",
+              "other": "Otro"
             }
           }
         }

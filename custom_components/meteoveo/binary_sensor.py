@@ -14,15 +14,21 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
+from homeassistant.core import callback
+
 from .coordinator import MeteoVeoConfigEntry
-from .entity import MeteoVeoEntity, add_when_allowed
+from .entity import MeteoVeoEntity, add_when_allowed, known_entity
 from .home import (
     WARNING_LEVELS,
+    WARNING_PHENOMENA,
     active_levels,
+    highest_level,
     lightning_attributes,
     lightning_nearby,
     lightning_unlocked,
     next_hour_attributes,
+    phenomenon_warnings,
+    warned_phenomena,
     warnings_list,
 )
 
@@ -50,6 +56,55 @@ async def async_setup_entry(
         allowed=lightning_unlocked,
         build=lambda: [LightningNearbyBinarySensor(runtime.home)],
     )
+
+    add_warned_phenomena(hass, entry, async_add_entities)
+
+
+@callback
+def add_warned_phenomena(
+    hass: HomeAssistant,
+    entry: MeteoVeoConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Create a phenomenon sensor the first time that phenomenon is warned for.
+
+    All eleven at once would mean eleven entities that in most of Spain can
+    never turn on -- an avalanche sensor in Valencia is noise in every
+    "unavailable entities" view (the ADR-0866 D5 rule). So each appears when
+    the place first gets a warning for it, *announced* rather than in force,
+    because the automation is written in the hours before the storm.
+
+    Once created it stays: an entity that vanished when the storm passed would
+    take the automation pointing at it with it (ADR-0866 D10.2), which is why
+    one the registry already knows is recreated even with no warning in sight.
+
+    Nothing is polled for this -- the coordinator is already refreshing.
+    """
+    coordinator = entry.runtime_data.home
+    base_id = entry.runtime_data.base_id
+    added: set[str] = set()
+
+    @callback
+    def _sync() -> None:
+        announced = warned_phenomena(coordinator.data)
+        new = [
+            code
+            for code in WARNING_PHENOMENA
+            if code not in added
+            and (
+                code in announced
+                or known_entity(hass, "binary_sensor", f"{base_id}_warning_phenomenon_{code.lower()}")
+            )
+        ]
+        if not new:
+            return
+        added.update(new)
+        async_add_entities([WarningPhenomenonBinarySensor(coordinator, code) for code in new])
+
+    _sync()
+    # The listener lives as long as the entry: any of the eleven may show up
+    # for the first time next winter.
+    entry.async_on_unload(coordinator.async_add_listener(_sync))
 
 
 class RainSoonBinarySensor(MeteoVeoEntity, BinarySensorEntity):
@@ -123,6 +178,60 @@ class WarningLevelBinarySensor(MeteoVeoEntity, BinarySensorEntity):
                 if w.get("level") == self._level and self._level in active_levels([w], now)
             ]
         }
+
+
+class WarningPhenomenonBinarySensor(MeteoVeoEntity, BinarySensorEntity):
+    """On while an official warning for this phenomenon is in force, any level.
+
+    The axis the level sensors cannot give: "only on wind", "only on
+    thunderstorms" -- without a template. The name comes from the translation
+    files rather than from the data, so it survives a restart during which the
+    warning expired (ADR-0935 D3), and the Spanish and Catalan wordings are
+    AEMET's own.
+
+    Unknown while the service says nothing about warnings at all: a missing
+    block is not "no danger".
+    """
+
+    def __init__(self, coordinator, phenomenon: str) -> None:
+        super().__init__(coordinator, f"warning_phenomenon_{phenomenon.lower()}")
+        self.entity_description = BinarySensorEntityDescription(
+            key=f"warning_phenomenon_{phenomenon.lower()}",
+            translation_key=f"warning_phenomenon_{phenomenon.lower()}",
+            device_class=BinarySensorDeviceClass.SAFETY,
+        )
+        self._phenomenon = phenomenon
+
+    @property
+    def is_on(self) -> bool | None:
+        warnings = warnings_list(self._view)
+        if warnings is None:
+            return None
+        return bool(self._in_force(warnings))
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        warnings = warnings_list(self._view)
+        in_force = [] if warnings is None else self._in_force(warnings)
+        return {
+            "phenomenon": self._phenomenon,
+            # AEMET's own name for it, from whichever warning mentions it.
+            "phenomenon_name": next(
+                (
+                    w["phenomenon_name"]
+                    for w in warnings or []
+                    if w.get("phenomenon") == self._phenomenon and w.get("phenomenon_name")
+                ),
+                None,
+            ),
+            # The worst level AEMET itself gave this phenomenon here -- a
+            # choice among its own levels, never a level of ours.
+            "highest_level": None if warnings is None else highest_level(in_force),
+            "warnings": None if warnings is None else in_force,
+        }
+
+    def _in_force(self, warnings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return phenomenon_warnings(warnings, self._phenomenon, dt_util.utcnow())
 
 
 class SensorHealthBinarySensor(MeteoVeoEntity, BinarySensorEntity):

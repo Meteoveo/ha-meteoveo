@@ -36,6 +36,72 @@
         "state": {
           "on": "mdi:flash"
         }
+      },
+      "warning_phenomenon_pr": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_to": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_vi": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_ne": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_ca": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_bf": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_co": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_ni": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_dp": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_al": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
+      },
+      "warning_phenomenon_po": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:alert"
+        }
       }
     },
     "sensor": {
@@ -94,6 +160,9 @@
     },
     "event": {
       "warning": {
+        "default": "mdi:alert-decagram-outline"
+      },
+      "warning_phenomenon": {
         "default": "mdi:alert-decagram-outline"
       }
     },

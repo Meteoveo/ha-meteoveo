@@ -136,7 +136,7 @@ actions:
           at_today: "las {time}"
           at_tomorrow: "mañana a las {time}"
           at_day: "el {day} a las {time}"
-          phenomena: { PR: "lluvias", TO: "tormentas", VI: "vientos", NE: "nevadas", CO: "fenómenos costeros", TM: "temperaturas máximas", Tm: "temperaturas mínimas", NI: "nieblas", PO: "polvo en suspensión", AV: "aludes", DU: "deshielo" }
+          phenomena: { PR: "lluvias", TO: "tormentas", VI: "vientos", NE: "nevadas", CA: "calor", BF: "frío", CO: "fenómenos costeros", NI: "nieblas", DP: "deshielo", AL: "aludes", PO: "polvo en suspensión" }
           tomorrow: "Mañana, {condition}, con una máxima de {max} y una mínima de {min} grados, y un {p} % de probabilidad de lluvia."
           no_forecast: "Ahora mismo no tengo la previsión de MeteoVeo."
           bands: { light: "débil", moderate: "moderada", heavy: "fuerte" }
@@ -178,7 +178,7 @@ actions:
           at_today: "{time} today"
           at_tomorrow: "tomorrow at {time}"
           at_day: "{day} at {time}"
-          phenomena: { PR: "rain", TO: "thunderstorms", VI: "wind", NE: "snow", CO: "coastal events", TM: "high temperatures", Tm: "low temperatures", NI: "fog", PO: "dust", AV: "avalanches", DU: "thaw" }
+          phenomena: { PR: "rain", TO: "thunderstorms", VI: "wind", NE: "snow", CA: "heat", BF: "cold", CO: "coastal events", NI: "fog", DP: "snowmelt", AL: "avalanches", PO: "dust" }
           tomorrow: "Tomorrow, expect {condition}, with a high of {max} and a low of {min} degrees. The chance of rain is {p}%."
           no_forecast: "I don't have the MeteoVeo forecast right now."
           bands: { light: "light", moderate: "moderate", heavy: "heavy" }
@@ -220,7 +220,7 @@ actions:
           at_today: "les {time}"
           at_tomorrow: "demà a les {time}"
           at_day: "{day} a les {time}"
-          phenomena: { PR: "pluges", TO: "tempestes", VI: "vents", NE: "nevades", CO: "fenòmens costaners", TM: "temperatures màximes", Tm: "temperatures mínimes", NI: "boires", PO: "pols en suspensió", AV: "allaus", DU: "desglaç" }
+          phenomena: { PR: "pluges", TO: "tempestes", VI: "vents", NE: "nevades", CA: "calor", BF: "fred", CO: "fenòmens costaners", NI: "boires", DP: "desgel", AL: "allaus", PO: "pols en suspensió" }
           tomorrow: "Demà, {condition}, amb una màxima de {max} i una mínima de {min} graus, i un {p} % de probabilitat de pluja."
           no_forecast: "Ara mateix no tinc la previsió de MeteoVeo."
           bands: { light: "feble", moderate: "moderada", heavy: "forta" }

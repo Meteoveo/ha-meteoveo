@@ -415,6 +415,39 @@
       },
       "lightning_nearby": {
         "name": "Villám a közelben"
+      },
+      "warning_phenomenon_pr": {
+        "name": "Eső-figyelmeztetés"
+      },
+      "warning_phenomenon_to": {
+        "name": "Zivatar-figyelmeztetés"
+      },
+      "warning_phenomenon_vi": {
+        "name": "Szél-figyelmeztetés"
+      },
+      "warning_phenomenon_ne": {
+        "name": "Havazás-figyelmeztetés"
+      },
+      "warning_phenomenon_ca": {
+        "name": "Hőség-figyelmeztetés"
+      },
+      "warning_phenomenon_bf": {
+        "name": "Hideg-figyelmeztetés"
+      },
+      "warning_phenomenon_co": {
+        "name": "Partmenti figyelmeztetés"
+      },
+      "warning_phenomenon_ni": {
+        "name": "Köd-figyelmeztetés"
+      },
+      "warning_phenomenon_dp": {
+        "name": "Hóolvadás-figyelmeztetés"
+      },
+      "warning_phenomenon_al": {
+        "name": "Lavina-figyelmeztetés"
+      },
+      "warning_phenomenon_po": {
+        "name": "Porszennyezés-figyelmeztetés"
       }
     },
     "event": {
@@ -426,6 +459,27 @@
               "yellow": "Sárga",
               "orange": "Narancs",
               "red": "Piros"
+            }
+          }
+        }
+      },
+      "warning_phenomenon": {
+        "name": "Új figyelmeztetés jelenség szerint",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "pr": "Eső",
+              "to": "Zivatar",
+              "vi": "Szél",
+              "ne": "Havazás",
+              "ca": "Hőség",
+              "bf": "Hideg",
+              "co": "Partmenti jelenségek",
+              "ni": "Köd",
+              "dp": "Hóolvadás",
+              "al": "Lavina",
+              "po": "Porszennyezés",
+              "other": "Egyéb"
             }
           }
         }

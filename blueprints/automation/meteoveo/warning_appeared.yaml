@@ -1,0 +1,122 @@
+blueprint:
+  name: MeteoVeo — a weather warning appeared
+  description: >-
+    Runs your actions the moment a new official AEMET warning (Meteoalerta) is
+    issued for your place — and only for the levels and the phenomena you pick.
+    "Close the awning on a wind warning", "stop the irrigation on a rain
+    warning", "notify me on any orange warning": no templates needed. Unlike a
+    level threshold, this fires on every new warning, so the second orange
+    warning of the day runs too.
+    Your actions get {{ level }}, {{ phenomenon }} (the AEMET code),
+    {{ phenomenon_name }}, {{ headline }}, {{ probability }}, {{ onset }} and
+    {{ expires }} — all of them AEMET's own words.
+
+
+    Ha aparecido un aviso: ejecuta tus acciones en cuanto AEMET emite un aviso
+    nuevo para tu zona, filtrando por nivel y por fenómeno.
+  domain: automation
+  source_url: https://github.com/Meteoveo/ha-meteoveo/blob/main/blueprints/automation/meteoveo/warning_appeared.yaml
+  input:
+    warning_event:
+      name: New warning event
+      description: >-
+        The MeteoVeo event entity of your place. Pick "New warning by
+        phenomenon" — "New warning" works too; both carry the level and the
+        phenomenon.
+      selector:
+        entity:
+          filter:
+            - integration: meteoveo
+              domain: event
+    min_level:
+      name: From this level
+      description: Warnings below this level are ignored.
+      default: yellow
+      selector:
+        select:
+          options:
+            - label: Yellow / Amarillo
+              value: yellow
+            - label: Orange / Naranja
+              value: orange
+            - label: Red / Rojo
+              value: red
+    phenomena:
+      name: Only for these phenomena
+      description: >-
+        Leave empty for every phenomenon. These are AEMET's own eleven
+        Meteoalerta phenomena.
+      default: []
+      selector:
+        select:
+          multiple: true
+          options:
+            - label: Rain / Lluvias
+              value: PR
+            - label: Thunderstorms / Tormentas
+              value: TO
+            - label: Wind / Viento
+              value: VI
+            - label: Snow / Nevadas
+              value: NE
+            - label: Heat / Calor
+              value: CA
+            - label: Cold / Frío
+              value: BF
+            - label: Coastal events / Fenómenos costeros
+              value: CO
+            - label: Fog / Nieblas
+              value: NI
+            - label: Snowmelt / Deshielo
+              value: DP
+            - label: Avalanches / Aludes
+              value: AL
+            - label: Airborne dust / Polvo en suspensión
+              value: PO
+    actions:
+      name: Actions
+      description: What to do — for example a notification using {{ headline }}.
+      default: []
+      selector:
+        action: {}
+
+# One run per warning, and several warnings can be issued in the same refresh.
+mode: queued
+max: 10
+
+variables:
+  min_level: !input min_level
+  phenomena: !input phenomena
+  ranks:
+    yellow: 1
+    orange: 2
+    red: 3
+  # The event's own attributes, so the actions can use them by name.
+  level: "{{ trigger.to_state.attributes.level | default('') }}"
+  phenomenon: "{{ trigger.to_state.attributes.phenomenon | default('') }}"
+  phenomenon_name: "{{ trigger.to_state.attributes.phenomenon_name | default('') }}"
+  headline: "{{ trigger.to_state.attributes.headline | default('') }}"
+  probability: "{{ trigger.to_state.attributes.probability | default('') }}"
+  onset: "{{ trigger.to_state.attributes.onset | default('') }}"
+  expires: "{{ trigger.to_state.attributes.expires | default('') }}"
+
+triggers:
+  - trigger: state
+    entity_id: !input warning_event
+
+conditions:
+  # A real firing only: the event entity's state is the moment it fired, so a
+  # reload or an attribute refresh must not count as a new warning.
+  - condition: template
+    value_template: >-
+      {{ trigger.to_state is not none
+         and trigger.to_state.state not in ['unknown', 'unavailable']
+         and (trigger.from_state is none or trigger.from_state.state != trigger.to_state.state) }}
+  - condition: template
+    value_template: "{{ ranks.get(level, 0) >= ranks.get(min_level, 1) }}"
+  # An empty list means every phenomenon. A code AEMET has newly invented
+  # passes only when no filter is set -- we do not decide what it means.
+  - condition: template
+    value_template: "{{ phenomena | count == 0 or phenomenon in phenomena }}"
+
+actions: !input actions

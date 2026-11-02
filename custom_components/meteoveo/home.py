@@ -17,6 +17,17 @@ from homeassistant.util import dt as dt_util
 
 WARNING_LEVELS = ("yellow", "orange", "red")
 
+#: The AEMET Meteoalerta phenomena (ADR-0935 D1), mirroring the service's own
+#: table (``services/api/src/forecast/warning-sentence.ts``): rain,
+#: thunderstorms, wind, snow, heat, cold, coastal events, fog, snowmelt,
+#: avalanches, airborne dust. A code outside this list is carried through as
+#: data and never named -- we do not guess what AEMET means by it.
+WARNING_PHENOMENA = ("PR", "TO", "VI", "NE", "CA", "BF", "CO", "NI", "DP", "AL", "PO")
+
+#: What a warning of an unknown code fires under. A container, not a guess:
+#: the raw code travels in the event's ``phenomenon`` attribute.
+UNKNOWN_PHENOMENON = "other"
+
 
 def _num(value: Any) -> float | int | None:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -137,6 +148,8 @@ def warnings_list(home: Mapping[str, Any] | None) -> list[dict[str, Any]] | None
             "level": item.get("level"),
             "phenomenon": item.get("phenomenon"),
             "phenomenon_name": item.get("phenomenonName"),
+            # AEMET's own band, verbatim ("40%-70%"); we compute nothing from it.
+            "probability": item.get("probability"),
             "headline": item.get("headline"),
             "onset": item.get("onset"),
             "expires": item.get("expires"),
@@ -214,15 +227,79 @@ def uv_max_today(view: Mapping[str, Any] | None, now: datetime) -> float | int |
     return None
 
 
+def in_force(warning: Mapping[str, Any], now: datetime) -> bool:
+    """Whether this warning has started and has not expired."""
+    onset, expires = parse_time(warning.get("onset")), parse_time(warning.get("expires"))
+    return onset is not None and onset <= now and (expires is None or now < expires)
+
+
 def active_levels(warnings: list[dict[str, Any]] | None, now: datetime) -> set[str]:
     """The levels with a warning in force now (started, not yet expired)."""
-    levels: set[str] = set()
-    for warning in warnings or []:
-        onset, expires = parse_time(warning.get("onset")), parse_time(warning.get("expires"))
-        if onset is not None and onset <= now and (expires is None or now < expires):
-            if warning.get("level") in WARNING_LEVELS:
-                levels.add(warning["level"])
-    return levels
+    return {
+        warning["level"]
+        for warning in warnings or []
+        if warning.get("level") in WARNING_LEVELS and in_force(warning, now)
+    }
+
+
+def active_phenomena(warnings: list[dict[str, Any]] | None, now: datetime) -> set[str]:
+    """The AEMET phenomena with a warning in force now, at any level."""
+    return {
+        warning["phenomenon"]
+        for warning in warnings or []
+        if warning.get("phenomenon") in WARNING_PHENOMENA and in_force(warning, now)
+    }
+
+
+def phenomenon_warnings(
+    warnings: list[dict[str, Any]] | None, phenomenon: str, now: datetime
+) -> list[dict[str, Any]]:
+    """The warnings of one phenomenon that are in force now, as AEMET wrote them."""
+    return [
+        warning
+        for warning in warnings or []
+        if warning.get("phenomenon") == phenomenon and in_force(warning, now)
+    ]
+
+
+def warned_phenomena(view: Mapping[str, Any] | None) -> set[str]:
+    """The known phenomena the place has a warning *announced* for.
+
+    Announced, not in force: the entity has to exist from the announcement,
+    because the automation is built in the hours before the storm. An absent
+    warnings block yields nothing at all -- silence is not a phenomenon.
+    """
+    return {
+        warning["phenomenon"]
+        for warning in warnings_list(view) or []
+        if warning.get("phenomenon") in WARNING_PHENOMENA
+    }
+
+
+def phenomenon_event_type(phenomenon: Any) -> str:
+    """The event type of a phenomenon: its code in the slug form Home
+    Assistant wants for translatable states, or the unknown container."""
+    code = phenomenon if isinstance(phenomenon, str) else ""
+    return code.lower() if code in WARNING_PHENOMENA else UNKNOWN_PHENOMENON
+
+
+#: What both warning events carry. ``level`` and ``probability`` were added in
+#: ADR-0935 D5; the five keys before them are unchanged, so an automation
+#: built on 0.3.x keeps reading what it read.
+WARNING_EVENT_FIELDS = (
+    "phenomenon",
+    "phenomenon_name",
+    "headline",
+    "onset",
+    "expires",
+    "level",
+    "probability",
+)
+
+
+def warning_event_body(warning: Mapping[str, Any]) -> dict[str, Any]:
+    """The attributes a warning event fires with."""
+    return {key: warning.get(key) for key in WARNING_EVENT_FIELDS}
 
 
 def next_warning_onset(warnings: list[dict[str, Any]] | None, now: datetime) -> datetime | None:

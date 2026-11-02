@@ -415,6 +415,39 @@
       },
       "lightning_nearby": {
         "name": "Lightning nearby"
+      },
+      "warning_phenomenon_pr": {
+        "name": "Rain warning"
+      },
+      "warning_phenomenon_to": {
+        "name": "Thunderstorm warning"
+      },
+      "warning_phenomenon_vi": {
+        "name": "Wind warning"
+      },
+      "warning_phenomenon_ne": {
+        "name": "Snow warning"
+      },
+      "warning_phenomenon_ca": {
+        "name": "Heat warning"
+      },
+      "warning_phenomenon_bf": {
+        "name": "Cold warning"
+      },
+      "warning_phenomenon_co": {
+        "name": "Coastal warning"
+      },
+      "warning_phenomenon_ni": {
+        "name": "Fog warning"
+      },
+      "warning_phenomenon_dp": {
+        "name": "Snowmelt warning"
+      },
+      "warning_phenomenon_al": {
+        "name": "Avalanche warning"
+      },
+      "warning_phenomenon_po": {
+        "name": "Dust warning"
       }
     },
     "event": {
@@ -426,6 +459,27 @@
               "yellow": "Yellow",
               "orange": "Orange",
               "red": "Red"
+            }
+          }
+        }
+      },
+      "warning_phenomenon": {
+        "name": "New warning by phenomenon",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "pr": "Rain",
+              "to": "Thunderstorms",
+              "vi": "Wind",
+              "ne": "Snow",
+              "ca": "Heat",
+              "bf": "Cold",
+              "co": "Coastal events",
+              "ni": "Fog",
+              "dp": "Snowmelt",
+              "al": "Avalanches",
+              "po": "Dust",
+              "other": "Other"
             }
           }
         }

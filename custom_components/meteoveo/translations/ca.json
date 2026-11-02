@@ -415,6 +415,39 @@
       },
       "lightning_nearby": {
         "name": "Llamps a prop"
+      },
+      "warning_phenomenon_pr": {
+        "name": "Avís per pluges"
+      },
+      "warning_phenomenon_to": {
+        "name": "Avís per tempestes"
+      },
+      "warning_phenomenon_vi": {
+        "name": "Avís per vent"
+      },
+      "warning_phenomenon_ne": {
+        "name": "Avís per nevades"
+      },
+      "warning_phenomenon_ca": {
+        "name": "Avís per calor"
+      },
+      "warning_phenomenon_bf": {
+        "name": "Avís per fred"
+      },
+      "warning_phenomenon_co": {
+        "name": "Avís per fenòmens costaners"
+      },
+      "warning_phenomenon_ni": {
+        "name": "Avís per boires"
+      },
+      "warning_phenomenon_dp": {
+        "name": "Avís per desgel"
+      },
+      "warning_phenomenon_al": {
+        "name": "Avís per allaus"
+      },
+      "warning_phenomenon_po": {
+        "name": "Avís per pols en suspensió"
       }
     },
     "event": {
@@ -426,6 +459,27 @@
               "yellow": "Groc",
               "orange": "Taronja",
               "red": "Vermell"
+            }
+          }
+        }
+      },
+      "warning_phenomenon": {
+        "name": "Nou avís per fenomen",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "pr": "Pluges",
+              "to": "Tempestes",
+              "vi": "Vent",
+              "ne": "Nevades",
+              "ca": "Calor",
+              "bf": "Fred",
+              "co": "Fenòmens costaners",
+              "ni": "Boires",
+              "dp": "Desgel",
+              "al": "Allaus",
+              "po": "Pols en suspensió",
+              "other": "Altre"
             }
           }
         }
